@@ -41,6 +41,7 @@ import {
 import { scheduleFlush } from './flush.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
+import { captureTimingFlag, TIMING_FLAG_PROP } from './performance.js';
 import {
   normalizeStylePropertyName,
   normalizeStyleValue,
@@ -733,6 +734,10 @@ export class ShadowElement {
     // or misclassify the marker as a scoped-CSS class. Preserve normal
     // data-v-app attribute behavior on user-created elements.
     if (this.uid === PAGE_ROOT_ID && key === 'data-v-app') return;
+    // Benchmark timing flag: capture into the current pipeline context.
+    if (key === TIMING_FLAG_PROP && !this._inert) {
+      captureTimingFlag(value);
+    }
     if (!this._inert && applyMainThreadProp(this, key, value)) return;
     // Vapor compiles ReactLynx-style event props (`:bindtap="fn"`,
     // `:catchtap="fn"`, …) to plain attribute writes — including

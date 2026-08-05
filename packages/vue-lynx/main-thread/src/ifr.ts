@@ -58,6 +58,7 @@ let backgroundHistory: unknown[][] = [];
 let warnedPostHydrationOps = false;
 let renderSealed = false;
 let inSyncRender = false;
+let ifrSetupPipelineOptions: Record<string, unknown> | undefined;
 
 /**
  * Value-bearing frames whose final payload does not define tree identity.
@@ -184,6 +185,30 @@ export function runIfrRender(): void {
   ] as (() => void) | undefined;
   if (!trigger) return;
 
+  // Start the IFR setup pipeline before the first-screen render
+  let ifrPipelineOptions: Record<string, unknown> | undefined;
+  if (typeof __GeneratePipelineOptions !== 'undefined') {
+    try {
+      const opts = __GeneratePipelineOptions();
+      if (opts && typeof opts === 'object' && opts['pipelineID']) {
+        ifrPipelineOptions = opts;
+        const id = opts['pipelineID'] as string;
+        if (typeof __OnPipelineStart !== 'undefined') {
+          __OnPipelineStart(id, 'vue');
+        }
+        opts['pipelineOrigin'] ??= 'vue';
+        opts['dsl'] ??= 'vue';
+        opts['stage'] ??= 'setup';
+        opts['needTimestamps'] = true;
+        if (typeof __MarkTiming !== 'undefined') {
+          __MarkTiming(id, 'vueIfrRenderStart');
+        }
+      }
+    } catch {
+      // Capability detection: do not break IFR if API is unavailable
+    }
+  }
+
   beginIfrSelectorAttributeDeferral();
   try {
     inSyncRender = true;
@@ -212,8 +237,18 @@ export function runIfrRender(): void {
         cleanupError,
       );
     } finally {
+      ifrPipelineOptions = undefined;
       finishHydration(false);
     }
+  }
+
+  // Mark end and store pipeline for the initial __FlushElementTree
+  if (ifrPipelineOptions) {
+    const id = ifrPipelineOptions['pipelineID'] as string;
+    if (typeof __MarkTiming !== 'undefined') {
+      __MarkTiming(id, 'vueIfrRenderEnd');
+    }
+    ifrSetupPipelineOptions = ifrPipelineOptions;
   }
 }
 
@@ -446,6 +481,7 @@ export function resetIfrForTesting(): void {
   warnedPostHydrationOps = false;
   renderSealed = false;
   inSyncRender = false;
+  ifrSetupPipelineOptions = undefined;
 
   const g = globalThis as Record<string, unknown>;
   delete g[IFR_MT_FLAG_GLOBAL];
@@ -458,4 +494,14 @@ export function resetIfrForTesting(): void {
 /** Current state for diagnostics and protocol tests. */
 export function getIfrPhase(): IfrPhase {
   return phase;
+}
+
+/**
+ * Take and consume the IFR setup pipeline options.
+ * Used by entry-main.ts for the initial __FlushElementTree(page) call.
+ */
+export function takeIfrSetupPipelineOptions(): Record<string, unknown> | undefined {
+  const opts = ifrSetupPipelineOptions;
+  ifrSetupPipelineOptions = undefined;
+  return opts;
 }
