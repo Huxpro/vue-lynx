@@ -93,12 +93,26 @@ export function applyInitMtRef(wvid: number, initValue: unknown): void {
   const impl = getWorkletImpl();
   if (impl?._refImpl) {
     const refMap = impl._refImpl._workletRefMap;
-    if (refMap && !(wvid in refMap)) {
-      refMap[wvid] = { current: initValue, _wvid: wvid };
+    if (refMap) {
+      const existing = refMap[wvid];
+      if (existing) {
+        // INIT_MT_REF is an 'always' op during hydration: the background
+        // thread's initial value is authoritative and must overwrite the one
+        // the main-thread first-screen render installed. Mutating the entry
+        // instead of replacing it keeps references worklet-runtime already
+        // handed out pointing at the live cell.
+        existing.current = initValue;
+        existing._wvid = wvid;
+      } else {
+        refMap[wvid] = { current: initValue, _wvid: wvid };
+      }
     }
   }
 }
 
-/** Reset worklet state — for testing only. */
-// biome-ignore lint/suspicious/noEmptyBlockStatements: no module-level state to clear yet
-export function resetWorkletState(): void {}
+/** Clear the external worklet ref registry on page reset / IFR fallback. */
+export function resetWorkletState(): void {
+  const refMap = getWorkletImpl()?._refImpl?._workletRefMap;
+  if (!refMap) return;
+  for (const key of Object.keys(refMap)) delete refMap[Number(key)];
+}

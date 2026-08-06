@@ -193,6 +193,37 @@ describe('IFR + native <list>', () => {
     expect(view.textContent).toBe('bg');
   });
 
+  it('rebuilds rather than patching when list platform metadata diverges', () => {
+    // `item-key` and friends reach native through update-list-info when the row
+    // is inserted, so a later SET_PROP cannot repair the item native was
+    // already told about — the diverging value has to force a rebuild.
+    const doc = mtRecordBatches([
+      [
+        OP.CREATE, 2, 'list',
+        OP.INSERT, PAGE_ROOT_ID, 2, -1,
+        OP.CREATE, 3, 'list-item',
+        OP.SET_PROP, 3, 'item-key', 'main-thread-key',
+        OP.INSERT, 2, 3, -1,
+      ],
+    ]);
+    const before = doc.querySelector('list');
+
+    bgBatch([
+      OP.CREATE, 2, 'list',
+      OP.INSERT, PAGE_ROOT_ID, 2, -1,
+      OP.CREATE, 3, 'list-item',
+      OP.SET_PROP, 3, 'item-key', 'background-key',
+      OP.INSERT, 2, 3, -1,
+    ]);
+
+    expect(getIfrPhase()).toBe('hydrated');
+    const after = doc.querySelector('list');
+    expect(doc.querySelectorAll('list').length).toBe(1);
+    // A fresh __CreateList — the first-screen list was not kept and patched.
+    expect(after).not.toBe(before);
+    expect(getListItemBgIdsForTest(bgIdOf(after!))).toEqual([3]);
+  });
+
   it('replays earlier background batches when a later batch mismatches', () => {
     // Batch 1 matches and is skipped; batch 2 diverges. The list described by
     // batch 1 was only ever painted by the main-thread render, so teardown
