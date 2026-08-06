@@ -158,7 +158,7 @@
     <button class="dark-toggle" data-lang-toggle aria-label="Toggle language" title="Toggle 中文 / English">中</button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 31</span>
+    <span data-counter>01 / 42</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://github.com/Huxpro/vue-lynx" target="_blank" rel="noreferrer">huxpro/vue-lynx</a>
@@ -243,6 +243,67 @@
     </p>
     <aside class="notes">
       <p>四份实现 UI 语义逐操作对齐（#343 的 harness 契约），黑盒可比。以下所有章节聚焦 Octane，RL/Vue 只在"它们是怎么解决同一个问题"时出场。</p>
+    </aside>
+  </section>
+
+
+  <!-- 0d · same Row, three sources (restored from v1) -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(8px,1.2cqh,12px)">
+      写起来，几乎是<span class="brand-text">同一门语言</span>
+    </h2>
+    <div class="trio">
+      <div class="trio__col t-react">
+        <div class="trio__head"><span class="dot"></span><b>ReactLynx</b><i>App.tsx · JSX + hooks</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>Row.tsx</span></div>
+<pre><span class="code-key">const</span> Row <span class="code-key">=</span> <span class="code-fn">memo</span>(<span class="code-key">function</span> <span class="code-fn">Row</span>({ row,
+    isSelected, onSelect }: RowProps) {
+  <span class="code-key">return</span> (
+    <span class="code-tag">&lt;view</span> <span class="code-attr">className</span>={isSelected
+        ? <span class="code-str">'row danger'</span> : <span class="code-str">'row'</span>}<span class="code-tag">&gt;</span>
+      <span class="code-tag">&lt;text</span> <span class="code-attr">className</span>=<span class="code-str">"col-id"</span><span class="code-tag">&gt;</span>{row.id}<span class="code-tag">&lt;/text&gt;</span>
+      <span class="code-tag">&lt;text</span> <span class="code-attr">bindtap</span>={() <span class="code-key">=&gt;</span> <span class="code-fn">onSelect</span>(row.id)}<span class="code-tag">&gt;</span>
+        {row.label}
+      <span class="code-tag">&lt;/text&gt;</span>
+    <span class="code-tag">&lt;/view&gt;</span>
+  );
+});  <span class="code-com">// ⚠ memo 是手写的</span></pre></div>
+      </div>
+      <div class="trio__col t-vue">
+        <div class="trio__head"><span class="dot"></span><b>Vue Lynx</b><i>App.vue · SFC + ref</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>App.vue</span></div>
+<pre><span class="code-tag">&lt;template&gt;</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">v-for</span>=<span class="code-str">"row of rows"</span> <span class="code-attr">:key</span>=<span class="code-str">"row.id"</span>
+    <span class="code-attr">:class</span>=<span class="code-str">"selected === row.id
+      ? 'row danger' : 'row'"</span><span class="code-tag">&gt;</span>
+    <span class="code-tag">&lt;text</span> <span class="code-attr">class</span>=<span class="code-str">"col-id"</span><span class="code-tag">&gt;</span>{{ row.id }}<span class="code-tag">&lt;/text&gt;</span>
+    <span class="code-tag">&lt;text</span> <span class="code-attr">@tap</span>=<span class="code-str">"select(row.id)"</span><span class="code-tag">&gt;</span>
+      {{ row.label.value }}
+    <span class="code-tag">&lt;/text&gt;</span>
+  <span class="code-tag">&lt;/view&gt;</span>
+<span class="code-tag">&lt;/template&gt;</span></pre></div>
+      </div>
+      <div class="trio__col t-oct">
+        <div class="trio__head"><span class="dot"></span><b>Octane</b><i>App.lynx.tsrx · 方言 + hooks</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>Row.tsrx</span></div>
+<pre><span class="code-key">function</span> <span class="code-fn">Row</span>(props: RowProps) <span class="code-key">@{</span>
+  <span class="code-tag">&lt;view</span> <span class="code-attr">class</span>={[<span class="code-str">'row'</span>,
+      props.isSelected <span class="code-key">&amp;&amp;</span> <span class="code-str">'danger'</span>]}<span class="code-tag">&gt;</span>
+    <span class="code-tag">&lt;text</span> <span class="code-attr">class</span>=<span class="code-str">"col-id"</span><span class="code-tag">&gt;</span>{String(props.row.id)}<span class="code-tag">&lt;/text&gt;</span>
+    <span class="code-tag">&lt;text</span> <span class="code-attr">bindtap</span>={() <span class="code-key">=&gt;</span> props.<span class="code-fn">onSelect</span>(
+        props.row.id)}<span class="code-tag">&gt;</span>
+      {props.row.label}
+    <span class="code-tag">&lt;/text&gt;</span>
+  <span class="code-tag">&lt;/view&gt;</span>
+<span class="code-key">}</span>  <span class="code-com">// ⚠ 没有 memo（伏笔）</span></pre></div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:66ch">
+      表层是同一门语言：组件 + 属性 + 事件，逐操作对齐。三家的一切分歧
+      都在编译之后 —— 所以这套 slides 的主线是往下挖 Octane 的编译产物与运行时。
+    </p>
+    <aside class="notes">
+      <p>恢复自 v1 的三方对照，加了两个 ⚠：react 版手写了 memo（select 时 9998 行 bail 掉），octane 版没有 —— 这个差别在第三章值 8 倍。Vue 的响应式在数据层（ref），另外两家在组件层，这也是第八章"旧账"的入口。</p>
     </aside>
   </section>
 
@@ -376,6 +437,42 @@
     </p>
     <aside class="notes">
       <p>本章任务（点名的那个）：Octane 的每个新名词，要么映射到 RL/Vue/矩阵的已有概念，要么用代码+图讲透。素材全部是本 session 用 octane 真编译器编译 bench app 的输出。</p>
+    </aside>
+  </section>
+
+
+  <!-- II·0 — vocabulary primer (restored, residual wording revised) -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:26ch">
+      词汇表：一个 UI 子树 = <code class="brand-text">λ holes. tree</code>
+    </h2>
+    <p class="lead" data-mm-fade style="max-width:62ch">
+      编译器对模板做部分求值（partial evaluation）：静态部分折叠成
+      <b>residual</b>（特化后剩下的静态骨架），动态部分留成参数（<b>洞</b>）。
+      每家的"模板机制"只是给 residual 选了一种表示、给洞选了一种命名。
+    </p>
+    <div class="coord" data-mm-fade style="max-width:96cqw;margin-top:clamp(8px,1.4cqh,14px)">
+      <div class="coord__row">
+        <b>六列</b>
+        <div class="coord__cells">
+          <span class="coord__cell"><b>Staging</b> residual 的形态：ops → data → code → native</span>
+          <span class="coord__cell"><b>Naming</b> 跨线程身份单位：node / block</span>
+          <span class="coord__cell"><b>Addressing</b> 怎么定位节点</span>
+          <span class="coord__cell"><b>Provider</b> 谁物化：BTS（后台）/ MTS（主线程）/ Engine</span>
+          <span class="coord__cell"><b>Lifetime</b> persistent / ephemeral</span>
+          <span class="coord__cell"><b>Delivery</b> residual 何时到 MT：runtime / bundle</span>
+        </div>
+      </div>
+      <div class="coord__row">
+        <b>两列（#352）</b>
+        <div class="coord__cells">
+          <span class="coord__cell"><b>Driver</b> 第一帧谁渲染：bts / mts-runtime / mts-oneshot / build</span>
+          <span class="coord__cell"><b>Handover</b> 两棵树怎么对上：stream / tree-adopt</span>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p>一页词汇，本章后面全用它说话。措辞修订：residual 直接用英文（"特化后剩下的静态骨架"作解释），不再用"残差"（那是统计词）；部分求值是 PL 标准译名。Staging 的 interp/compiled 分界即 Futamura 分界：data=懒 AST+通用解释器，code=每模板编译出的 create()（第一 Futamura 投影），native=引擎持有原型。</p>
     </aside>
   </section>
 
@@ -620,6 +717,62 @@
     </p>
     <aside class="notes">
       <p>方法：storms 黑盒数字（select@10k octane 1226ms vs vdom 152ms）来自同机 n=3；本章的分段数字来自打了计时补丁的 build（@10k，加载后单次操作），抓包来自 1k（报文可读）。两套数字侧重不同：黑盒可比、插桩可归因。</p>
+    </aside>
+  </section>
+
+
+  <!-- III·0 — three pipelines side by side (restored, corrected) -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(8px,1.2cqh,12px)">
+      先摆好三条流水线，再解剖 <span class="brand-text">Octane 的那条</span>
+    </h2>
+    <div class="trio">
+      <div class="trio__col t-react">
+        <div class="trio__head"><span class="dot"></span><b>ReactLynx</b><i>组件级 diff → 扁平补丁</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>参照</span></div>
+<pre>setState
+ → Preact 重渲染该组件 (BG)
+ → diff BSI，槽值深判等
+   (isDirectOrDeepEqual)
+ → snapshotPatch 扁平数组
+   [3, id, 槽位, 新值, …]
+ → callLepusMethod 过线
+ → MT 查 id → 跑编译好的
+   update[槽位]() → Flush</pre></div>
+      </div>
+      <div class="trio__col t-vue">
+        <div class="trio__head"><span class="dot"></span><b>Vue Lynx</b><i>两种粒度，同一条 wire</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>参照</span></div>
+<pre>ref.value = x
+ vdom → 组件重渲染 + diff
+        (patchFlags 制导) → ops
+ vapor → 只跑依赖它的
+        renderEffect → ops
+ → numeric-flat 数组过线
+ → MT switch 解释 → Flush</pre></div>
+      </div>
+      <div class="trio__col t-oct">
+        <div class="trio__head"><span class="dot"></span><b>Octane</b><i>owner 重放 + 记录 diff</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>研究对象</span></div>
+<pre>setState
+ → 调度 owner（#578 后：最近
+   公共组件 owner；之前=整根）
+ → 重跑编译组件 → Blueprint
+ → 与 LogicalRecord diff
+   （identity 判等 ⚠）
+ → 命令对象批 + 版本号，
+   structured clone 过线
+ → MT 验证→staging→应用→
+   Flush→ack→complete</pre></div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:70ch">
+      三条流水线尾部同构（查表 → 写 PAPI → Flush），头部三种粒度（组件 diff /
+      绑定 effect / owner 重放）。<b>头部决定 wire 上有多少东西，中间的判等决定
+      多少是假的，尾部决定每条多贵</b> —— 接下来逐段量 Octane 的账。
+    </p>
+    <aside class="notes">
+      <p>恢复自 v1 并按新证据修订：RL 一栏补了"槽值深判等"（它防住了假阳性的关键）；Octane 一栏补了 identity 判等 ⚠ 和三段协议。这一页是第三章的地图，后面每一页都在这张图的某一段上放大。</p>
     </aside>
   </section>
 
@@ -1200,6 +1353,204 @@ select@10k e2e:
     </p>
     <aside class="notes">
       <p>验证闭环：每个 R 都有本 deck 的插桩/抓包 harness 做回归指标（命令数、报文字节、分段 ms）。修完重跑同一套 storms + FCP，把这页的预期和实测放在一起 —— 那就是下一次 review 的第一页。</p>
+    </aside>
+  </section>
+
+
+  <!-- ====================================================
+       VII · 共性 → 平台（restored from v1, revised）
+       ==================================================== -->
+  <section class="slide divider" data-bg="clean">
+    <h2 class="divider__title">七 · 三次收敛<br/>= 一份清单</h2>
+    <p class="divider__tag">
+      跳出 Octane：三个互不通气的团队重复建造了同一批东西 —— 这就是"在 Lynx 上做框架"的公分母。
+    </p>
+    <aside class="notes">
+      <p>从 Octane 深潜拉回全景。判据：一件事三家都被迫各造一遍，它就不该是框架的作业，而是平台（或共享 lib）的作业。Octane 的案例让这份清单多了第 0 件，也让每一件都有了正反例。</p>
+    </aside>
+  </section>
+
+  <!-- VII·1 — the kit -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
+      每家都各造了一遍的<span class="brand-text">八件套</span>
+    </h2>
+    <table class="score score--tight">
+      <thead>
+        <tr><th>必造件</th><th style="color:#61dafb">ReactLynx</th><th style="color:#42b883">Vue Lynx</th><th style="color:#f2a15d">Octane</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><b>0 · 跨线程判等语义</b></td><td class="good">深判等 + 事件字符串化</td><td class="good">值语义 ops / effect 粒度</td><td class="bad">identity（本 deck 主病灶）</td></tr>
+        <tr><td>1 · 跨线程身份</td><td>snapshot id + 槽位</td><td>数字 id（node）/ 基址+偏移（block）</td><td>id + generation</td></tr>
+        <tr><td>2 · wire 编码</td><td>snapshotPatch 扁平数组</td><td class="good">numeric-flat ops</td><td>命令对象 + clone</td></tr>
+        <tr><td>3 · 第一帧驱动</td><td class="good">render-to-string fork 一遍式</td><td>完整运行时上 MT（D2 计划中）</td><td class="good">冻结 hooks 一遍式</td></tr>
+        <tr><td>4 · 交接/认领</td><td class="good">hydrate + swap 表</td><td>stream 比对 → D1 树认领</td><td class="good">快照逐节点认领 + repair</td></tr>
+        <tr><td>5 · list 回收</td><td>componentAtIndex + 复用池</td><td>同</td><td>同 + LIS 最小增量</td></tr>
+        <tr><td>6 · 事件路由</td><td>id 字符串 → BG 查表</td><td>eventMap + PAPI 注册</td><td class="good">token 内嵌优先级</td></tr>
+        <tr><td>7 · 主线程手势（worklet）</td><td>'main thread' 指令 + SWC 抽取</td><td>同（worklet-loader 双通道）</td><td>同（_wkltId 兼容 wire）</td></tr>
+      </tbody>
+    </table>
+    <p class="lead arch-cap" data-mm-fade style="max-width:68ch">
+      八行没有一行是"React 的问题"或"Vue 的问题" —— 全是<b>平台形状</b>的问题。
+      第 5 行是对照组：<b>平台已经提供的（list 回收），三家零分歧</b> —— 提供了就会收敛。
+    </p>
+    <aside class="notes">
+      <p>v1 七件套 + 新的第 0 件（判等语义）——它排第 0 是因为其余七件都建立在它之上：wire 编码再好，判等错了照样发全量；认领再好，判等错了照样 repair。逐行最优解分布在三家手里：判等/交接看 RL，编码看 Vue，第一帧/事件优先级看 Octane（和 RL），这正是下一页平台建议的择优来源。</p>
+    </aside>
+  </section>
+
+  <!-- VII·2 — platform API proposals -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:30ch;font-size:clamp(22px,2.5cqw,34px)">
+      给 <span class="brand-text">Lynx for Framework</span> 的四条建议
+    </h2>
+    <table class="score" style="margin-top:clamp(6px,1cqh,12px)">
+      <tbody>
+        <tr><td>1 · 标准 ops 协议</td><td>平台定义扁平数字 ops 流 + MT 解释器（Vue ops.ts 即原型），<b>值语义写进协议</b>：进 wire 的都是值，判等由协议层定义。验证平台做、dev 一次 —— #459 类 bug 死在平台层，2.4MB 类事故不可能被无意发明</td></tr>
+        <tr><td>2 · 身份认领原语</td><td>引擎级 adopt/remap：把已画好的树的元素身份批量转移（RL refMap、Octane adoption、Vue D1 matchTrees —— 三度重复发明）。块级命名让表 O(实例) 而非 O(节点)（D1 实测 46ms→2ms）</td></tr>
+        <tr><td>3 · Element Templates 共享靶</td><td>native 级 residual（__CreateElementTemplate 族）是三家 code/data residual 的共同上界 —— 平台实现一次，RL Snapshot、Vue 模板、Octane plan 一起上 engine 档</td></tr>
+        <tr><td>4 · 公共事件契约</td><td>Octane 靠 monkey-patch lynxCoreInject 收事件、RL 靠字符串约定 —— string-token → BG 路由应是公开 API，优先级语义抄 Octane 的 token 设计</td></tr>
+      </tbody>
+    </table>
+    <p class="lead arch-cap" data-mm-fade style="max-width:66ch">
+      与第六章不冲突：mini-RFC 是 Octane 侧<b>现在就能修</b>的事，这四条是平台侧
+      <b>让下一个框架不用再踩</b>的事 —— 同一份证据，两个受益人。
+    </p>
+    <aside class="notes">
+      <p>相比 v1 的修订：第 1 条吸收了判等第一律（"值语义写进协议"是新增的半句，直接来自 Octane 案例）；每条的论据都换成了本 deck 实测过的版本。这一页可以直接改写成给 lynx-family 的 RFC 提纲。</p>
+    </aside>
+  </section>
+
+  <!-- ====================================================
+       VIII · 旧账 / 新账（restored from v1, revised）
+       ==================================================== -->
+  <section class="slide divider" data-bg="clean">
+    <h2 class="divider__title">八 · 老问题，<br/>新问题</h2>
+    <p class="divider__tag">
+      这些框架差异，哪些是 Web 吵了十年的旧账，哪些是 Lynx 双线程新开的账？
+    </p>
+    <aside class="notes">
+      <p>最后一层抽象：把坐标系的轴分成两堆。这决定哪些结论可以从 Web 社区平移，哪些必须在 Lynx 上重新测 —— 也解释了为什么 Octane 这种高水平团队会踩到那个坑。</p>
+    </aside>
+  </section>
+
+  <!-- VIII·1 — axis classification -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(22px,2.5cqw,34px)">
+      九根轴，<span class="brand-text">两种出身</span>
+    </h2>
+    <div class="coord" style="margin-top:clamp(8px,1.4cqh,16px);max-width:104cqw">
+      <div class="coord__row">
+        <b style="color:var(--ink-mute)">Web 旧账</b>
+        <div class="coord__cells">
+          <span class="coord__cell">render model：vdom diff vs 细粒度 effect vs owner 重放 —— js-framework-benchmark 吵到今天的同一题</span>
+          <span class="coord__cell">Staging 的存在性：模板编译/静态提升 web 也有（cloneNode 就是 native 档）</span>
+        </div>
+      </div>
+      <div class="coord__row t-vue">
+        <b>Lynx 新账</b>
+        <div class="coord__cells">
+          <span class="coord__cell is-diff">判等语义 —— 单 realm 里 identity 免费又无害；跨线程后必须按值（Octane 案例＝标准标本）</span>
+          <span class="coord__cell is-diff">Naming —— 单 realm 里指针即身份，跨线程必须发明 id</span>
+          <span class="coord__cell is-diff">Delivery —— residual"何时过线"在 web 无意义</span>
+          <span class="coord__cell is-diff">WireEncoding / Validation —— web 没有热路径消息边界</span>
+          <span class="coord__cell is-diff">Driver / Handover —— 第一帧双渲染与认领（web 仅 SSR 有远亲）</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:68ch">
+      九根轴里七根是双线程新开的账 —— "web 框架直接移植"注定踩坑的结构性原因：
+      <b>它们的概念清单里没有这七根轴</b>。Octane 的病灶恰好全落在新账区，
+      而它的编译语义创新（旧账区）平移无损。
+    </p>
+    <aside class="notes">
+      <p>v1 的八根轴 + 新增第九根（判等语义），且有了最好的标本：Octane 团队平台功课做得很深（__RenderPage 时机、优先级 token），仍然踩了新账区的坑 —— 因为那不是"知识"缺口，是"概念清单"缺口。这也是这份分类存在的意义：把新账列成清单，下一个框架照单自检。</p>
+    </aside>
+  </section>
+
+  <!-- VIII·2 — vdom vs signal re-weighed -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:32ch;font-size:clamp(22px,2.5cqw,34px)">
+      VDOM vs Signal：Lynx 把两边的赌注<span class="brand-text">都放大了</span>
+    </h2>
+    <div class="trio trio--two" style="margin-top:clamp(8px,1.4cqh,16px)">
+      <div class="trio__col t-react">
+        <div class="trio__head"><span class="dot"></span><b>VDOM/重放家族在 Lynx 多赚的</b><i>react / vdom / octane</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>batch 是天然形状</span></div>
+<pre><span class="code-com">· 一次 commit = 一次 diff =</span>
+<span class="code-com">  一条消息 —— 批处理免费</span>
+<span class="code-com">· 极端形态 = Octane 背压合并：</span>
+<span class="code-com">  50 tick → 19 commit，</span>
+<span class="code-com">  updateStorm@30k 全场最快</span>
+<span class="code-com">· create/首帧：一遍式投影easy</span>
+<span class="code-com">  （render-to-* 生态现成）</span></pre></div>
+      </div>
+      <div class="trio__col t-vue">
+        <div class="trio__head"><span class="dot"></span><b>Signal/effect 在 Lynx 多赚的</b><i>vapor</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>不重渲染 = 不重发</span></div>
+<pre><span class="code-com">· 点更新零 diff、零假阳性：</span>
+<span class="code-com">  select 39 字节；selectStorm@30k</span>
+<span class="code-com">  429ms vs vdom 5367ms (12.5×)</span>
+<span class="code-com">· web 上 signals 省 diff；</span>
+<span class="code-com">  Lynx 上还省 wire —— 双重红利</span>
+<span class="code-com">· 但代价前置：必须先建 Naming</span>
+<span class="code-com">  （effect 要能"指名"远端节点）</span></pre></div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:70ch">
+      Web 的结论不能白拿：Lynx 给重放家族发了"批量免费"的新牌（Octane 的合并流水线是
+      极端好例），给 Signal 发了"wire 最小化"的新牌 —— 但 Signal 的牌<b>必须先付
+      Naming 的门票</b>（vapor 的整个 +b 工程），而重放家族<b>必须先过判等这一关</b>
+      （Octane 的 2.4MB 是没过关的代价）。
+    </p>
+    <aside class="notes">
+      <p>v1 的结论保留，但两边各加了一个 Octane 案例：批量红利的极端好例（背压合并）和重放家族的新前提（判等按值 —— web 上 vdom 不需要这一关，Lynx 上必须过）。诚实答案不变：交互重的 UI，signal 双重红利值回门票；静态重的 UI，重放+模板已贴地板。</p>
+    </aside>
+  </section>
+
+  <!-- VIII·3 — IFR ≈ SSR rhyme -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:30ch;font-size:clamp(22px,2.5cqw,34px)">
+      IFR 是 <span class="brand-text">SSR 的韵脚</span>，不是它的复刻
+    </h2>
+    <table class="score" style="margin-top:clamp(6px,1cqh,12px)">
+      <thead>
+        <tr><th></th><th>Web SSR + hydration</th><th>Lynx IFR + handover</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>第一帧生产者</td><td>服务器（跨机器）</td><td>主线程（跨 realm，同设备）</td></tr>
+        <tr><td>一遍式渲染器</td><td>renderToString 生态成熟</td><td>RL fork 之 / Octane 自建（冻结 hooks）/ Vue 待 D2</td></tr>
+        <tr><td>认领机制</td><td>DOM 树遍历 + 就地绑定</td><td>id 认领表（refMap / adoption / D1）</td></tr>
+        <tr><td>分歧代价</td><td>hydration mismatch → 局部重渲染</td><td>局部补（RL/D1）或确定性 repair（Octane）</td></tr>
+        <tr><td>独有难点</td><td>序列化数据、流式</td><td class="good">事件重放（画得出但听不见的窗口）、id realm 对齐、<b>每台设备每次冷启都在跑</b></td></tr>
+      </tbody>
+    </table>
+    <p class="lead arch-cap" data-mm-fade style="max-width:66ch">
+      RL 的 opcodes 干脆就是同一个渲染器的 SSR 输出档。但 Lynx 的新难点是真的：
+      第一帧和框架<b>同机不同 realm</b>，事件会在交接窗口里到达 ——
+      RL 的 delayEvents + idSwap 和 Octane 的 FIFO replay 都是为此发明的。
+    </p>
+    <aside class="notes">
+      <p>给 Web 背景读者的桥（v1 恢复，Octane 列补全）：概念全对得上，但三个 Lynx 独有难点让"直接搬 SSR 方案"不够 —— 事件缓冲重放、双 realm id 对齐、以及成本模型（SSR 每次部署跑一次，IFR 每台设备每次冷启跑，一遍式渲染器的每毫秒乘以 DAU）。</p>
+    </aside>
+  </section>
+
+  <!-- 五问五答 (restored, updated) -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
+      最初的五问，<span class="brand-text">现在的五答</span>
+    </h2>
+    <table class="score" style="max-width:112cqw">
+      <tbody>
+        <tr><td>1 · 模型与位置</td><td>Octane = React 状态模型 + 编译期静态依赖（RC 一族，非 signal）+ owner 重放；plan 是 data/block/bundle 的 residual（≈ vapor +b!），但 wire 退化成 ops/node 全量 —— 矩阵里要占两行的框架</td></tr>
+        <tr><td>2 · 性能后果</td><td>重放宽度 × 判等失败 × 单命令成本：select 慢 8×（报文 2.4MB vs vapor 39B、与变更量无关）；风暴反超 = 背压合并（50 tick→19 commit），不是渲染器快</td></tr>
+        <tr><td>3 · 好设计 / 弯路</td><td>抄 Octane：背压合并、hooks 编译语义、优先级 token、__RenderPage 时机。抄 RL：判等深比较、一遍式 driver、树认领。抄 Vue：flat wire、BG 无感 IFR。弯路分了 A/B/C 三类，B 类（单 realm 直觉）是主病灶</td></tr>
+        <tr><td>4 · 共性 → 平台</td><td>八件套三度重复发明（判等语义列第 0）；四条平台建议 + 五个 Octane 侧 mini-RFC —— 同一份证据，两个受益人</td></tr>
+        <tr><td>5 · 旧账 / 新账</td><td>render model 是旧账可平移；九轴里七根新账 —— signal 有双重红利但付 Naming 门票，重放家族拿批量免费但必须先过判等关</td></tr>
+      </tbody>
+    </table>
+    <aside class="notes">
+      <p>五问五答回归，全部按 v2 的证据更新。只记一句：<strong>三个框架的分歧集中在平台没提供的地方；平台提供了的（list 回收），三家一致 —— 而 Octane 的教训把"该提供什么"的清单加长了一件：判等语义。</strong></p>
     </aside>
   </section>
 
