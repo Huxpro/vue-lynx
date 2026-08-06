@@ -2,13 +2,26 @@
 import { ref, computed } from 'vue'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 
-// WORKAROUND: lynx-stack web-platform's RuntimeWrapperWebpackPlugin shadows
-// `fetch` with an `undefined` parameter. Go through `globalThis` to bypass.
+// WORKAROUND: the bare `fetch` binding is `undefined` on the web platform.
+//
+// This is not the chunk wrapper's doing. RuntimeWrapperWebpackPlugin passes
+// `fetch` as an injected parameter by design — it sits in the same BOM inject
+// list as `window`/`document`/`navigator` — and it even emits a fallback:
+//
+//   tt.define(id, function (require, module, exports, ...injected) {
+//     fetch = fetch || lynx.fetch;
+//
+// Both sides of that fallback are the host's to supply, and on web neither is:
+// nothing lands in the injected slot and `lynx.fetch` is unset, so the binding
+// stays `undefined`. `globalThis.fetch` is untouched and still reaches the
+// browser's real implementation, which is what we use here.
 //
 // Resolved lazily at request time: the IFR main-thread context has no fetch,
 // and a module-scope reference would crash bundle evaluation there.
 //
-// TODO: Remove once lynx-stack shims `fetch` on the `lynx` global.
+// TODO: Remove once the web platform honours its documented contract — "Web
+// Platform supports Fetch API using Browser's Fetch implementation" — by
+// injecting the browser `fetch` (or, failing that, setting `lynx.fetch`).
 function getFetch(): typeof fetch {
   if (typeof globalThis.fetch === 'function') return globalThis.fetch
   if (typeof fetch === 'function') return fetch
