@@ -1,5 +1,35 @@
 # 教程：商品详情页
 
+export const swipeDemo = {
+  // The web preview is driven by a mouse and this carousel by touch, so without
+  // help it looks like a still image to a desktop reader. These synthesized
+  // touches replay the swipe — seven to reach the last of the eight images,
+  // then seven back — with the contact point drawn the way a device simulator
+  // does it. The first real touch or pointer hands the example back.
+  loop: true,
+  startDelayMs: 1400,
+  steps: [
+    {
+      path: [
+        { x: 0.98, y: 0.3 },
+        { x: -0.02, y: 0.3 },
+      ],
+      iterations: 7,
+      durationMs: 520,
+      restMs: 2600,
+    },
+    {
+      path: [
+        { x: 0.02, y: 0.3 },
+        { x: 1.02, y: 0.3 },
+      ],
+      iterations: 7,
+      durationMs: 520,
+      restMs: 2600,
+    },
+  ],
+};
+
 本教程将带你使用 **Vue 3** 和 **Lynx** 构建一个高性能的商品详情页，核心是一个支持触摸滑动的图片轮播组件。
 
 你将学到：
@@ -21,7 +51,9 @@
 - 底部**指示器**实时高亮当前页面
 - **点击指示器圆点**跳转到对应页面
 
-<Go example="swiper" defaultFile="src/Swiper/Swiper.vue" entry="src/Swiper" defaultEntryName="Swiper" />
+轮播依赖触摸事件，因此下面的 Web 预览会自动为你演示：滑动是模拟出来的，圆点标记的是手指的位置。你随时可以触摸或点击预览，控制权会立刻交还给你。
+
+<Go example="swiper" defaultFile="src/Swiper/Swiper.vue" autoGesture={swipeDemo} entry="src/Swiper" defaultEntryName="Swiper" />
 
 ## 教程准备工作
 
@@ -237,7 +269,7 @@ Vue 模板使用带有 `v-bind`（`:`）的 `main-thread-` 连字符前缀来将
 
 ### 组合起来
 
-<Go example="swiper" defaultFile="src/SwiperMTS/Swiper.vue" entry="src/SwiperMTS" defaultEntryName="SwiperMTS" />
+<Go example="swiper" defaultFile="src/SwiperMTS/Swiper.vue" autoGesture={swipeDemo} entry="src/SwiperMTS" defaultEntryName="SwiperMTS" />
 
 打开 LynxExplorer 预览 `SwiperMTS`——拖动图片你会发现滑动**立即响应**，零延迟。完整代码请查看上方的代码查看器。
 
@@ -662,6 +694,7 @@ function handleTouchEnd() {
 <Go
   example="swiper"
   defaultFile="src/Swiper/Swiper.vue"
+  autoGesture={swipeDemo}
   entry="src/Swiper"
   defaultEntryName="Swiper"
   highlight={{

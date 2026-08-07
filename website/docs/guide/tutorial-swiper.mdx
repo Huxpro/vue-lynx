@@ -1,5 +1,35 @@
 # Tutorial: Product Detail
 
+export const swipeDemo = {
+  // The web preview is driven by a mouse and this carousel by touch, so without
+  // help it looks like a still image to a desktop reader. These synthesized
+  // touches replay the swipe — seven to reach the last of the eight images,
+  // then seven back — with the contact point drawn the way a device simulator
+  // does it. The first real touch or pointer hands the example back.
+  loop: true,
+  startDelayMs: 1400,
+  steps: [
+    {
+      path: [
+        { x: 0.98, y: 0.3 },
+        { x: -0.02, y: 0.3 },
+      ],
+      iterations: 7,
+      durationMs: 520,
+      restMs: 2600,
+    },
+    {
+      path: [
+        { x: 0.02, y: 0.3 },
+        { x: 1.02, y: 0.3 },
+      ],
+      iterations: 7,
+      durationMs: 520,
+      restMs: 2600,
+    },
+  ],
+};
+
 This tutorial walks you through building a high-performance product detail page with **Vue 3** and **Lynx**, centered around a touch-swipeable image carousel.
 
 You will learn:
@@ -21,7 +51,9 @@ The end result is a product detail page. At the top is a full-width image carous
 - A bottom **indicator** that highlights the current page in real time
 - **Tap an indicator dot** to jump to that page
 
-<Go example="swiper" defaultFile="src/Swiper/Swiper.vue" entry="src/Swiper" defaultEntryName="Swiper" />
+The carousel responds to touch, so the web preview below demonstrates it for you: the swipes are simulated, and the circle marks where a finger would be. Touch or click the preview at any time and it hands control straight back to you.
+
+<Go example="swiper" defaultFile="src/Swiper/Swiper.vue" autoGesture={swipeDemo} entry="src/Swiper" defaultEntryName="Swiper" />
 
 ## Setup for the Tutorial
 
@@ -237,7 +269,7 @@ This is needed because Vue template attribute names don't support colons.
 
 ### Putting It Together
 
-<Go example="swiper" defaultFile="src/SwiperMTS/Swiper.vue" entry="src/SwiperMTS" defaultEntryName="SwiperMTS" />
+<Go example="swiper" defaultFile="src/SwiperMTS/Swiper.vue" autoGesture={swipeDemo} entry="src/SwiperMTS" defaultEntryName="SwiperMTS" />
 
 Open LynxExplorer and preview `SwiperMTS` — drag the images and you'll find the swipe responds **instantly** with zero lag. See the complete code in the viewer above.
 
@@ -662,6 +694,7 @@ Without the prefix, the compiler treats it as an ordinary background-thread valu
 <Go
   example="swiper"
   defaultFile="src/Swiper/Swiper.vue"
+  autoGesture={swipeDemo}
   entry="src/Swiper"
   defaultEntryName="Swiper"
   highlight={{
