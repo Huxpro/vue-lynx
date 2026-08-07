@@ -18,19 +18,30 @@ const listRef = useTemplateRef<ShadowElement>('listRef');
 function adjustScrollbarMTS(
   scrollTop: number,
   scrollHeight: number,
+  listHeight: number,
   ref: { current?: { setStyleProperty?(k: string, v: string): void } },
 ) {
   'main thread';
-  const listHeight = SystemInfo.pixelHeight / SystemInfo.pixelRatio - 48;
   const scrollbarHeight = listHeight * (listHeight / scrollHeight);
   const scrollbarTop = listHeight * (scrollTop / scrollHeight);
   ref.current?.setStyleProperty?.('height', `${scrollbarHeight}px`);
   ref.current?.setStyleProperty?.('top', `${scrollbarTop}px`);
 }
 
-const onScrollMTS = (event: { detail: { scrollTop: number; scrollHeight: number } }) => {
+const onScrollMTS = (event: {
+  detail: { scrollTop: number; scrollHeight: number; listHeight?: number };
+}) => {
   'main thread';
-  adjustScrollbarMTS(event.detail.scrollTop, event.detail.scrollHeight, scrollbarThumbRef);
+  // `listHeight` is the list's own box. Native engines report it; Lynx for Web
+  // reports 0, and there the list fills the page, so the page height is the
+  // same number.
+  const listHeight = event.detail.listHeight || SystemInfo.pixelHeight / SystemInfo.pixelRatio;
+  adjustScrollbarMTS(
+    event.detail.scrollTop,
+    event.detail.scrollHeight,
+    listHeight,
+    scrollbarThumbRef,
+  );
 };
 
 onMounted(() => {
