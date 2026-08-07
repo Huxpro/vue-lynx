@@ -1,6 +1,6 @@
 {
   "name": "@vue-lynx-example/touch-fx",
-  "version": "0.2.9",
+  "version": "0.2.10",
   "private": false,
   "description": "Vue-Lynx touch playground — a green orb that chases your finger, with water ripples and firework sparks driven entirely on the Main Thread",
   "license": "Apache-2.0",

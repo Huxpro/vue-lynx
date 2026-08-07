@@ -1,5 +1,21 @@
 # vue-lynx
 
+## 0.5.2
+
+### Patch Changes
+
+- Fix `<style scoped>` rules not applying to a component's own root element. Vue applies several scope ids to a component root (its own, then those of the ancestor components whose subtree root it is); on the web these coexist as separate `data-v-*` attributes, but Lynx associates an element with exactly one CSS fragment, so the last `__SetCSSId` won and moved the root into the _parent's_ fragment. `nodeOps.setScopeId` now keeps the first scope an element is given — the one of the component that authored it — so static `class`/`style` on a component root works natively without the extra wrapper element workaround. ([#346](https://github.com/Huxpro/vue-lynx/pull/346))
+
+- Fix the IFR hydration fallback discarding background batches and leaving native `<list>` registries behind. On a structural mismatch the main-thread tree is torn down, but batches the background thread had already sent (skipped as identical, or value-patched) were never re-applied — everything they described disappeared from the page. The fallback now replays the complete background history onto the clean page. Teardown also resets `list-apply`'s state: a native list does not own its rows, so the abandoned render's list registries survived teardown and a later background `INSERT` whose parent id had been a `<list>` in the discarded stream was routed into the dead list instead of the element tree, with `update-list-info` committed onto whatever element reused that id. ([#358](https://github.com/Huxpro/vue-lynx/pull/358))
+
+- Fix event-registry leaks when `<Transition>` / `<TransitionGroup>` without an explicit `duration` is interrupted before `transitionend`/`animationend`. `whenTransitionEnds()` now arms a bounded fallback cleanup with a per-element generation guard so stranded handlers are unregistered. The Transition example and Vue Compatibility docs include a registry-monitor demo for the before/after behavior. ([#316](https://github.com/Huxpro/vue-lynx/pull/316))
+
+- Fix `'main thread'` worklet registrations being silently dropped when a worklet body contains a comment with an apostrophe, quote, or unpaired paren (e.g. `// the finger's position`). The LEPUS transform preserves user comments, and worklet-loader-mt's balanced-paren scan treated quote characters inside them as string delimiters — derailing the scan and discarding every registration after the offending one, which surfaced at runtime as `TypeError: cannot read property 'bind' of undefined` on the Main Thread. The scanner now skips line and block comments. Also adds the `touch-fx` example — a Main Thread touch playground (spring-chasing orb, continuous water ripples, firework sparks) with a headless-browser verification harness. ([#349](https://github.com/Huxpro/vue-lynx/pull/349))
+
+- Let the gallery example's list fill its wrapper instead of leaving a 48px black band. ([#360](https://github.com/Huxpro/vue-lynx/pull/360))
+
+  `.list` was `height: calc(100% - 48px)` inside a black `.gallery-wrapper`, and every scrollbar step derived its viewport from `SystemInfo.pixelHeight / SystemInfo.pixelRatio - 48`. That 48 is Lynx Explorer's title bar, but `100%` is already the page area below it, so the example subtracted it twice — leaving the band on Lynx for Web, in Explorer's fullscreen mode, and under the title bar itself. The scrollbar now takes its viewport from `event.detail.listHeight`, the list's own box, falling back to the page height where Lynx for Web reports 0.
+
 ## 0.5.1
 
 ### Patch Changes
