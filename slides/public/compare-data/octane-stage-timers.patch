@@ -1,0 +1,103 @@
+diff --git a/packages/lynx/src/core/transport.ts b/packages/lynx/src/core/transport.ts
+index ad22cdf6..dd18334c 100644
+--- a/packages/lynx/src/core/transport.ts
++++ b/packages/lynx/src/core/transport.ts
+@@ -308,8 +308,42 @@ export function createLynxBackgroundTransport(
+ 
+ 	const dispatch = (message: Parameters<typeof validateLynxBackgroundOutboundMessage>[0]) => {
+ 		if (closedError !== null) throw closedError;
++		const __p: any = ((globalThis as any).__OCT_PROF ||= {});
++		const __t0 = performance.now();
+ 		const validated = selfCheckLynxBackgroundOutboundMessage(message);
++		const __t1 = performance.now();
+ 		context.dispatchEvent({ type: LYNX_BACKGROUND_TO_MAIN_EVENT, data: validated });
++		const __t2 = performance.now();
++		__p.bg_selfcheck_ms = (__p.bg_selfcheck_ms || 0) + (__t1 - __t0);
++		__p.bg_dispatch_ms = (__p.bg_dispatch_ms || 0) + (__t2 - __t1);
++		if ((message as any)?.type === 'commit') {
++			__p.bg_commits = (__p.bg_commits || 0) + 1;
++			const __batch: any = (message as any).batch;
++			__p.bg_cmds = (__p.bg_cmds || 0)
++				+ (Array.isArray(__batch) ? __batch.length : (__batch?.commands?.length ?? 0));
++			try {
++				const __json = JSON.stringify(message);
++				__p.bg_bytes = (__p.bg_bytes || 0) + __json.length;
++				if ((globalThis as any).__OCT_CAPTURE) {
++					__p.last_head = __json.slice(0, 4000);
++					const __hist: Record<string, number> = {};
++					const __walkCmds = (arr: any[]) => {
++						for (const c of arr) {
++							if (c && typeof c === 'object') {
++								const k = (c as any).kind ?? (c as any).type ?? 'unknown';
++								__hist[k] = (__hist[k] || 0) + 1;
++							}
++						}
++					};
++					if (Array.isArray(__batch)) __walkCmds(__batch);
++					else if (Array.isArray(__batch?.commands)) __walkCmds(__batch.commands);
++					__p.last_hist = __hist;
++					__p.last_batch_keys = __batch && typeof __batch === 'object' && !Array.isArray(__batch)
++						? Object.keys(__batch)
++						: ['<array>'];
++				}
++			} catch {}
++		}
+ 	};
+ 
+ 	const wireError = (value: unknown, fallback: string) => {
+diff --git a/packages/lynx/src/main-thread.ts b/packages/lynx/src/main-thread.ts
+index 018cbcf2..4fe5f13e 100644
+--- a/packages/lynx/src/main-thread.ts
++++ b/packages/lynx/src/main-thread.ts
+@@ -1830,6 +1830,8 @@ export function installLynxMainThread<Node extends LynxElementRef = LynxElementR
+ 			}
+ 		}
+ 
++		const __p: any = ((globalThis as any).__OCT_PROF_MT ||= {});
++		const __tPrep0 = performance.now();
+ 		let prepared: LynxPreparedHostBatch;
+ 		// The opaque journal remains live after transfer only so first-screen event
+ 		// tokens can be resolved until background confirms listener ownership. It
+@@ -1854,15 +1856,20 @@ export function installLynxMainThread<Node extends LynxElementRef = LynxElementR
+ 			return;
+ 		}
+ 
++		__p.mt_prepare_ms = (__p.mt_prepare_ms || 0) + (performance.now() - __tPrep0);
++		__p.mt_cmds = (__p.mt_cmds || 0) + (message.batch?.length ?? 0);
++		__p.mt_commits = (__p.mt_commits || 0) + 1;
+ 		if (provisional) active = record;
+ 		let applyFailed = false;
+ 		let applyError: unknown;
++		const __tApply0 = performance.now();
+ 		try {
+ 			prepared.apply();
+ 		} catch (error) {
+ 			applyFailed = true;
+ 			applyError = error;
+ 		}
++		__p.mt_apply_ms = (__p.mt_apply_ms || 0) + (performance.now() - __tApply0);
+ 		if (!prepared.mutationStarted) {
+ 			prepared.abort();
+ 			if (provisional) {
+@@ -1889,7 +1896,9 @@ export function installLynxMainThread<Node extends LynxElementRef = LynxElementR
+ 				disposeAvailableFirstTree();
+ 			}
+ 		}
++		const __tAck0 = performance.now();
+ 		const handles = acknowledgementHandles(driver, record.container, prepared, message.batch);
++		__p.mt_ackhandles_ms = (__p.mt_ackhandles_ms || 0) + (performance.now() - __tAck0);
+ 		const acknowledgement: LynxTransportAcknowledgement = {
+ 			...identity,
+ 			type: 'ack',
+@@ -2097,8 +2106,11 @@ export function installLynxMainThread<Node extends LynxElementRef = LynxElementR
+ 	function receive(event: LynxContextProxyEvent): void {
+ 		if (closed) return;
+ 		let message: ReturnType<typeof validateLynxBackgroundOutboundMessage>;
++		const __pRecv: any = ((globalThis as any).__OCT_PROF_MT ||= {});
++		const __tRecv0 = performance.now();
+ 		try {
+ 			message = validateLynxBackgroundOutboundMessage(event.data);
++			__pRecv.mt_validate_ms = (__pRecv.mt_validate_ms || 0) + (performance.now() - __tRecv0);
+ 		} catch (error) {
+ 			const normalized = report(error, 'Octane Lynx received a malformed outbound message.');
+ 			const identity = recoverIdentity(event.data);
