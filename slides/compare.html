@@ -158,7 +158,7 @@
     <button class="dark-toggle" data-lang-toggle aria-label="Toggle language" title="Toggle 中文 / English">中</button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 47</span>
+    <span data-counter>01 / 51</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://github.com/Huxpro/vue-lynx" target="_blank" rel="noreferrer">huxpro/vue-lynx</a>
@@ -530,6 +530,61 @@
     </aside>
   </section>
 
+
+  <!-- II·1b — the plan, drawn (dtree pair) -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
+      把 plan <span class="brand-text">画出来</span>：和 Snapshot 是同一棵树
+    </h2>
+    <div class="dtrees" style="max-width:104cqw">
+      <figure>
+        <p style="font-family:var(--mono);font-size:12.5px;color:var(--ink-mute);text-align:center;margin:0 0 6px">
+          <b style="color:#f2a15d">Octane plan0</b> — data：树躺在 JSON 里，解释器走
+        </p>
+        <svg class="dtree" viewBox="0 0 300 152" role="img" aria-label="Octane plan tree: static skeleton with numbered slots">
+          <line class="edge" x1="150" y1="28" x2="48" y2="64"/>
+          <line class="edge" x1="150" y1="28" x2="155" y2="64"/>
+          <line class="edge" x1="150" y1="28" x2="247" y2="64"/>
+          <line class="edge" x1="48" y1="86" x2="48" y2="124"/>
+          <line class="edge" x1="155" y1="86" x2="155" y2="124"/>
+          <line class="edge" x1="247" y1="86" x2="247" y2="124"/>
+          <g><rect class="nodebox st" x="110" y="6" width="80" height="22" rx="5"/><text class="tag" x="130" y="21">view</text><rect class="uidbg" x="168" y="0" width="38" height="14" rx="6"/><text class="uid" x="173" y="11">槽0</text></g>
+          <g><rect class="nodebox st" x="10" y="64" width="76" height="22" rx="5"/><text class="tag" x="26" y="79">col-id</text></g>
+          <g><rect class="nodebox st" x="112" y="64" width="86" height="22" rx="5"/><text class="tag" x="122" y="79">col-label</text><rect class="uidbg" x="170" y="58" width="38" height="14" rx="6"/><text class="uid" x="175" y="69">槽2</text></g>
+          <g><rect class="nodebox st" x="204" y="64" width="86" height="22" rx="5"/><text class="tag" x="210" y="79">col-remove</text><rect class="uidbg" x="260" y="58" width="38" height="14" rx="6"/><text class="uid" x="265" y="69">槽4</text></g>
+          <g><rect class="nodebox dy" x="22" y="124" width="52" height="20" rx="5"/><text class="tag" x="32" y="138" style="font-size:10px">#text</text><rect class="uidbg" x="53" y="118" width="36" height="13" rx="6"/><text class="uid" x="58" y="128">槽1</text></g>
+          <g><rect class="nodebox dy" x="129" y="124" width="52" height="20" rx="5"/><text class="tag" x="139" y="138" style="font-size:10px">#text</text><rect class="uidbg" x="160" y="118" width="36" height="13" rx="6"/><text class="uid" x="165" y="128">槽3</text></g>
+          <g><rect class="nodebox dy" x="221" y="124" width="52" height="20" rx="5"/><text class="tag" x="231" y="138" style="font-size:10px">#text</text><rect class="uidbg" x="252" y="118" width="36" height="13" rx="6"/><text class="uid" x="257" y="128">槽5</text></g>
+          </svg>
+        <figcaption>槽0 class · 槽2/槽4 bindtap · 槽1/槽3/槽5 文本<br/>静态骨架折进常量 · <b>洞按块内编号</b>（基址+偏移的一切要素）</figcaption>
+      </figure>
+      <figure>
+        <p style="font-family:var(--mono);font-size:12.5px;color:var(--ink-mute);text-align:center;margin:0 0 6px">
+          <b style="color:#61dafb">RL Snapshot create()</b> — code：同一棵树长在函数体里
+        </p>
+        <svg class="dtree" viewBox="0 0 300 152" role="img" aria-label="RL snapshot tree: same skeleton, values-indexed holes">
+          <line class="edge" x1="150" y1="28" x2="48" y2="64"/>
+          <line class="edge" x1="150" y1="28" x2="155" y2="64"/>
+          <line class="edge" x1="150" y1="28" x2="247" y2="64"/>
+          <line class="edge" x1="48" y1="86" x2="48" y2="124"/>
+          <line class="edge" x1="155" y1="86" x2="155" y2="124"/>
+          <line class="edge ghost" x1="247" y1="86" x2="247" y2="124"/>
+          <g><rect class="nodebox st" x="110" y="6" width="80" height="22" rx="5"/><text class="tag" x="130" y="21">view</text><rect class="uidbg" x="172" y="0" width="30" height="14" rx="6"/><text class="uid" x="177" y="11">v0</text></g>
+          <g><rect class="nodebox st" x="10" y="64" width="76" height="22" rx="5"/><text class="tag" x="26" y="79">col-id</text></g>
+          <g><rect class="nodebox st" x="112" y="64" width="86" height="22" rx="5"/><text class="tag" x="122" y="79">col-label</text><rect class="uidbg" x="174" y="58" width="30" height="14" rx="6"/><text class="uid" x="179" y="69">v2</text></g>
+          <g><rect class="nodebox st" x="204" y="64" width="86" height="22" rx="5"/><text class="tag" x="210" y="79">col-remove</text><rect class="uidbg" x="264" y="58" width="30" height="14" rx="6"/><text class="uid" x="269" y="69">v4</text></g>
+          <g><rect class="nodebox dy" x="22" y="124" width="52" height="20" rx="5"/><text class="tag" x="32" y="138" style="font-size:10px">#text</text><rect class="uidbg" x="58" y="118" width="26" height="13" rx="6"/><text class="uid" x="62" y="128">v1</text></g>
+          <g><rect class="nodebox dy" x="129" y="124" width="52" height="20" rx="5"/><text class="tag" x="139" y="138" style="font-size:10px">#text</text><rect class="uidbg" x="165" y="118" width="26" height="13" rx="6"/><text class="uid" x="169" y="128">v3</text></g>
+          <g class="ghost"><rect class="nodebox" x="221" y="124" width="52" height="20" rx="5"/><text class="tag" x="234" y="138" style="font-size:10px">'x'</text></g>
+          </svg>
+        <figcaption>同形骨架 · 洞=values[i] · 常量 'x' 折叠成静态（Octane 没折叠 → 槽5）<br/>code 阶：<b>同一棵树</b>，编译成直线 PAPI 的 create()</figcaption>
+      </figure>
+    </div>
+    <aside class="notes">
+      <p><strong>树图版的 staging 论证。</strong>两棵树同形、洞表同构 —— Staging 的差别只是"这棵树住在哪"：data（JSON，MT 解释器走）vs code（函数体，直线 PAPI）。绿色描边=静态骨架，琥珀=洞，徽章=洞的编号（Octane 槽 n / RL values[i]）。一个从编译产物里挖出的小发现：静态常量 'x' 在 RL 里被折叠进骨架，在 Octane 里仍是一个槽（每次 render 都在槽值数组里传一遍 'x'）—— 编译器还有常量折叠的余量。</p>
+    </aside>
+  </section>
+
   <!-- II·2 — universalValue vs RL snapshot values -->
   <section class="slide stage" data-bg="clean" data-chrome="minimal">
     <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
@@ -631,34 +686,39 @@
     <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
       运行时的三棵树 —— <span class="brand-text">名词全对齐</span>
     </h2>
-    <div class="trees">
-      <div class="tree t-oct">
-        <div class="tree__name">Octane<span class="tree__where">研究对象</span></div>
-        <ul>
-          <li><b>Blueprint</b> 树 <span style="color:var(--ink-mute)">· BG，每次 render 重建</span></li>
-          <li><b>LogicalRecord</b> 树 <span style="color:var(--ink-mute)">· BG，保留态（diff 基准）</span></li>
-          <li><b>host 节点</b> <span style="color:var(--ink-mute)">· MT，接收器按命令建</span></li>
-        </ul>
-        <div class="tree__note">Blueprint vs LogicalRecord 做 keyed diff → 命令批过线 → MT 应用到 PAPI 元素。owner = 组件实例（调度单位）。</div>
-      </div>
-      <div class="tree t-react">
-        <div class="tree__name">ReactLynx<span class="tree__where">参照</span></div>
-        <ul>
-          <li>vnode（Preact）<span style="color:var(--ink-mute)">· BG，每次 render 重建</span></li>
-          <li>BackgroundSnapshotInstance <span style="color:var(--ink-mute)">· BG，保留态</span></li>
-          <li>SnapshotInstance + 元素 <span style="color:var(--ink-mute)">· MT</span></li>
-        </ul>
-        <div class="tree__note">Preact diff BSI → snapshotPatch 扁平数组过线 → MT 查 id 跑编译好的槽位更新器。</div>
-      </div>
-      <div class="tree t-vue">
-        <div class="tree__name">Vue Lynx<span class="tree__where">参照</span></div>
-        <ul>
-          <li>vnode / vapor 无此层 <span style="color:var(--ink-mute)">· BG</span></li>
-          <li>ShadowElement <span style="color:var(--ink-mute)">· BG，保留态</span></li>
-          <li>MT 元素（ops 解释器建）</li>
-        </ul>
-        <div class="tree__note">vdom：diff 产 ops；vapor：effect 直写 ShadowElement 产 ops。同一条 numeric-flat wire。</div>
-      </div>
+    <div style="display:flex;align-items:center;justify-content:center;gap:clamp(6px,1cqw,14px);width:100%;max-width:118cqw">
+      <figure style="margin:0;flex:1;max-width:24cqw;text-align:center">
+        <svg class="dtree" viewBox="0 0 220 128" style="max-width:200px;margin:0 auto" aria-label="Blueprint tree, rebuilt each render">
+          <line class="edge" x1="110" y1="24" x2="60" y2="52"/><line class="edge" x1="110" y1="24" x2="160" y2="52"/><line class="edge" x1="160" y1="74" x2="160" y2="96"/>
+          <g><rect class="nodebox dy" x="80" y="4" width="60" height="20" rx="5"/><text class="tag" x="94" y="18">range</text></g>
+          <g><rect class="nodebox dy" x="30" y="52" width="60" height="20" rx="5"/><text class="tag" x="48" y="66">Row</text></g>
+          <g><rect class="nodebox dy" x="130" y="52" width="60" height="20" rx="5"/><text class="tag" x="148" y="66">Row</text></g>
+          <g><rect class="nodebox dy" x="130" y="96" width="60" height="20" rx="5"/><text class="tag" x="140" y="110" style="font-size:10px">槽值[]</text></g>
+        </svg>
+        <figcaption style="font-family:var(--mono);font-size:clamp(9.5px,1cqw,12.5px);color:#f2a15d"><b>Blueprint</b> · BG<br/><span style="color:var(--ink-mute)">每次 render 全新重建<br/>≡ 新 vnode 树</span></figcaption>
+      </figure>
+      <span style="font-family:var(--mono);font-size:clamp(10px,1.1cqw,13px);color:var(--ink-mute);text-align:center;flex:0 0 auto">keyed diff<br/><span style="font-size:1.6em;color:var(--ink)">→</span><br/>identity 判等 ⚠</span>
+      <figure style="margin:0;flex:1;max-width:24cqw;text-align:center">
+        <svg class="dtree" viewBox="0 0 220 128" style="max-width:200px;margin:0 auto" aria-label="LogicalRecord retained tree">
+          <line class="edge" x1="110" y1="24" x2="60" y2="52"/><line class="edge" x1="110" y1="24" x2="160" y2="52"/><line class="edge" x1="160" y1="74" x2="160" y2="96"/>
+          <g><rect class="nodebox st" x="80" y="4" width="60" height="20" rx="5"/><text class="tag" x="94" y="18">range</text></g>
+          <g><rect class="nodebox st" x="30" y="52" width="60" height="20" rx="5"/><text class="tag" x="42" y="66">record</text></g>
+          <g><rect class="nodebox st" x="130" y="52" width="60" height="20" rx="5"/><text class="tag" x="142" y="66">record</text></g>
+          <g><rect class="nodebox st" x="130" y="96" width="60" height="20" rx="5"/><text class="tag" x="138" y="110" style="font-size:10px">props 快照</text></g>
+        </svg>
+        <figcaption style="font-family:var(--mono);font-size:clamp(9.5px,1cqw,12.5px);color:var(--vue-green)"><b>LogicalRecord</b> · BG<br/><span style="color:var(--ink-mute)">保留态（diff 基准）<br/>≡ 旧 vnode / fiber</span></figcaption>
+      </figure>
+      <span style="font-family:var(--mono);font-size:clamp(10px,1.1cqw,13px);color:var(--ink-mute);text-align:center;flex:0 0 auto">命令批<br/><span style="font-size:1.6em;color:var(--ink)">→</span><br/>clone 过线</span>
+      <figure style="margin:0;flex:1;max-width:24cqw;text-align:center">
+        <svg class="dtree" viewBox="0 0 220 128" style="max-width:200px;margin:0 auto" aria-label="MT host element tree">
+          <line class="edge" x1="110" y1="24" x2="60" y2="52"/><line class="edge" x1="110" y1="24" x2="160" y2="52"/><line class="edge" x1="160" y1="74" x2="160" y2="96"/>
+          <g><rect class="nodebox" x="80" y="4" width="60" height="20" rx="5"/><text class="tag" x="96" y="18">page</text></g>
+          <g><rect class="nodebox" x="30" y="52" width="60" height="20" rx="5"/><text class="tag" x="48" y="66">view</text></g>
+          <g><rect class="nodebox" x="130" y="52" width="60" height="20" rx="5"/><text class="tag" x="148" y="66">view</text></g>
+          <g><rect class="nodebox" x="130" y="96" width="60" height="20" rx="5"/><text class="tag" x="148" y="110">text</text></g>
+        </svg>
+        <figcaption style="font-family:var(--mono);font-size:clamp(9.5px,1cqw,12.5px);color:#56b8f0"><b>host 元素</b> · MT<br/><span style="color:var(--ink-mute)">接收器按命令建/改<br/>__CreateView… PAPI</span></figcaption>
+      </figure>
     </div>
     <table class="score score--tight" style="margin-top:clamp(8px,1.2cqh,12px);max-width:116cqw">
       <thead><tr><th>Octane 名词</th><th>≡ React/RL</th><th>≡ Vue</th><th>矩阵轴</th></tr></thead>
@@ -776,6 +836,65 @@
     </aside>
   </section>
 
+
+  <!-- III·0b — the octane commit, as a dual-thread flow -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
+      Octane 的一次 select，<span class="brand-text">展开成双线程图</span>（数字全实测 @10k）
+    </h2>
+    <div class="ifrjoin ifrjoin--linked">
+      <div class="ifrjoin__cols">
+        <div class="ifrjoin__col" style="--c:#f2a15d">
+          <span class="ifrjoin__label"><i></i>Background · worker</span>
+          <span class="ifrjoin__role">universal 运行时</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op">setState(selected)</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op is-hero">owner=App 重放 ×10k 行</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op is-hero">Blueprint ↔ Record diff（identity）</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op">命令批构建 ~30k 条</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op">selfcheck 0.1ms · clone 90ms</code>
+          </div>
+          <span class="ifrjoin__hint">BG 合计 ≈790ms（重放段=e2e 减实测段）</span>
+        </div>
+        <div class="ifrjoin__links">
+          <span class="ifrjoin__linkhead">3 条消息</span>
+          <div class="ifrjoin__stack">
+            <span class="ifrjoin__link is-hero" style="--c:#f2a15d"><b>①</b> commit·2.4MB</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" style="--c:#56b8f0"><b>②</b> ack·句柄</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" style="--c:#56b8f0"><b>③</b> complete</span>
+          </div>
+        </div>
+        <div class="ifrjoin__col" style="--c:#56b8f0">
+          <span class="ifrjoin__label"><i></i>Main · iframe</span>
+          <span class="ifrjoin__role">接收器 + PAPI</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op">validate 入站 62ms</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op is-hero">prepare（staging+语义校验）266ms</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op">apply → PAPI → Flush 85ms</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op">ack 句柄构建 15ms</code>
+          </div>
+          <span class="ifrjoin__hint">MT 合计 ≈428ms</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:68ch">
+      对照读法：Vue 同一操作的这张图只有两个盒子 —— BG 一个 effect（0.2ms），
+      wire 一条 39 字节消息，MT 两条 SET_CLASS。<b>图的复杂度本身就是结论。</b>
+    </p>
+    <aside class="notes">
+      <p>把 III·0 三条流水线里 Octane 那条放大成实测标注的双线程图。热点盒（描边加重）是三个乘数的所在：owner 重放宽度（BG 左二）、identity 判等（BG 左三）、per-command 校验（MT 右二）。三条消息的方向：commit 去、ack/complete 回 —— 每次交互一个完整往返，storm 时 ① 被背压合并（下文）。</p>
+    </aside>
+  </section>
+
   <!-- III·1 — the pipeline with measured stages -->
   <section class="slide stage" data-bg="clean" data-chrome="minimal">
     <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
@@ -851,6 +970,54 @@
     </p>
     <aside class="notes">
       <p><strong>全 deck 最重的一页证据。</strong>报文是打了 __OCT_CAPTURE 的 build 里原样截的。注意报文里"没变的行"发的是 {class:["row",false]} —— 值和上一帧完全一样。也注意 diff 并不是没做：row/label 等字符串槽没有出现在报文里（字符串按值比较通过了）。问题精确地落在<b>非原始值槽位</b>上 —— 下一页讲为什么。</p>
+    </aside>
+  </section>
+
+
+  <!-- III·2b — one hot node vs the wire -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;max-width:34ch;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
+      树上变了 <span class="brand-text">1 个节点</span>，线上过了 <span class="brand-text">3000 条命令</span>
+    </h2>
+    <div style="display:flex;align-items:center;justify-content:center;gap:clamp(16px,2.4cqw,36px);width:100%;max-width:112cqw">
+      <figure style="margin:0;flex:0 0 42cqw;text-align:center">
+        <svg class="dtree" viewBox="0 0 300 118" style="max-width:440px;margin:0 auto" aria-label="1000-row list, one row actually changed">
+          <line class="edge ghost" x1="150" y1="26" x2="46" y2="58"/>
+          <line class="edge ghost" x1="150" y1="26" x2="115" y2="58"/>
+          <line class="edge" x1="150" y1="26" x2="187" y2="58"/>
+          <line class="edge ghost" x1="150" y1="26" x2="255" y2="58"/>
+          <g><rect class="nodebox st" x="105" y="4" width="90" height="22" rx="5"/><text class="tag" x="118" y="19">rows ×1000</text></g>
+          <g class="ghost"><rect class="nodebox" x="16" y="58" width="60" height="22" rx="5"/><text class="tag" x="30" y="73">row 1</text></g>
+          <g class="ghost"><rect class="nodebox" x="88" y="58" width="54" height="22" rx="5"/><text class="tag" x="99" y="73">row 2</text></g>
+          <g><rect class="nodebox dy" x="155" y="58" width="64" height="22" rx="5"/><text class="tag" x="160" y="73">row 501</text><rect class="uidbg" x="156" y="38" width="70" height="14" rx="6"/><text class="uid" x="161" y="49">class 变了</text></g>
+          <g class="ghost"><rect class="nodebox" x="226" y="58" width="60" height="22" rx="5"/><text class="tag" x="231" y="73">row 1000</text></g>
+          <text class="holelbl" x="62" y="104" style="fill:var(--ink-mute)">…其余 999 行与上一帧完全相同…</text>
+        </svg>
+        <figcaption style="font-family:var(--mono);font-size:clamp(10px,1.05cqw,13px);color:#e5646f;margin-top:8px;line-height:1.6">
+          但 identity 判等认不出"相同" ——<br/>每行 1 条 class 命令 + 2 条 bindtap 重绑<br/>= <b>2999 条假阳性</b>，全部序列化 + clone + 验证 + 应用
+        </figcaption>
+        <figcaption style="font-family:var(--mono);font-size:clamp(9px,0.95cqw,12px);color:var(--ink-mute);margin-top:6px">1k 行抓包实况 · @10k 同形状 ~30k 条</figcaption>
+      </figure>
+      <div class="bench-chart bench-chart--proto" style="flex:0 0 36cqw">
+        <h3 class="bench-chart__title">同一次点击的 wire 载荷 <span>@10k · 实测</span></h3>
+        <div class="bench-proto">
+          <div class="bench-proto__col">
+            <span class="bench-proto__bar" style="--h:100%;background:#f2a15d"></span>
+            <span class="bench-proto__cap" style="color:#f2a15d">2.41 MB</span>
+            <span class="bench-proto__sub">octane · 1 commit</span>
+          </div>
+          <div class="bench-proto__arrow">&rarr;</div>
+          <div class="bench-proto__col">
+            <span class="bench-proto__bar is-brand" style="--h:2%"></span>
+            <span class="bench-proto__cap is-brand">39 B</span>
+            <span class="bench-proto__sub">vapor · 同一操作</span>
+          </div>
+          <div class="mega bench-proto__mult">61,700&times;<small>差距</small></div>
+        </div>
+      </div>
+    </div>
+    <aside class="notes">
+      <p>抓包页（上一页原始报文）的图形化：左树是变更的真实形状（1 个热点节点，999 个 ghost），右柱是 wire 上的形状（2.41MB vs 39B，61,700×）。两个形状之间的落差就是第三章全部的病理 —— 树知道只有一个节点变了，线不知道。</p>
     </aside>
   </section>
 
@@ -1000,6 +1167,66 @@ react  26.5s</pre></div>
     </p>
     <aside class="notes">
       <p>用轴解释 FCP（点名要求"用引入的概念解释"）：react 459 = code staging（无解释）+ oneshot driver（无框架启动）双红利；vue 四格 794–949 = ops/data 解释 + （IFR 时）mts-runtime 的框架启动税；octane 1090 = data 解释（与 vue 同类）+ 更大的 MT 常数（receiver+驱动 59KB gzip 的求值与初始化）。诚实提示：FCP 斜率四家相同（α≈0.6），Octane 不是病理性慢，是常数大。</p>
+    </aside>
+  </section>
+
+
+  <!-- III·6b — first-frame adoption, drawn -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
+      第一帧的交接，<span class="brand-text">画出来</span>：adoption 而非重画
+    </h2>
+    <div class="ifrjoin ifrjoin--linked">
+      <div class="ifrjoin__cols">
+        <div class="ifrjoin__col" style="--c:#56b8f0">
+          <span class="ifrjoin__label"><i></i>Main · 先跑</span>
+          <span class="ifrjoin__role">一遍式渲染器（冻结 hooks）</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op">等 __RenderPage（PageConfig 就位）</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op is-hero">plan 解释 → PAPI → 首帧上屏</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op">firstTree 快照（可 clone）</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op">事件先入队（听不见的窗口）</code>
+          </div>
+        </div>
+        <div class="ifrjoin__links">
+          <span class="ifrjoin__linkhead">交接</span>
+          <div class="ifrjoin__stack">
+            <span class="ifrjoin__link" style="--c:#56b8f0"><b>①</b> ready+快照</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link is-hero" style="--c:#f2a15d"><b>②</b> commit v1</span>
+            <span class="ifrjoin__arr ifrjoin__arr--ghost" aria-hidden="true">&darr;</span>
+            <span class="ifrjoin__link" style="--c:#56b8f0"><b>③</b> ack·adopted</span>
+          </div>
+        </div>
+        <div class="ifrjoin__col" style="--c:#f2a15d">
+          <span class="ifrjoin__label"><i></i>Background · 后到</span>
+          <span class="ifrjoin__role">universal 完整运行时</span>
+          <div class="ifrjoin__stack">
+            <code class="ifrjoin__op">同一组件，完整渲染</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op is-hero">首批 commit 与快照逐节点比对</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op">命中 → 跳过 create/insert，re-own</code>
+            <span class="ifrjoin__arr">&darr;</span>
+            <code class="ifrjoin__op">此后 MT 只当接收器</code>
+          </div>
+        </div>
+      </div>
+      <div class="ifrjoin__outcomes">
+        <span class="ifrjoin__out is-skip">节点吻合 &rarr; 认领（零重建）</span>
+        <span class="ifrjoin__out is-tear">mismatch &rarr; 确定性 repair + 上报</span>
+        <span class="ifrjoin__out is-patch">入队的事件 &rarr; 认领完成后 FIFO 重放</span>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:66ch">
+      这张图与 ReactLynx 的 hydrate+swap 同构（各自独立发明）——
+      Vue 的 D1 树认领也是同一形状。<b>Driver/Handover 两根轴上，三家已经收敛。</b>
+    </p>
+    <aside class="notes">
+      <p>Octane 首帧架构的流程图：MT 先用冻结 hooks 的一遍式渲染器把 plan 解释上屏（刻意等到 __RenderPage 之后 —— PageConfig 时机的平台细节），快照随 main-ready 交给 BG；BG 完整渲染后首批 commit 与快照逐节点比对，命中直接 re-own 已画好的 PAPI 节点。交接窗口里的事件入队、认领后 FIFO 重放。这一页放在 FCP 数字之后：架构（图）是对的，常数（上一页 1090ms）是 data 解释 + 59KB 接收器的账。</p>
     </aside>
   </section>
 
