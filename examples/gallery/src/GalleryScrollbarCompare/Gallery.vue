@@ -16,29 +16,40 @@ const scrollbarThumbRef = useMainThreadRef(null);
 const listRef = useTemplateRef<ShadowElement>('listRef');
 
 // BTS scroll handler
-function onScroll(event: { detail?: { scrollTop?: number; scrollHeight?: number } }) {
+function onScroll(event: {
+  detail?: { scrollTop?: number; scrollHeight?: number; listHeight?: number };
+}) {
   const scrollTop = event.detail?.scrollTop ?? 0;
   const scrollHeight = event.detail?.scrollHeight ?? 0;
-  scrollbarRef.value?.adjustScrollbar(scrollTop, scrollHeight);
+  const listHeight = event.detail?.listHeight || SystemInfo.pixelHeight / SystemInfo.pixelRatio;
+  scrollbarRef.value?.adjustScrollbar(scrollTop, scrollHeight, listHeight);
 }
 
 // MTS scrollbar adjuster — runs directly on Main Thread (no -48 offset, full height)
 function adjustScrollbarCompare(
   scrollTop: number,
   scrollHeight: number,
+  listHeight: number,
   ref: { current?: { setStyleProperty?(k: string, v: string): void } },
 ) {
   'main thread';
-  const listHeight = SystemInfo.pixelHeight / SystemInfo.pixelRatio;
   const scrollbarHeight = listHeight * (listHeight / scrollHeight);
   const scrollbarTop = listHeight * (scrollTop / scrollHeight);
   ref.current?.setStyleProperty?.('height', `${scrollbarHeight}px`);
   ref.current?.setStyleProperty?.('top', `${scrollbarTop}px`);
 }
 
-const onScrollMTS = (event: { detail: { scrollTop: number; scrollHeight: number } }) => {
+const onScrollMTS = (event: {
+  detail: { scrollTop: number; scrollHeight: number; listHeight?: number };
+}) => {
   'main thread';
-  adjustScrollbarCompare(event.detail.scrollTop, event.detail.scrollHeight, scrollbarThumbRef);
+  const listHeight = event.detail.listHeight || SystemInfo.pixelHeight / SystemInfo.pixelRatio;
+  adjustScrollbarCompare(
+    event.detail.scrollTop,
+    event.detail.scrollHeight,
+    listHeight,
+    scrollbarThumbRef,
+  );
 };
 
 onMounted(() => {
