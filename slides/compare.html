@@ -158,7 +158,7 @@
     <button class="dark-toggle" data-lang-toggle aria-label="Toggle language" title="Toggle 中文 / English">中</button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 42</span>
+    <span data-counter>01 / 47</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://github.com/Huxpro/vue-lynx" target="_blank" rel="noreferrer">huxpro/vue-lynx</a>
@@ -1125,6 +1125,103 @@ create        2.05× → 2.19×（不动）
     </aside>
   </section>
 
+
+  <!-- IV·4 — same semantics, two bills -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
+      为什么 web 上没事：<span class="brand-text">同一套语义，两张账单</span>
+    </h2>
+    <table class="score score--tight">
+      <thead>
+        <tr><th>问题</th><th>Octane 单线程 DOM 路径</th><th>Octane universal / Lynx 路径</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>P1 · identity 判等</td><td class="good">假阳性 = 同值 className 再写一遍 —— 同线程幂等 DOM 写，纳秒级；闭包重建 = 一次指针赋值</td><td class="bad">假阳性 = 序列化 + clone + 验证 + 应用 ×N 行 ×每 commit → 2.4MB/次</td></tr>
+        <tr><td>P2 · owner 重放宽度</td><td class="good">重放也是 O(N)，但每行 = "比一下、跳过/直写"，10k 行共几个 ms</td><td class="bad">每行重放<b>物化成产物</b>：props 数组 + Blueprint 节点 + 记录 diff + 命令对象 ≈ 70µs/行 → 700ms</td></tr>
+        <tr><td>P3 · wire 形状</td><td class="good"><b>定义上不存在</b> —— 编译产物直接写 DOM，没有"报文"</td><td class="bad">per-node 命令对象流，plan 的块级信息全丢</td></tr>
+        <tr><td>P4 · 协议 + 验证</td><td class="good"><b>定义上不存在</b> —— 没有边界就没有 commit→ack→complete，validator 无处可站</td><td class="bad">328ms/批的 MT 校验 + 三段往返 + 59KB 接收器</td></tr>
+      </tbody>
+    </table>
+    <p class="lead arch-cap" data-mm-fade style="max-width:70ch">
+      Octane 没有"慢的渲染器"—— 它有一组<b>在单线程环境里免费、在跨线程环境里按 N 计费</b>的
+      默认假设。web 上这些账单是零，所以从没有人看过它们。
+    </p>
+    <aside class="notes">
+      <p><strong>回答"这些问题是不是单线程上没有的"：基本全是。</strong>P3/P4 是边界的发明物，单线程定义上不存在；P1/P2 是同一套语义在两个平台上的两张账单。这也解释了带病发布：开发与测试环境（DOM/jsdom、单 realm）里这些问题全部不可见 —— 与 #459 完全同一个模式。更准确地说这不是"Lynx 问题"而是 <b>split topology 问题</b>：universal-core 同时是 electron process-split（#472）的底座，同样的假阳性在 electron 的进程边界上会以 IPC 序列化的形式同样爆炸 —— 修 P1/P2 的受益面比 Lynx 大，这是给 upstream 的好论据。</p>
+    </aside>
+  </section>
+
+  <!-- IV·5 — one Row, two compilers (the attribution money slide) -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
+      证据：同一个 Row，<span class="brand-text">两条编译路径</span>（都是实编输出）
+    </h2>
+    <div class="trio trio--two">
+      <div class="trio__col t-oct">
+        <div class="trio__head"><span class="dot"></span><b>DOM 编译器</b><i>web 版住在 native 档（cloneNode）</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>octane 默认 renderer</span></div>
+<pre><span class="code-key">const</span> _t$0 = <span class="code-fn">_$template</span>(<span class="code-str">"&lt;div&gt;&lt;span class=…"</span>);
+<span class="code-com">// ↑ 模板 clone —— Engine-Template！</span>
+<span class="code-key">const</span> _root = <span class="code-fn">_$clone</span>(_t$0);
+
+_el0[<span class="code-str">'$$click'</span>] = () <span class="code-key">=&gt;</span> props.onSelect(…);
+<span class="code-com">// ↑ 事件：指针赋值 + 全局委托，重绑免费</span>
+
+<span class="code-fn">_$setClassAttr</span>(_b.a, [<span class="code-str">'row'</span>, sel <span class="code-key">&amp;&amp;</span> <span class="code-str">'danger'</span>]);
+<span class="code-com">// ↑ 无条件直写，连判等都不做 ——</span>
+<span class="code-com">//   因为同值写免费到不值得比较</span>
+
+<span class="code-key">if</span> (_b.e !== _v) <span class="code-fn">_$setText</span>(_t, _v);
+<span class="code-com">// ↑ 只有 text 洞有值守卫</span></pre></div>
+      </div>
+      <div class="trio__col t-oct">
+        <div class="trio__head"><span class="dot"></span><b>universal 编译器</b><i>Lynx 版退化到 ops 档</i></div>
+        <div class="codeframe"><div class="codeframe__head"><span class="dots"><span></span><span></span><span></span></span><span>@octanejs/lynx renderer</span></div>
+<pre><span class="code-fn">universalValue</span>(plan0, [
+  [<span class="code-str">'row'</span>, sel <span class="code-key">&amp;&amp;</span> <span class="code-str">'danger'</span>],  <span class="code-com">// 槽值进 diff</span>
+  () <span class="code-key">=&gt;</span> props.onSelect(…),   <span class="code-com">// 闭包进 diff</span>
+  …
+])
+<span class="code-com">// ↓ 记录 diff（identity 判等）</span>
+<span class="code-com">// ↓ 每个"变了"的槽 = 一条命令对象</span>
+{op:<span class="code-str">"update"</span>, id:53,
+ props:{class:[<span class="code-str">"row"</span>,false]}}
+<span class="code-com">// ↓ structured clone → MT 验证 → 应用</span></pre></div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:70ch">
+      DOM 编译器的成本模型写在产物里：<b>值得守卫的才守卫</b>（text 比、class 不比）。
+      universal 层继承了"不用细比"的守卫策略，却把"免费直写"换成了
+      "每命令序列化 + clone + 验证" —— <b>成本模型翻转了，守卫策略没跟着翻</b>。
+    </p>
+    <aside class="notes">
+      <p><strong>全 deck 归因链的最后一环，也是最硬的一页。</strong>左边是本 session 用 octane 默认（DOM）编译器编同形状 Row 的原样输出（compare-data/octane-compiled-dom-row.txt）：_$template/cloneNode 说明 web 版 Octane 在我们矩阵里住 native 档（和 Vapor-Web 同档！）；setClassAttr 无条件调用、$$click 指针赋值说明"web 上不守卫是对的工程判断"。右边同一语义在 universal 路径的遭遇。顺带一个反差：<em>同一个框架，web 版在 staging 阶梯顶端，Lynx 版落到 ops 档</em> —— 不是能力问题，是 universal 层从没被这张账单测过。</p>
+    </aside>
+  </section>
+
+  <!-- IV·6 — attribution layers -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(22px,2.5cqw,34px);margin-bottom:clamp(6px,1cqh,10px)">
+      归因分层：<span class="brand-text">架构 · 成本模型 · 一行细节</span>
+    </h2>
+    <table class="score">
+      <thead><tr><th>层</th><th>归因</th><th>修复面</th></tr></thead>
+      <tbody>
+        <tr><td>架构层</td><td>universal-core 为 split 拓扑而生：把重放<b>物化</b>成 Blueprint/记录/命令是必要的（DOM 路径的"产物"就是 DOM 写本身，无需物化）。这一层<b>没有错</b> —— 有边界就必须有物化</td><td class="meh">不用修</td></tr>
+        <tr><td>成本模型层</td><td>物化之后，"每个变更的单价"从纳秒涨到微秒~毫秒，但守卫策略仍按"写免费"设计：class/事件不判等、命令逐节点发、验证每条跑 —— <b>单价变了，预算没重算</b></td><td class="bad">R1/R2/R3 全在这层</td></tr>
+        <tr><td>细节层</td><td>具体的三个点：diff 判等用 identity（一处比较函数）；@for item 无 memo bail（一个缺失的分支）；#459 的 realm 原型检查（一行谓词）</td><td class="good">修复面极小，杠杆极大</td></tr>
+      </tbody>
+    </table>
+    <p class="lead arch-cap" data-mm-fade style="max-width:70ch">
+      结论：<b>架构无罪，成本模型未随架构迁移</b>。这也是为什么五个 mini-RFC
+      都不是架构手术 —— 要改的是几处守卫策略和一个比较函数，
+      而不是 universal-core 的形状。
+    </p>
+    <aside class="notes">
+      <p>三层归因回答"是架构、代码还是实现细节"：(1) 架构层（物化 + 协议边界）是 split 拓扑的必然，RL/Vue 也都有各自的物化（BSI/ShadowElement）；(2) 真正的病在成本模型层 —— 一组按单线程单价设计的策略被原样带进了按 N 计费的世界；(3) 落到代码是三个很小的点。这个分层也给了修复优先级的理论依据：改细节层（判等函数、memo 分支）就能纠正成本模型层的大部分账单，架构层一行不动。</p>
+    </aside>
+  </section>
+
   <!-- ====================================================
        V · 运行时有多重
        ==================================================== -->
@@ -1356,6 +1453,71 @@ select@10k e2e:
     </aside>
   </section>
 
+
+
+  <!-- VI·X — the ceiling -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;max-width:34ch;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
+      上限：Octane 的天花板是 <span class="brand-text">ReactLynx 的位置</span>，不是 Vapor 的
+    </h2>
+    <table class="score score--tight">
+      <thead>
+        <tr><th>指标@10k</th><th>今天</th><th>+R1 判等</th><th>+R5 memo</th><th>上限位置（参照）</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>select</td><td class="bad">1226ms</td><td>~710ms</td><td class="good">~100–150ms</td><td>≈ react 151 / vdom 152；<b>vapor 96 到不了</b>（需换响应式模型）</td></tr>
+        <tr><td>update10th</td><td class="bad">1413ms</td><td>~900ms</td><td class="good">~200–260ms</td><td>≈ react 261 / vdom 190 档</td></tr>
+        <tr><td>create</td><td>4700ms</td><td colspan="2">+R2/R3 → <span class="good">~2200–2600ms</span></td><td>≈ vdom 2143；react 1745 是长期目标</td></tr>
+        <tr><td>FCP</td><td>1090ms</td><td colspan="2">+R3/R4 → <span class="good">~800ms</span></td><td>≈ vue 带 795–949；<b>react 459 结构性领先</b>（32KB 全包 + code 首帧）</td></tr>
+        <tr><td>updateStorm@30k</td><td class="good">7102ms 全场第一</td><td colspan="2">见下页陷阱</td><td>保住第一需要一步显式设计</td></tr>
+        <tr><td>bundle gzip</td><td>102.8KB</td><td colspan="2">瘦身 → ~70–80KB</td><td>react 31.9KB 不可及（universal 通用性 + 协议机器）</td></tr>
+      </tbody>
+    </table>
+    <p class="lead arch-cap" data-mm-fade style="max-width:70ch">
+      为什么上限是 RL：两家是<b>同一个模型</b>（owner 重渲染 + 值判等 diff + 块级模板 + 一遍式首帧），
+      修完病灶自然收敛到同一档。vapor 的点更新档位来自"根本不重渲染"——
+      那是 Octane 明确没选的模型，不改模型就到不了。
+    </p>
+    <aside class="notes">
+      <p>估算置信度分三档：R1 后的数字最硬（每一段都实测过，减法而已）；R5 后的数字有同 app 锚点（react 版手写 memo 的 Row，select@10k=151ms —— Octane 自动 memo 的收敛目标就是它）；create/FCP 最软（基于 vapor +b:c 实验的"create 是 PAPI-bound"外推）。更长期：MT 侧把 plan 解释换成 code 级 create() + 运行时瘦身，create 可逼近 react —— 但那是第二季的事。</p>
+    </aside>
+  </section>
+
+  <!-- VI·Y — the storm trap -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:34ch;font-size:clamp(22px,2.5cqw,34px)">
+      风暴陷阱：修 R1 之前，先把<span class="brand-text">合并变成显式设计</span>
+    </h2>
+    <div class="coord" style="margin-top:clamp(10px,1.6cqh,18px)">
+      <div class="coord__row t-oct">
+        <b>今天</b>
+        <div class="coord__cells">
+          <span class="coord__cell">2.4MB 批把 MT 噎住 → 背压自动折叠 50 tick→19 commit → <b>跳过 30+ 次 layout</b> → 风暴全场第一</span>
+          <span class="coord__cell is-diff">合并是"事故的副产品"</span>
+        </div>
+      </div>
+      <div class="coord__row">
+        <b>R1 修完</b>
+        <div class="coord__cells">
+          <span class="coord__cell">报文变小 → MT 不再是瓶颈 → 合并消失 → 每 tick 老实 layout → <b>风暴退化到 layout 地板</b>（vapor 的形状，@30k ≈ 12s）</span>
+        </div>
+      </div>
+      <div class="coord__row t-vue">
+        <b>该做的</b>
+        <div class="coord__cells">
+          <span class="coord__cell is-diff">把合并写成显式策略：<b>MT 每 vsync 只应用最新版本、中间帧丢弃</b> —— 版本化协议已具备一切条件，一条规则的事</span>
+          <span class="coord__cell">RL 和 Vue 都没有这个能力 —— 保住它，持续交互类指标可以长期领先全场</span>
+        </div>
+      </div>
+    </div>
+    <p class="lead arch-cap" data-mm-fade style="max-width:68ch">
+      可证伪的预测：只修 R1 不做显式合并，updateStorm@30k 会从 7.1s 退到 ~12s。
+      修完请重测这一格 —— 它是整套优化里唯一"修好一处、退步一处"的风险点。
+    </p>
+    <aside class="notes">
+      <p>这一页是给自己（我们真的会去做）的工程备忘：R1 的 PR 里应当同时带上显式 frame-skipping（或至少一个 flag），并把 updateStorm 作为回归门槛。反直觉的地方值得强调：今天风暴的第一名不是渲染器的功劳，是"堵车堵出来的节流"—— 把节流从事故变成设计，才能既要点更新的快、又保风暴的第一。</p>
+    </aside>
+  </section>
 
   <!-- ====================================================
        VII · 共性 → 平台（restored from v1, revised）

@@ -1,0 +1,69 @@
+import {
+	__s as _$__s,
+	bag8 as _$bag8,
+	child as _$child,
+	childTextHole as _$childTextHole,
+	clone as _$clone,
+	delegateEvents as _$delegateEvents,
+	setClassAttr as _$setClassAttr,
+	setText as _$setText,
+	sibling as _$sibling,
+	template as _$template,
+	useState
+} from 'octane';
+
+_$delegateEvents(["click"]);
+
+const _t$0 = /* @__PURE__ */ _$template("<div><span class=\"col-id\"></span><span class=\"col-label\"></span></div>");
+
+export const Row = /* @__PURE__ */ _$__s(function Row(props, __s, __extra) {
+	let _b = __s.slots[0];
+
+	if (_b === undefined) {
+		let _m0, _m1, _m2, _m5;
+		const _root = _$clone(_t$0);
+
+		_m0 = _root;
+
+		const _el0 = _$sibling(_$child(_root), 1);
+
+		_m1 = _el0;
+		_el0['$$click'] = () => props.onSelect(props.row.id);
+
+		const _el1 = _$child(_root);
+
+		_m2 = _el1;
+		_m5 = _el0;
+		_b = _$bag8(__s, _root, _m0, _m1, _m2, null, undefined, _m5, null, undefined);
+	} else {
+		_b.b['$$click'] = () => props.onSelect(props.row.id);
+	}
+
+	_$setClassAttr(_b.a, ['row', props.isSelected && 'danger']);
+
+	{
+		const _v = String(props.row.id);
+		const _o = _v !== null && (typeof _v === 'object' || typeof _v === 'function');
+
+		if (_o || _b.e !== _v) {
+			const _t = _b.d;
+
+			if (_t != null && !_o && _v !== null) _$setText(_t, _v); else _b.d = _$childTextHole(__s, 1, _b.c, _v, _t);
+
+			_b.e = _v;
+		}
+	}
+
+	{
+		const _v = props.row.label;
+		const _o = _v !== null && (typeof _v === 'object' || typeof _v === 'function');
+
+		if (_o || _b.h !== _v) {
+			const _t = _b.g;
+
+			if (_t != null && !_o && _v !== null) _$setText(_t, _v); else _b.g = _$childTextHole(__s, 2, _b.f, _v, _t);
+
+			_b.h = _v;
+		}
+	}
+});
