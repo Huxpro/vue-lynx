@@ -73,7 +73,9 @@ TypeScript is recommended for better editor hints and type checking.
 
 Let's start with the simplest version — a non-interactive static image list.
 
-<Go example="swiper" defaultFile="src/SwiperEmpty/Swiper.vue" entry="src/SwiperEmpty" defaultEntryName="SwiperEmpty" />
+The demonstration swipes this one too, and nothing moves — that is the point. Nothing here listens for the gesture yet.
+
+<Go example="swiper" defaultFile="src/SwiperEmpty/Swiper.vue" autoGesture={swipeDemo} entry="src/SwiperEmpty" defaultEntryName="SwiperEmpty" />
 
 Each image is wrapped in a `SwiperItem` component. The `Swiper` component renders them with `v-for`. The key CSS uses `display: linear` — a Lynx-specific layout mode, similar to flexbox but more performant:
 

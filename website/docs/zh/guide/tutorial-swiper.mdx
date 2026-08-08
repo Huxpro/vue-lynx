@@ -73,7 +73,9 @@ export const swipeDemo = {
 
 让我们从最简单的版本开始——一个不可交互的静态图片列表。
 
-<Go example="swiper" defaultFile="src/SwiperEmpty/Swiper.vue" entry="src/SwiperEmpty" defaultEntryName="SwiperEmpty" />
+演示同样会在这个预览上滑动，但画面不会动——这正是重点，此时还没有任何代码在监听手势。
+
+<Go example="swiper" defaultFile="src/SwiperEmpty/Swiper.vue" autoGesture={swipeDemo} entry="src/SwiperEmpty" defaultEntryName="SwiperEmpty" />
 
 每张图片被包裹在一个 `SwiperItem` 组件中。`Swiper` 组件通过 `v-for` 渲染它们。关键 CSS 使用了 `display: linear`——这是 Lynx 特有的布局模式，类似于 flexbox 但性能更好：
 
