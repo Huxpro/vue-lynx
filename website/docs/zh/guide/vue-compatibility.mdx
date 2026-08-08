@@ -35,18 +35,15 @@ Vue Lynx 100% 复用了 Vue 的响应式核心（`@vue/reactivity`）。每个�
 作用域不会叠加。在 Web 上，Vue 会给子组件的根元素同时加上子组件和父组件的 `data-v-*` 属性，因此[父组件的 scoped 样式也能命中该根元素](https://vuejs.org/api/sfc-css-features.html#scoped-css)。Lynx 中每个元素只能关联一个 CSS 作用域，Vue Lynx 始终保留创建该元素的组件的作用域——组件自己的 scoped 规则总能作用于它的根节点。父组件若需要为子组件的根节点设置样式，可以传入一个由子组件自行应用的 class，或者自己加一层包裹元素。
 :::
 
-`<style>` 中的 `v-bind()` 需要两个配置选项，以便 Lynx 引擎识别内联样式中的 CSS 自定义属性并将其级联到后代元素：
+`<style>` 中的 `v-bind()` 需要一个配置选项，以便 Lynx 引擎识别内联样式中的 CSS 自定义属性：
 
 ```ts title="lynx.config.ts"
 pluginVueLynx({
   enableCSSInlineVariables: true,
-  enableCSSInheritance: true,
 })
 ```
 
-:::warning 已知限制
-通过 `v-bind()` 驱动的影响布局的属性（如 `font-size`）在初始渲染时可以正确应用，但在响应式更新时可能不会更新视觉效果。这是 Lynx 引擎的限制。解决方法：在元素上直接通过 `:style` 绑定来驱动布局属性。
-:::
+需要 **Lynx 引擎 ≥ 3.9.0**，这是首个在标记源码中包含将 CSS 自定义属性从组件根元素传播到其后代的修复（[lynx-family/lynx#5912](https://github.com/lynx-family/lynx/pull/5912)）的版本。在更早的引擎上，变量只会标记在根元素上，无法传递到后代。
 
 :::
 
