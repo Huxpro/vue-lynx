@@ -45,7 +45,7 @@ const env = () => (globalThis as any).lynxTestingEnv;
 function mtFirstScreenRender(comp: Component): Document {
   const e = env();
   e.switchToMainThread();
-  const doc = e.jsdom.window.document as Document;
+  const doc = e.env.window.document as Document;
   doc.body.innerHTML = '';
 
   resetForTesting();
@@ -373,7 +373,7 @@ describe('non-IFR builds are unaffected', () => {
 
     const e = env();
     e.switchToMainThread();
-    const doc = e.jsdom.window.document as Document;
+    const doc = e.env.window.document as Document;
     doc.body.innerHTML = '';
     (globalThis as any).renderPage({});
 

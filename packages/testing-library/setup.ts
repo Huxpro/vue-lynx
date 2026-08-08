@@ -16,7 +16,9 @@ import { LynxTestingEnv } from '@lynx-js/testing-environment';
 // --- Create the testing environment -----------------------------------------
 
 const jsdom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-const lynxTestingEnv = new LynxTestingEnv(jsdom);
+const lynxTestingEnv = new LynxTestingEnv({
+  window: jsdom.window as unknown as Window & typeof globalThis,
+});
 
 // Expose globally so render() / fireEvent() can access it.
 (globalThis as any).lynxTestingEnv = lynxTestingEnv;

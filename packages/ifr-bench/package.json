@@ -9,7 +9,7 @@
     "check": "node --import ./register-hooks.mjs src/correctness.mjs"
   },
   "dependencies": {
-    "@lynx-js/testing-environment": "^0.1.2",
+    "@lynx-js/testing-environment": "^0.2.1",
     "@vue/compiler-dom": "^3.5.0",
     "@vue/runtime-core": "^3.5.0",
     "jsdom": "^26.0.0",

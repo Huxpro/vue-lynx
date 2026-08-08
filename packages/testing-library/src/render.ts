@@ -52,7 +52,7 @@ export function render(
 
   // 2. Clear JSDOM body so previous render's elements are gone
   env.switchToMainThread();
-  const doc = env.jsdom.window.document;
+  const doc = env.env.window.document;
   doc.body.innerHTML = '';
 
   // 3. Call renderPage to create page root (id=1)

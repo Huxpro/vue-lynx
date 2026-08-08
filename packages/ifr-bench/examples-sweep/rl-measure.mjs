@@ -29,7 +29,7 @@ const bundlePath = process.argv[2];
 const bundle = JSON.parse(fs.readFileSync(bundlePath, 'utf8'));
 
 const jsdom = new JSDOM('<!DOCTYPE html><html><body></body></html>');
-const env = new LynxTestingEnv(jsdom);
+const env = new LynxTestingEnv({ window: jsdom.window });
 globalThis.lynxTestingEnv = env;
 
 const contentSize = () => {
