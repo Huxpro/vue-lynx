@@ -41,7 +41,7 @@ const env = () => (globalThis as any).lynxTestingEnv;
 function mtFirstScreenRender(comp: Component): Document {
   const e = env();
   e.switchToMainThread();
-  const doc = e.jsdom.window.document as Document;
+  const doc = e.env.window.document as Document;
   doc.body.innerHTML = '';
 
   resetForTesting();
@@ -71,7 +71,7 @@ function bgHydrate(comp: Component): void {
 function mtRecordBatches(batches: unknown[][]): Document {
   const e = env();
   e.switchToMainThread();
-  const doc = e.jsdom.window.document as Document;
+  const doc = e.env.window.document as Document;
   doc.body.innerHTML = '';
 
   resetForTesting();

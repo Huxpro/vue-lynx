@@ -8,4 +8,6 @@ Bumps the upstream `@lynx-js/*` dependencies to their latest versions: `@lynx-js
 
 Notable internal adjustments: `__SetID` accepts `string | null` (Lynx types 3.9), and the testing setup tracks the `@lynx-js/testing-environment` `0.2` API (`new LynxTestingEnv({ window })`, `env.env.window`).
 
+Also fixes removing a row from a native `<list>`. A list does not own its rows up front — `componentAtIndex` attaches them to the element tree only when native asks for that cell — so a row native never requested was never in the tree, and removing it called `__RemoveElement` with an element the list is not the parent of. `list-apply` now records which rows native pulled in and only detaches those. Previously the stray call was silently absorbed; on the 3.9 element API it surfaces as `child N is not in parent M, cannot remove it!`.
+
 The website pins `@lynx-js/lynx-core` to the exact version `web-core` resolves it as a peer (`0.1.4`); it's only added so `web-core`'s `/web` subpath resolves after the lockfile re-resolution, and a range would risk a second, mismatched copy.
