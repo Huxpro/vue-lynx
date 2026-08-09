@@ -158,7 +158,7 @@
     <button class="dark-toggle" data-lang-toggle aria-label="Toggle language" title="Toggle 中文 / English">中</button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 51</span>
+    <span data-counter>01 / 53</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://github.com/Huxpro/vue-lynx" target="_blank" rel="noreferrer">huxpro/vue-lynx</a>
@@ -755,15 +755,19 @@
         <tr class="t-react"><td>rl Snapshot</td><td>vdom</td><td class="good">code</td><td class="good">block</td><td class="good">bundle</td><td class="good">mts-oneshot</td><td class="good">tree-adopt</td></tr>
         <tr class="t-oct"><td><b>octane · 编译器侧</b></td><td>vdom</td><td class="good">data</td><td class="good">block（洞表在）</td><td class="good">bundle</td><td class="good">mts-oneshot</td><td class="good">tree-adopt+repair</td></tr>
         <tr class="t-oct"><td><b>octane · wire 侧</b></td><td>vdom</td><td class="bad">ops</td><td class="bad">node</td><td class="bad">—（逐实例流）</td><td></td><td></td></tr>
+        <tr class="t-oct"><td><b>octane (Hux) · wire 侧 · 修后</b></td><td>vdom</td><td class="good">data（增量 · 按值判等）</td><td class="good">block（plan-id + 槽值）</td><td class="good">bundle（plan 双端协商）</td><td></td><td></td></tr>
       </tbody>
     </table>
     <p class="lead arch-cap" data-mm-fade style="max-width:70ch">
       Octane 要占<b>两行</b>才放得下：编译器侧是 data/block/bundle（≈ vapor +b! 的格），
       wire 侧却按 ops/node 逐节点发命令 —— <b>编译期挣到的块级信息，在线上一个字节都没用</b>。
       这一格间的落差，就是第三章全部性能现象的总根源。
+      <b>2026-08 更新（绿行）：Hux 的 [lynx-perf] 栈（octane fork PR #1 + #10–#15）已把 wire 行修上来
+      —— select@10k 从 ~30k 命令 / 2.4MB 到 2 命令 / 225 字节，create 命令按 plan-id 落到每行一条的下限。</b>
     </p>
     <aside class="notes">
       <p><strong>回应两条批评：</strong>(1) Vue 行补全 —— vdom 也有 +b（code/block/bundle 的 Code-Template）、vapor 有 +b!/+b:c 投递/staging 变体，全部列出；(2) 上一版把 Octane 单格标成 ops/node 是把两层压扁了，信息量损失很大。正确的画法是两行：plan 层它其实与 vapor +b! 几乎同格（data+bundle+block），但 BG diff 产出的命令批把一切退化回 per-node update 对象流 —— 洞表、slot 编号、plan id 都没有上 wire。RL 单行就够，因为它的 wire（snapshotPatch 的 (id, 槽位, 值)）与编译产物同构。这个"两行落差"图就是 R1/R2 优化提案的靶子。</p>
+      <p><strong>修后行（Hux 栈实测）怎么读：</strong>Staging=data —— 判等换成值语义后 wire 只载真变更（R1，栈 PR #1 内）；Naming=block —— create 按 content-derived plan-id 实例化，块级洞表终于上线（R2，栈 #12）；Delivery=bundle —— plan 双切片各持一份、握手时协商声明，报文只引用不搬运。两行落差闭合之后，剩余差距整体移到了 PAPI/首帧架构（见第六章回执与 code-staged MT 页）。</p>
     </aside>
   </section>
 
@@ -1495,7 +1499,7 @@ vue vapor +ifr:     89.7
       + worklet 桥 + 一遍式渲染器；RL 用 32KB 装下了全部两侧。
     </p>
     <aside class="notes">
-      <p>方法：vue 的 .web.bundle 是 JSON，可直接分段测 gzip（manifest/app-service = BG，lepusCode.root = MT）；octane/react 的 bundle 是二进制编码，octane 侧引用其 baselines/ratios.json 的自报分解（demo app 与我们 bench 同量级：110.7 vs 102.8）。LOC 表来自 checkout 实数。把它连回第三章：MT prepare 266ms 花在哪？就花在这 59KB 里那套 per-command staging+校验管线上。R3/R4 的减重目标即此。</p>
+      <p>方法：vue 的 .web.bundle 是 JSON，可直接分段测 gzip（manifest/app-service = BG，lepusCode.root = MT）；octane/react 的 bundle 是二进制编码，octane 侧引用其 baselines/ratios.json 的自报分解（demo app 与我们 bench 同量级：110.7 vs 102.8）。LOC 表来自 checkout 实数。把它连回第三章：MT prepare 266ms 花在哪？就花在这 59KB 里那套 per-command staging+校验管线上。R3/R4 的减重目标即此。<strong>回执补注（栈 #13/#15）：</strong>prepare 管线已 3.8× 提速（校验 dev 折叠）；MT 侧 worklets.ts 那 1,817 行改为惰性桥 —— 无 worklet 应用整块不再付费（−3.6% gzip），并上了每切片冻结预算门禁。但 gzip 教训要记：10,153 raw 字节的诊断字符串压缩后只值 234B —— 字符串瘦身对 gzip 门指标近乎无效，32KB 档确认不可及。</p>
     </aside>
   </section>
 
@@ -1560,8 +1564,13 @@ update10th 报文:
       杠杆最大、面最小的一刀：只改 diff 的判等语义 + 两条编译规则，
       协议、运行时结构、语义全不动。<b>跨线程判等第一律的直接执行。</b>
     </p>
+    <p class="lead arch-cap" data-mm-fade style="max-width:68ch;color:var(--vue-green)">
+      ✅ <b>已落地（栈 PR #1 内）</b>：select@10k 报文 2.4MB → <b>225 字节 / 2 条命令</b>（门禁钉死，maxRatio 1）；
+      同机 select 1374→857ms、update10th 1493→1044ms —— 剩余正是预告的 BG 重放项。
+      预告的风暴陷阱同步兑现：storm 3054→3962ms，把下一刀（显式合并）从建议变成必需。
+    </p>
     <aside class="notes">
-      <p>实现位置：判等在 universal-core 的 record diff 处（prop 比较点）；class 字符串化在 compile-universal.js 的 binding 降级；事件 token 在 host-driver 的 applyProps 事件分支（native-events.ts 已有 token 基建 —— 只需让 diff 层不把闭包当值）。风险：深判等的 CPU 成本 —— 但 RL 已证明这在 BG 侧是划算的（深比较 ns 级 vs 假阳性 wire μs~ms 级）。验证方式就用本 deck 的插桩 harness：报文字节数是最直接的回归指标。</p>
+      <p>实现位置：判等在 universal-core 的 record diff 处（prop 比较点）；class 字符串化在 compile-universal.js 的 binding 降级；事件 token 在 host-driver 的 applyProps 事件分支（native-events.ts 已有 token 基建 —— 只需让 diff 层不把闭包当值）。风险：深判等的 CPU 成本 —— 但 RL 已证明这在 BG 侧是划算的（深比较 ns 级 vs 假阳性 wire μs~ms 级）。验证方式就用本 deck 的插桩 harness：报文字节数是最直接的回归指标。<strong>回执补注：</strong>本页三个预测全部命中 —— 命令 ~30k→2、报文 &lt;1KB（实测 225B）、create/FCP 不动。绝对 ms 与本 deck 的 1226 不可直接比（不同 host），比值口径见第六章回执页。</p>
     </aside>
   </section>
 
@@ -1615,8 +1624,14 @@ select@10k e2e:
       <b>自动化这一刀是它比 React 更有资格做的事</b>（React Compiler 正是这个方向）。
       R1+R5 合起来，select 应回到两位数毫秒。
     </p>
+    <p class="lead arch-cap" data-mm-fade style="max-width:68ch;color:var(--vue-green)">
+      ✅ <b>已落地（栈 PR #11）</b>：select 重放 10k 行 → <b>2 行</b>（item-render 计数门禁钉死）；
+      同机 select 857→<b>274ms = 1.95× vdom</b>（@1k <b>1.15× ≈ 平价</b>），update10th 473ms = 2.60×。
+      机制修正：<b>不需要新编译器机制</b> —— 现有 retained-subtree adoption 扩展到 transported roots 即可。
+      顺带风暴 1460ms = <b>0.51× vdom · 0.93× vapor，全场第一</b>。
+    </p>
     <aside class="notes">
-      <p>为什么 R5 排在 R2 前面：R1 之后 select 剩的 ~700ms 全在 BG 重放（10k 份 props 重建 + diff）——那是重放宽度的账，编码再快也省不掉。而 R5 依赖 R1（判等按值）才有意义，两者是一组。octane README 已宣称 memo bailouts 存在——普查 universal 路径为什么没生效/没启用，可能是比"新写"更小的补丁。</p>
+      <p>为什么 R5 排在 R2 前面：R1 之后 select 剩的 ~700ms 全在 BG 重放（10k 份 props 重建 + diff）——那是重放宽度的账，编码再快也省不掉。而 R5 依赖 R1（判等按值）才有意义，两者是一组。octane README 已宣称 memo bailouts 存在——普查 universal 路径为什么没生效/没启用，可能是比"新写"更小的补丁。<strong>回执补注：</strong>"普查比新写小"的直觉命中 —— 落地版正是让既有 memo/adoption 基建对 transported roots 生效，零编译器改动。绝对 ms 没到"两位数"（本机整体慢一档），但对照锚点成立：react 手写 memo 版在其 host 是 151ms，octane 自动版在本机同轮是 vdom 的 1.95×、@1k 1.15×，收敛到同一档。</p>
     </aside>
   </section>
 
@@ -1626,11 +1641,11 @@ select@10k e2e:
       R2–R4 · 传输层三连：<span class="brand-text">编码 · 验证 · 协议</span>
     </h2>
     <table class="score">
-      <thead><tr><th></th><th>现状（实测）</th><th>改法</th><th>预期移动</th></tr></thead>
+      <thead><tr><th></th><th>现状（实测）</th><th>改法</th><th>预期移动</th><th>✅ 实测（Hux 栈）</th></tr></thead>
       <tbody>
-        <tr><td>R2 编码</td><td>命令对象树过 structured clone；clone 90ms@2.4MB</td><td>报文用 (plan-id, slot, 值) 扁平数组 —— <b>编译器已有的洞表终于上 wire</b>；参照 vue ops.ts / RL snapshotPatch</td><td>create 报文 −60%+；R1 后此项主要影响 create/storm；矩阵坐标两行并一行</td></tr>
-        <tr><td>R3 验证</td><td>MT 入站 validate 62ms + prepare 内语义校验（266ms 的主体）@10k</td><td>生产构建：边界校验一次 + 命令走 schema-free 快路径；完整校验留 dev（#459 的 vm rig 保住回归）</td><td>MT prepare 266 → 目标 &lt;50ms；FCP 常数同步受益</td></tr>
-        <tr><td>R4 协议</td><td>commit→ack(句柄)→complete 三段；ack 句柄 15ms/commit；效果/refs 发布等 ack</td><td>ack 惰性化：句柄按需查询而非每 commit 全量快照；complete 并入下一消息；<b>保留</b>版本号与背压合并（那是好东西）</td><td>单发操作的尾延迟 −15~30ms；协议复杂度显著降（main-thread.ts 2410 行的主要构成）</td></tr>
+        <tr><td>R2 编码</td><td>命令对象树过 structured clone；clone 90ms@2.4MB</td><td>报文用 (plan-id, slot, 值) 扁平数组 —— <b>编译器已有的洞表终于上 wire</b>；参照 vue ops.ts / RL snapshotPatch</td><td>create 报文 −60%+；R1 后此项主要影响 create/storm；矩阵坐标两行并一行</td><td class="good">#12：create 命令 160k→<b>10k（= 每行一条下限）</b>、commit 字节 −69%、两行并一行兑现；<b>create e2e 纹丝不动（2.08× vdom）</b> —— 本页"PAPI-bound"的诚实预期精确应验</td></tr>
+        <tr><td>R3 验证</td><td>MT 入站 validate 62ms + prepare 内语义校验（266ms 的主体）@10k</td><td>生产构建：边界校验一次 + 命令走 schema-free 快路径；完整校验留 dev（#459 的 vm rig 保住回归）</td><td>MT prepare 266 → 目标 &lt;50ms；FCP 常数同步受益</td><td class="good">#13：MT prepare <b>3.8× 提速</b>（整轮 11.2s→2.9s，validate ~90×）；fail-stop 由 prod-module 套件钉死。<b>FCP ±0 —— "同步受益"落空</b>：首帧 MT 直渲，校验从不在其路径</td></tr>
+        <tr><td>R4 协议</td><td>commit→ack(句柄)→complete 三段；ack 句柄 15ms/commit；效果/refs 发布等 ack</td><td>ack 惰性化：句柄按需查询而非每 commit 全量快照；complete 并入下一消息；<b>保留</b>版本号与背压合并（那是好东西）</td><td>单发操作的尾延迟 −15~30ms；协议复杂度显著降（main-thread.ts 2410 行的主要构成）</td><td class="good">#14：句柄改为 BG 本地<b>派生</b>（dev 保全量交叉核对）、消息 <b>3→2</b>、空转重渲染 <b>0 字节</b>；<b>尾延迟是 wash —— ack 从未背过 15–30ms</b>。真浏览器 harness 还抓到 rig 看不见的 tap 冻结回归，已修+钉死</td></tr>
       </tbody>
     </table>
     <p class="lead arch-cap" data-mm-fade style="max-width:70ch">
@@ -1670,13 +1685,21 @@ select@10k e2e:
           <span class="coord__cell">vue vapor +b! 同格（data/block/bundle + 扁平增量 wire）+ oneshot driver + adoption + 背压合并</span>
         </div>
       </div>
+      <div class="coord__row t-oct">
+        <b>✅ 实测落点</b>
+        <div class="coord__cells">
+          <span class="coord__cell is-same">编译器 data/block/bundle（一行未动）</span>
+          <span class="coord__cell is-same">wire (plan-id, slot, 值) · 增量 · 按值判等 —— <b>到格</b>（select 2 命令/225B）</span>
+          <span class="coord__cell is-diff">交互比值 select 1.95× / update 2.60× / storm 0.51×（封王）；create/FCP 证明为 PAPI/首帧架构-bound</span>
+        </div>
+      </div>
     </div>
     <p class="lead arch-cap" data-mm-fade style="max-width:68ch">
       五刀没有一刀动语义或架构 —— 全是把编译器已经挣到的信息接到 wire 上、
       把判等换成值语义。终点格子在矩阵里<b>已经存在且被测过</b>：这就是路线图可信的原因。
     </p>
     <aside class="notes">
-      <p>验证闭环：每个 R 都有本 deck 的插桩/抓包 harness 做回归指标（命令数、报文字节、分段 ms）。修完重跑同一套 storms + FCP，把这页的预期和实测放在一起 —— 那就是下一次 review 的第一页。</p>
+      <p>验证闭环：每个 R 都有本 deck 的插桩/抓包 harness 做回归指标（命令数、报文字节、分段 ms）。修完重跑同一套 storms + FCP，把这页的预期和实测放在一起 —— 那就是下一次 review 的第一页。<strong>回执补注：</strong>绿行即"下一次 review 的第一页"的承诺兑现 —— wire 形状与判等语义全部到格且由 ~24 条确定性门禁（命令/字节/消息/渲染次数/每切片 gzip）钉死；没到格的两项（create/FCP）各换回一条硬结论，见回执页与 code-staged MT 页。</p>
     </aside>
   </section>
 
@@ -1689,15 +1712,15 @@ select@10k e2e:
     </h2>
     <table class="score score--tight">
       <thead>
-        <tr><th>指标@10k</th><th>今天</th><th>+R1 判等</th><th>+R5 memo</th><th>上限位置（参照）</th></tr>
+        <tr><th>指标@10k</th><th>今天</th><th>+R1 判等</th><th>+R5 memo</th><th>✅ 实测（Hux 栈 · 同机比值）</th><th>上限位置（参照）</th></tr>
       </thead>
       <tbody>
-        <tr><td>select</td><td class="bad">1226ms</td><td>~710ms</td><td class="good">~100–150ms</td><td>≈ react 151 / vdom 152；<b>vapor 96 到不了</b>（需换响应式模型）</td></tr>
-        <tr><td>update10th</td><td class="bad">1413ms</td><td>~900ms</td><td class="good">~200–260ms</td><td>≈ react 261 / vdom 190 档</td></tr>
-        <tr><td>create</td><td>4700ms</td><td colspan="2">+R2/R3 → <span class="good">~2200–2600ms</span></td><td>≈ vdom 2143；react 1745 是长期目标</td></tr>
-        <tr><td>FCP</td><td>1090ms</td><td colspan="2">+R3/R4 → <span class="good">~800ms</span></td><td>≈ vue 带 795–949；<b>react 459 结构性领先</b>（32KB 全包 + code 首帧）</td></tr>
-        <tr><td>updateStorm@30k</td><td class="good">7102ms 全场第一</td><td colspan="2">见下页陷阱</td><td>保住第一需要一步显式设计</td></tr>
-        <tr><td>bundle gzip</td><td>102.8KB</td><td colspan="2">瘦身 → ~70–80KB</td><td>react 31.9KB 不可及（universal 通用性 + 协议机器）</td></tr>
+        <tr><td>select</td><td class="bad">1226ms</td><td>~710ms</td><td class="good">~100–150ms</td><td class="good">274ms = <b>1.95× vdom</b>（@1k 1.15× ≈ 平价）</td><td>≈ react 151 / vdom 152；<b>vapor 96 到不了</b>（需换响应式模型）</td></tr>
+        <tr><td>update10th</td><td class="bad">1413ms</td><td>~900ms</td><td class="good">~200–260ms</td><td class="good">473ms = <b>2.60× vdom</b></td><td>≈ react 261 / vdom 190 档</td></tr>
+        <tr><td>create</td><td>4700ms</td><td colspan="2">+R2/R3 → <span class="good">~2200–2600ms</span></td><td class="bad">4669ms = 2.08× vdom —— <b>落空：命令 −94% 后不动，PAPI-bound 实证</b></td><td>≈ vdom 2143；react 1745 是长期目标</td></tr>
+        <tr><td>FCP</td><td>1090ms</td><td colspan="2">+R3/R4 → <span class="good">~800ms</span></td><td class="bad">无可分辨移动 —— <b>落空：校验与切片体积都不在首帧路径</b></td><td>≈ vue 带 795–949；<b>react 459 结构性领先</b>（32KB 全包 + code 首帧）</td></tr>
+        <tr><td>updateStorm@30k</td><td class="good">7102ms 全场第一</td><td colspan="2">见下页陷阱</td><td class="good">@10k 1460ms = <b>0.51× vdom · 0.93× vapor</b> —— 显式 pacing 后封王保住</td><td>保住第一需要一步显式设计</td></tr>
+        <tr><td>bundle gzip</td><td>102.8KB</td><td colspan="2">瘦身 → ~70–80KB</td><td class="bad">MT 切片 −3.6%（70.4→67.8KB）+ 冻结预算门禁 —— <b>−25% 落空：预估双计了 DCE 已删的质量</b></td><td>react 31.9KB 不可及（universal 通用性 + 协议机器）</td></tr>
       </tbody>
     </table>
     <p class="lead arch-cap" data-mm-fade style="max-width:70ch">
@@ -1706,7 +1729,7 @@ select@10k e2e:
       那是 Octane 明确没选的模型，不改模型就到不了。
     </p>
     <aside class="notes">
-      <p>估算置信度分三档：R1 后的数字最硬（每一段都实测过，减法而已）；R5 后的数字有同 app 锚点（react 版手写 memo 的 Row，select@10k=151ms —— Octane 自动 memo 的收敛目标就是它）；create/FCP 最软（基于 vapor +b:c 实验的"create 是 PAPI-bound"外推）。更长期：MT 侧把 plan 解释换成 code 级 create() + 运行时瘦身，create 可逼近 react —— 但那是第二季的事。</p>
+      <p>估算置信度分三档：R1 后的数字最硬（每一段都实测过，减法而已）；R5 后的数字有同 app 锚点（react 版手写 memo 的 Row，select@10k=151ms —— Octane 自动 memo 的收敛目标就是它）；create/FCP 最软（基于 vapor +b:c 实验的"create 是 PAPI-bound"外推）。更长期：MT 侧把 plan 解释换成 code 级 create() + 运行时瘦身，create 可逼近 react —— 但那是第二季的事。<strong>回执补注：</strong>置信度分档被实测精确验证 —— 最硬的（R1/R5）全中，最软的（create/FCP）全落空，且落空原因正是本页预判的"PAPI-bound 外推"变成了实证。绝对 ms 列（1226/1413/…）是本 deck host 的数字，实测列是 Hux rig host 的数字，两机不可直接比 —— 实测列因此只报同机同轮比值。"第二季"（code-staged MT）的 blocker 分析见本章末新页。</p>
     </aside>
   </section>
 
@@ -1741,8 +1764,65 @@ select@10k e2e:
       可证伪的预测：只修 R1 不做显式合并，updateStorm@30k 会从 7.1s 退到 ~12s。
       修完请重测这一格 —— 它是整套优化里唯一"修好一处、退步一处"的风险点。
     </p>
+    <p class="lead arch-cap" data-mm-fade style="max-width:68ch;color:var(--vue-green)">
+      ✅ <b>预测精确应验</b>：R1 落地后 storm 3054→3962ms（同机，合并消失、退向 layout 地板）。
+      栈 PR #10 把合并写成显式 vsync pacing（每帧只应用最新版本）→ 3524ms = 1.07× vdom 追平；
+      叠加 R5 后 <b>1460ms = 0.51× vdom</b> —— 第一保住，且 50 tick→<b>3 commit</b> 由门禁钉死。
+      "从事故到设计"完成。
+    </p>
     <aside class="notes">
-      <p>这一页是给自己（我们真的会去做）的工程备忘：R1 的 PR 里应当同时带上显式 frame-skipping（或至少一个 flag），并把 updateStorm 作为回归门槛。反直觉的地方值得强调：今天风暴的第一名不是渲染器的功劳，是"堵车堵出来的节流"—— 把节流从事故变成设计，才能既要点更新的快、又保风暴的第一。</p>
+      <p>这一页是给自己（我们真的会去做）的工程备忘：R1 的 PR 里应当同时带上显式 frame-skipping（或至少一个 flag），并把 updateStorm 作为回归门槛。反直觉的地方值得强调：今天风暴的第一名不是渲染器的功劳，是"堵车堵出来的节流"—— 把节流从事故变成设计，才能既要点更新的快、又保风暴的第一。<strong>回执补注：</strong>整个 program 预测得最准的一页 —— 陷阱按剧本触发、显式化按剧本收复。selectStorm 同轮 487ms = 0.35× vdom。这也是"确定性计数器 + 比值"方法论的最好广告：wall-clock 的绝对值随 host 漂，commit 折叠 50→3 永远可检。</p>
+    </aside>
+  </section>
+
+  <!-- VI·Z1 — the receipt: shipped stack, expectations vs measurements -->
+  <section class="slide stage" data-bg="clean" data-chrome="minimal">
+    <h2 class="h-section" style="text-align:center;font-size:clamp(20px,2.2cqw,30px);margin-bottom:clamp(6px,1cqh,10px)">
+      回执：五刀落地之后，<span class="brand-text">预期 vs 实测</span>
+    </h2>
+    <table class="score score--tight" style="max-width:118cqw">
+      <thead>
+        <tr><th>指标@10k</th><th>第六章预期</th><th>实测（Hux 栈 · 同机中位数）</th><th>判定</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>select</td><td>两位数 ms · 报文百字节</td><td>274ms = <b>1.95× vdom</b>（@1k 1.15×）· <b>2 命令 / 225 B</b></td><td class="good">到档（比值口径）</td></tr>
+        <tr><td>update10th</td><td>~200–260ms 档</td><td>473ms = <b>2.60× vdom</b> · 命令数 = 真变更 1,000 条</td><td class="good">接近，宽度已到底</td></tr>
+        <tr><td>updateStorm</td><td>保住第一（需显式合并）</td><td>1460ms = <b>0.51× vdom · 0.93× vapor</b> · 显式 pacing 50 tick→3 commit</td><td class="good">封王，事故→设计</td></tr>
+        <tr><td>create</td><td>~2200–2600ms</td><td>4669ms = 2.08× vdom · 命令 160k→<b>10k（每行一条下限）</b>· 字节 −69%</td><td class="bad">落空 —— <b>PAPI-bound 实证</b></td></tr>
+        <tr><td>FCP</td><td>~800ms 带</td><td>同窗 A/B 无可分辨移动（±900ms host 噪声）</td><td class="bad">落空 —— 校验/体积不在首帧路径</td></tr>
+        <tr><td>MT 切片 gzip</td><td>59→45KB 档（−25%）</td><td>70.4→67.8KB（<b>−3.6%</b>）；无 worklet 应用整块卸下 worklet 运行时；每切片冻结预算门禁</td><td class="bad">落空 —— 预估双计了 DCE 已删的质量</td></tr>
+      </tbody>
+    </table>
+    <p class="lead arch-cap" data-mm-fade style="max-width:70ch">
+      交付形态：octane fork 的 stacked PR <b>#1 + #10–#15</b>，每刀一 PR、每 PR 带
+      基线→实测表与红检测试；全部收益由 <b>~24 条确定性门禁</b>（命令/字节/消息/渲染次数/每切片 gzip）钉死。
+      两项落空各换回一条硬结论 —— create/FCP 的剩余差距在 <b>PAPI 与首帧架构</b>，不在守卫策略。
+    </p>
+    <aside class="notes">
+      <p>方法论收获（错误预测的共性）：凡预测"diff 直接控制的量"（命令数、字节、消息数、渲染次数、gzip）—— 门禁几乎每次精确命中；凡预测"wall-clock 归因"（wire 之于 create、校验之于 FCP、ack 之于尾延迟）—— 三次全部错归了层。绝对 ms 目标三次被 host 迁移作废（3100 风暴带、800–900 FCP 带、102.8KB 锚），同机同轮比值与冻结字节预算从未失效 —— "counters gate, wall-clock informs" 从工作协议升格为实证结论。完整清单见 Huxpro/octane#9 的收官总结。</p>
+    </aside>
+  </section>
+
+  <!-- VI·Z2 — next season: code-staged MT, the blocker analysis -->
+  <section class="slide stage" data-bg="clean">
+    <h2 class="h-section" style="text-align:center;max-width:34ch;font-size:clamp(22px,2.5cqw,34px)">
+      第二季 · <span class="brand-text">code-staged MT</span>：blocker 到底是什么
+    </h2>
+    <table class="score" style="margin-top:clamp(6px,1cqh,12px)">
+      <tbody>
+        <tr><td>编译器信息够吗？</td><td class="good"><b>够。</b>plan 就是完整静态骨架 + 洞表；栈 #12 的 content-derived plan-id 还给了跨切片模板身份 —— code-staged create() 注册表的 key 现成。缺的不是信息，是一个 <b>MT 专属 emission target</b>：今天 compile-universal 只产一份双切片共用的 plan，没有 per-template 的 MT codegen 层</td></tr>
+        <tr><td>现有 plan renderer 够吗？</td><td class="meh"><b>不够，但不用扔。</b>renderPlanNode 是活渲染器（组件 / @if / @switch / slots / Suspense / context / adoption 全在其中）。code staging 只能覆盖静态骨架 —— 正确形态是 RL Snapshot 式<b>混合</b>：骨架 = 编译出的直线 PAPI create()，组合与控制流仍走 renderer。是"在 renderer 下面加一层"，不是替换</td></tr>
+        <tr><td>需要 DOM-template 式引擎档吗？</td><td class="meh"><b>分两档。</b>到 RL 档（FCP 459 / create 1717）<b>不需要</b> —— RL 本身没有引擎模板，纯 code staging 就够；要<b>超过</b> RL 才需要平台 Element Templates（第七章建议 3），那是引擎侧原型克隆，框架自己做不出来</td></tr>
+        <tr><td>实测新增的三条约束</td><td class="bad">① #12：砍掉 94% create 命令 e2e 纹丝不动 ⇒ code staging 省的是每节点<b>解释 + canonicalize</b>，PAPI 次数不变 ⇒ <b>上限就是 RL 档</b>；② #15：−2.5KB 切片对 FCP 无感，而 per-template codegen 会显著<b>加大</b> MT 切片 ⇒ 与刚上线的每切片预算直接冲突，要重新谈判；③ 首帧 adoption/repair 语义必须原样保住 —— plan-id 协商恰好是 code-created 树与 BG plan 树对齐的现成基础</td></tr>
+      </tbody>
+    </table>
+    <p class="lead arch-cap" data-mm-fade style="max-width:70ch">
+      blocker 不是信息，是<b>形态</b>：编译器缺 MT emission target、混合边界要设计、切片预算要重谈 ——
+      且天花板明确是 RL 档。动刀之前先在安静 host 把 FCP 分解成
+      <b>切片求值 / plan 解释 / PAPI / layout</b> 四段，用数字决定这刀值不值。
+    </p>
+    <aside class="notes">
+      <p>把三个子问题连起来读：信息层早就够了（这正是本 deck 第二章的结论 —— plan 与 RL Snapshot 同构，差在 data vs code），所以第二季不是研究题而是工程题。真正的决策变量有两个：(1) 收益上限被 #12 的 PAPI-bound 实证压到了 RL 档 —— create 最多 4669→~1717 档、FCP 靠削掉 plan 解释 + 部分切片求值逼近 RL 形状，但 vapor-web 那种 cloneNode 档在 Lynx 上只有平台 Element Templates 能给；(2) 成本不只是编译器的新 emission 层，还有 MT 切片体积回涨（与 #15 的门禁冲突）和首帧语义风险（#15 评估 unification 时确认 renderPlanNode 的动态部分不可静态化）。所以行动顺序是：先做四段分解测量（安静 host），若 plan 解释 + 切片求值占比不足以把 FCP 拉近 RL 档，这刀就不值得动 —— 这正是 roadmap 收官时"re-measure first, don't pre-commit"的具体化。</p>
     </aside>
   </section>
 
@@ -1769,7 +1849,7 @@ select@10k e2e:
         <tr><th>必造件</th><th style="color:#61dafb">ReactLynx</th><th style="color:#42b883">Vue Lynx</th><th style="color:#f2a15d">Octane</th></tr>
       </thead>
       <tbody>
-        <tr><td><b>0 · 跨线程判等语义</b></td><td class="good">深判等 + 事件字符串化</td><td class="good">值语义 ops / effect 粒度</td><td class="bad">identity（本 deck 主病灶）</td></tr>
+        <tr><td><b>0 · 跨线程判等语义</b></td><td class="good">深判等 + 事件字符串化</td><td class="good">值语义 ops / effect 粒度</td><td class="good">identity → 按值（主病灶，已修：栈 PR #1）</td></tr>
         <tr><td>1 · 跨线程身份</td><td>snapshot id + 槽位</td><td>数字 id（node）/ 基址+偏移（block）</td><td>id + generation</td></tr>
         <tr><td>2 · wire 编码</td><td>snapshotPatch 扁平数组</td><td class="good">numeric-flat ops</td><td>命令对象 + clone</td></tr>
         <tr><td>3 · 第一帧驱动</td><td class="good">render-to-string fork 一遍式</td><td>完整运行时上 MT（D2 计划中）</td><td class="good">冻结 hooks 一遍式</td></tr>
@@ -1936,10 +2016,11 @@ select@10k e2e:
         <tr><td>3 · 好设计 / 弯路</td><td>抄 Octane：背压合并、hooks 编译语义、优先级 token、__RenderPage 时机。抄 RL：判等深比较、一遍式 driver、树认领。抄 Vue：flat wire、BG 无感 IFR。弯路分了 A/B/C 三类，B 类（单 realm 直觉）是主病灶</td></tr>
         <tr><td>4 · 共性 → 平台</td><td>八件套三度重复发明（判等语义列第 0）；四条平台建议 + 五个 Octane 侧 mini-RFC —— 同一份证据，两个受益人</td></tr>
         <tr><td>5 · 旧账 / 新账</td><td>render model 是旧账可平移；九轴里七根新账 —— signal 有双重红利但付 Naming 门票，重放家族拿批量免费但必须先过判等关</td></tr>
+        <tr><td class="good">6 · 修完之后（新）</td><td>六个 stacked PR（fork #1 + #10–#15）把 R1–R5 + 瘦身全部落地：wire 到 (plan-id, slot, 值) 格（select 2 命令/225B）、交互比值 select 1.95× / update 2.60× / storm <b>0.51× 封王</b>；create/FCP 实证为 PAPI/首帧架构-bound —— 守卫策略的账清零了，剩下的是第二季（code-staged MT，上限 RL 档）</td></tr>
       </tbody>
     </table>
     <aside class="notes">
-      <p>五问五答回归，全部按 v2 的证据更新。只记一句：<strong>三个框架的分歧集中在平台没提供的地方；平台提供了的（list 回收），三家一致 —— 而 Octane 的教训把"该提供什么"的清单加长了一件：判等语义。</strong></p>
+      <p>五问五答回归，全部按 v2 的证据更新。只记一句：<strong>三个框架的分歧集中在平台没提供的地方；平台提供了的（list 回收），三家一致 —— 而 Octane 的教训把"该提供什么"的清单加长了一件：判等语义。</strong>第 6 行为 2026-08 回执新增：mini-RFC 章的预言兑现情况见第六章回执页。</p>
     </aside>
   </section>
 
@@ -1957,10 +2038,11 @@ select@10k e2e:
         <tr><td>两个修复</td><td>#459 = 单 realm 直觉的功能版（B 类，已修+补 test rig）；#578 = 年轻的整根重放（C 类，被 wire 放大；owner 宽度与判等未动，报文仍 2.4MB）</td></tr>
         <tr><td>真正的好东西</td><td>背压合并流水线（50 tick→19 commit，风暴反超 2× 的真机制）、__RenderPage 时机、优先级 token、list 回收、一遍式 driver + adoption</td></tr>
         <tr><td>怎么修</td><td>R1 判等按值 → R5 自动 memo → R2 洞表上 wire → R3 验证降级 → R4 ack 惰性化；终点 = vapor +b! 格 + oneshot + 合并流水线，select 应回两位数 ms</td></tr>
+        <tr><td class="good">修完了（2026-08）</td><td>六个 stacked PR 全部落地：select 2 命令/225B、交互 1.95×/2.60×/storm 0.51× 封王、消息 3→2、prepare 3.8×、MT 卸 worklet；create/FCP 实证 PAPI/首帧架构-bound —— 天花板确认是 RL 档，通往它的下一刀是 code-staged MT（blocker 已析）</td></tr>
       </tbody>
     </table>
     <aside class="notes">
-      <p>一句话版：<strong>Octane 的编译器已经把 Lynx 需要的一切都算出来了 —— 它只是还没把这些信息接到跨线程的 wire 上；接上的那天，它就落在我们矩阵里已被验证过的那一格。</strong></p>
+      <p>一句话版：<strong>Octane 的编译器已经把 Lynx 需要的一切都算出来了 —— 它只是还没把这些信息接到跨线程的 wire 上；接上的那天，它就落在我们矩阵里已被验证过的那一格。</strong>回执一句话版：<strong>接上了，落格了 —— 交互侧到档、风暴封王；没到档的 create/FCP 把"下一格在哪"也测清楚了。</strong></p>
     </aside>
   </section>
 
