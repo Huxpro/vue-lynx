@@ -1,0 +1,122 @@
+{
+  "select_row1": {
+    "wallMsIncludingSettle": 282,
+    "counters": [
+      {
+        "kind": "frame",
+        "url": "about:srcdoc",
+        "prof": null,
+        "mt": {
+          "mt_validate_ms": 50.40000000002328,
+          "mt_prepare_ms": 265.80000000004657,
+          "mt_cmds": 0,
+          "mt_commits": 1,
+          "mt_apply_ms": 90,
+          "mt_ackhandles_ms": 14.699999999953434
+        }
+      },
+      {
+        "kind": "worker",
+        "url": "alhost:8462/webcore/static/js/async/web-core-worker-chunk.js",
+        "prof": {
+          "bg_selfcheck_ms": 0,
+          "bg_dispatch_ms": 88,
+          "bg_commits": 1,
+          "bg_cmds": 0,
+          "bg_bytes": 2406468
+        },
+        "mt": null
+      }
+    ]
+  },
+  "select_row2": {
+    "wallMsIncludingSettle": 179,
+    "counters": [
+      {
+        "kind": "frame",
+        "url": "about:srcdoc",
+        "prof": null,
+        "mt": {
+          "mt_validate_ms": 75.09999999997672,
+          "mt_prepare_ms": 266.19999999995343,
+          "mt_cmds": 0,
+          "mt_commits": 1,
+          "mt_apply_ms": 78.90000000002328,
+          "mt_ackhandles_ms": 15
+        }
+      },
+      {
+        "kind": "worker",
+        "url": "alhost:8462/webcore/static/js/async/web-core-worker-chunk.js",
+        "prof": {
+          "bg_selfcheck_ms": 0,
+          "bg_dispatch_ms": 92.59999999997672,
+          "bg_commits": 1,
+          "bg_cmds": 0,
+          "bg_bytes": 2406468
+        },
+        "mt": null
+      }
+    ]
+  },
+  "update10th": {
+    "wallMsIncludingSettle": 230,
+    "counters": [
+      {
+        "kind": "frame",
+        "url": "about:srcdoc",
+        "prof": null,
+        "mt": {
+          "mt_validate_ms": 45.90000000002328,
+          "mt_prepare_ms": 259.5,
+          "mt_cmds": 0,
+          "mt_commits": 1,
+          "mt_apply_ms": 71.70000000006985,
+          "mt_ackhandles_ms": 14.79999999993015
+        }
+      },
+      {
+        "kind": "worker",
+        "url": "alhost:8462/webcore/static/js/async/web-core-worker-chunk.js",
+        "prof": {
+          "bg_selfcheck_ms": 0.09999999997671694,
+          "bg_dispatch_ms": 27.800000000046566,
+          "bg_commits": 1,
+          "bg_cmds": 0,
+          "bg_bytes": 2476313
+        },
+        "mt": null
+      }
+    ]
+  },
+  "updateStorm_50ticks": {
+    "wallMsIncludingSettle": 259,
+    "counters": [
+      {
+        "kind": "frame",
+        "url": "about:srcdoc",
+        "prof": null,
+        "mt": {
+          "mt_validate_ms": 762.0000000003492,
+          "mt_prepare_ms": 3809.0999999996275,
+          "mt_cmds": 0,
+          "mt_commits": 18,
+          "mt_apply_ms": 1018.7000000000698,
+          "mt_ackhandles_ms": 211.69999999983702
+        }
+      },
+      {
+        "kind": "worker",
+        "url": "alhost:8462/webcore/static/js/async/web-core-worker-chunk.js",
+        "prof": {
+          "bg_selfcheck_ms": 0.09999999997671694,
+          "bg_dispatch_ms": 936.1999999997206,
+          "bg_commits": 19,
+          "bg_cmds": 0,
+          "bg_bytes": 45833676
+        },
+        "mt": null
+      }
+    ]
+  }
+}

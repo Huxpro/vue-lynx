@@ -1,0 +1,1047 @@
+
+===== BACKGROUND (kind=compile) =====
+
+import { hookSlots as _$hookSlots, useCallback, useRef, useState } from '@octanejs/lynx/renderer';
+
+const _hs$ = /* @__PURE__ */ _$hookSlots(17);
+const _h$0 = /* @__PURE__ */ Symbol(_hs$);
+const _h$1 = /* @__PURE__ */ Symbol(_hs$ + 1);
+const _h$2 = /* @__PURE__ */ Symbol(_hs$ + 2);
+const _h$3 = /* @__PURE__ */ Symbol(_hs$ + 3);
+const _h$4 = /* @__PURE__ */ Symbol(_hs$ + 4);
+const _h$5 = /* @__PURE__ */ Symbol(_hs$ + 5);
+const _h$6 = /* @__PURE__ */ Symbol(_hs$ + 6);
+const _h$7 = /* @__PURE__ */ Symbol(_hs$ + 7);
+const _h$8 = /* @__PURE__ */ Symbol(_hs$ + 8);
+const _h$9 = /* @__PURE__ */ Symbol(_hs$ + 9);
+const _h$10 = /* @__PURE__ */ Symbol(_hs$ + 10);
+const _h$11 = /* @__PURE__ */ Symbol(_hs$ + 11);
+const _h$12 = /* @__PURE__ */ Symbol(_hs$ + 12);
+const _h$13 = /* @__PURE__ */ Symbol(_hs$ + 13);
+const _h$14 = /* @__PURE__ */ Symbol(_hs$ + 14);
+const _h$15 = /* @__PURE__ */ Symbol(_hs$ + 15);
+const _h$16 = /* @__PURE__ */ Symbol(_hs$ + 16);
+
+import {
+	defineUniversalComponent as __octaneDefineUniversalComponent,
+	universalPlan as __octaneUniversalPlan,
+	universalValue as __octaneUniversalValue,
+	universalComponent as __octaneUniversalComponent,
+	universalProps as __octaneUniversalProps,
+	universalIf as __octaneUniversalIf,
+	universalSwitch as __octaneUniversalSwitch,
+	universalFor as __octaneUniversalFor,
+	universalTry as __octaneUniversalTry,
+	universalChildren as __octaneUniversalChildren,
+	universalContext as __octaneUniversalContext,
+	universalActivity as __octaneUniversalActivity
+} from '@octanejs/lynx/renderer';
+
+const __octaneUniversalPlan0 = __octaneUniversalPlan('lynx', {
+	"kind": "host",
+	"type": "view",
+	"bindings": [["class", 0]],
+	"children": [
+		{
+			"kind": "host",
+			"type": "text",
+			"props": { "class": "col-id" },
+			"children": [{ "kind": "slot", "slot": 1 }]
+		},
+
+		{
+			"kind": "host",
+			"type": "text",
+			"props": { "class": "col-label" },
+			"bindings": [["bindtap", 2]],
+			"children": [{ "kind": "slot", "slot": 3 }]
+		},
+
+		{
+			"kind": "host",
+			"type": "text",
+			"props": { "class": "col-remove" },
+			"bindings": [["bindtap", 4]],
+			"children": [{ "kind": "slot", "slot": 5 }]
+		}
+	]
+});
+
+const __octaneUniversalPlan1 = __octaneUniversalPlan('lynx', { "kind": "slot", "slot": 0 });
+
+const __octaneUniversalPlan2 = __octaneUniversalPlan('lynx', {
+	"kind": "host",
+	"type": "view",
+	"props": { "class": "page" },
+	"children": [
+		{
+			"kind": "host",
+			"type": "text",
+			"props": { "class": "title" },
+			"children": [{ "kind": "slot", "slot": 0 }]
+		},
+
+		{
+			"kind": "host",
+			"type": "view",
+			"props": { "class": "toolbar" },
+			"children": [
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 1]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 2 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 3]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 4 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 5]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 6 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 7]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 8 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 9]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 10 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 11]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 12 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 13]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 14 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 15]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 16 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 17]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 18 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 19]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 20 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 21]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 22 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 23]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 24 }]
+						}
+					]
+				}
+			]
+		},
+
+		{
+			"kind": "host",
+			"type": "view",
+			"props": { "class": "rows" },
+			"children": [{ "kind": "slot", "slot": 25 }]
+		}
+	]
+});
+
+import { buildData, buildDataSeeded } from './data.js';
+
+const INITIAL_ROWS = __BENCH_AUTOROWS__ > 0 ? buildDataSeeded(__BENCH_AUTOROWS__) : [];
+const STORM_UPDATE_TICKS = 50;
+const STORM_SELECT_TICKS = 30;
+const _stormChannel = new MessageChannel();
+let _stormPending = null;
+
+_stormChannel.port1.onmessage = () => {
+	const cb = _stormPending;
+
+	_stormPending = null;
+
+	if (cb) cb();
+};
+
+function nextMacrotask(cb) {
+	_stormPending = cb;
+	_stormChannel.port2.postMessage(0);
+}
+
+function runStorm(ticks, step) {
+	let t = 0;
+
+	const tick = () => {
+		t += 1;
+		step(t);
+
+		if (t < ticks) nextMacrotask(tick);
+	};
+
+	nextMacrotask(tick);
+}
+
+const Row = __octaneDefineUniversalComponent(
+	'lynx',
+	function Row(props) {
+		return __octaneUniversalValue(__octaneUniversalPlan0, [
+			['row', props.isSelected && 'danger'],
+			String(props.row.id),
+			() => props.onSelect(props.row.id),
+			props.row.label,
+			() => props.onRemove(props.row.id),
+			'x'
+		]);
+	},
+	{ "module": "@octanejs/lynx/renderer" }
+);
+
+export const App = __octaneDefineUniversalComponent(
+	'lynx',
+	function App() {
+		const [rows, setRows] = useState(INITIAL_ROWS, _h$0);
+		const [selected, setSelected] = useState(undefined, _h$1);
+
+		const run = useCallback(
+			() => {
+				setRows(buildData());
+				setSelected(undefined);
+			},
+			[],
+			_h$2
+		);
+
+		const run3k = useCallback(
+			() => {
+				setRows(buildData(3000));
+				setSelected(undefined);
+			},
+			[],
+			_h$3
+		);
+
+		const run5k = useCallback(
+			() => {
+				setRows(buildData(5000));
+				setSelected(undefined);
+			},
+			[],
+			_h$4
+		);
+
+		const runLots = useCallback(
+			() => {
+				setRows(buildData(10000));
+				setSelected(undefined);
+			},
+			[],
+			_h$5
+		);
+
+		const run20k = useCallback(
+			() => {
+				setRows(buildData(20000));
+				setSelected(undefined);
+			},
+			[],
+			_h$6
+		);
+
+		const run30k = useCallback(
+			() => {
+				setRows(buildData(30000));
+				setSelected(undefined);
+			},
+			[],
+			_h$7
+		);
+
+		const add = useCallback(
+			() => {
+				setRows((prev) => prev.concat(buildData(1000)));
+			},
+			[],
+			_h$8
+		);
+
+		const update = useCallback(
+			() => {
+				setRows((prev) => {
+					const next = prev.slice();
+
+					for (let i = 0; i < next.length; i += 10) {
+						next[i] = { id: next[i].id, label: `${next[i].label} !!!` };
+					}
+
+					return next;
+				});
+			},
+			[],
+			_h$9
+		);
+
+		const select = useCallback(
+			(id) => {
+				setSelected(id);
+			},
+			[],
+			_h$10
+		);
+
+		const remove = useCallback(
+			(id) => {
+				setRows((prev) => {
+					const idx = prev.findIndex((d) => d.id === id);
+
+					return prev.slice(0, idx).concat(prev.slice(idx + 1));
+				});
+			},
+			[],
+			_h$11
+		);
+
+		const swapRows = useCallback(
+			() => {
+				setRows((prev) => {
+					if (prev.length <= 998) return prev;
+
+					const next = prev.slice();
+					const d1 = next[1];
+
+					next[1] = next[998];
+					next[998] = d1;
+
+					return next;
+				});
+			},
+			[],
+			_h$12
+		);
+
+		const clear = useCallback(
+			() => {
+				setRows([]);
+				setSelected(undefined);
+			},
+			[],
+			_h$13
+		);
+
+		const idsRef = useRef([], _h$14);
+
+		idsRef.current = rows.map((r) => r.id);
+
+		const stormUpdate = useCallback(
+			() => {
+				runStorm(STORM_UPDATE_TICKS, (t) => setRows((prev) => prev.map((r, i) => i % 10 === 0 ? { id: r.id, label: 'bench ' + t } : r)));
+			},
+			[],
+			_h$15
+		);
+
+		const stormSelect = useCallback(
+			() => {
+				runStorm(STORM_SELECT_TICKS, (t) => {
+					const ids = idsRef.current;
+
+					setSelected(t < STORM_SELECT_TICKS ? ids[t * 97 % ids.length] : ids[0]);
+				});
+			},
+			[],
+			_h$16
+		);
+
+		return __octaneUniversalValue(__octaneUniversalPlan2, [
+			'Octane UI Benchmark on Lynx · ready',
+			run,
+			'Create 1,000 rows',
+			run3k,
+			'Create 3,000 rows',
+			run5k,
+			'Create 5,000 rows',
+			runLots,
+			'Create 10,000 rows',
+			run20k,
+			'Create 20,000 rows',
+			run30k,
+			'Create 30,000 rows',
+			add,
+			'Append 1,000 rows',
+			update,
+			'Update every 10th row',
+			swapRows,
+			'Swap Rows',
+			clear,
+			'Clear',
+			stormUpdate,
+			'Update storm',
+			stormSelect,
+			'Select storm',
+			__octaneUniversalFor(rows, (row, __octaneUniversalIndex) => row.id, (row, __octaneUniversalIndex) => {
+				return __octaneUniversalValue(__octaneUniversalPlan1, [
+					__octaneUniversalComponent('lynx', Row, __octaneUniversalProps([
+						["set", "row", row],
+						["set", "isSelected", selected === row.id],
+						["set", "onSelect", select],
+						["set", "onRemove", remove]
+					]))
+				]);
+			})
+		]);
+	},
+	{ "module": "@octanejs/lynx/renderer" }
+);
+
+===== MAIN-THREAD (kind=compile) =====
+
+import { hookSlots as _$hookSlots, useCallback, useRef, useState } from '@octanejs/lynx/main-renderer';
+
+const _hs$ = /* @__PURE__ */ _$hookSlots(17);
+const _h$0 = /* @__PURE__ */ Symbol(_hs$);
+const _h$1 = /* @__PURE__ */ Symbol(_hs$ + 1);
+const _h$2 = /* @__PURE__ */ Symbol(_hs$ + 2);
+const _h$3 = /* @__PURE__ */ Symbol(_hs$ + 3);
+const _h$4 = /* @__PURE__ */ Symbol(_hs$ + 4);
+const _h$5 = /* @__PURE__ */ Symbol(_hs$ + 5);
+const _h$6 = /* @__PURE__ */ Symbol(_hs$ + 6);
+const _h$7 = /* @__PURE__ */ Symbol(_hs$ + 7);
+const _h$8 = /* @__PURE__ */ Symbol(_hs$ + 8);
+const _h$9 = /* @__PURE__ */ Symbol(_hs$ + 9);
+const _h$10 = /* @__PURE__ */ Symbol(_hs$ + 10);
+const _h$11 = /* @__PURE__ */ Symbol(_hs$ + 11);
+const _h$12 = /* @__PURE__ */ Symbol(_hs$ + 12);
+const _h$13 = /* @__PURE__ */ Symbol(_hs$ + 13);
+const _h$14 = /* @__PURE__ */ Symbol(_hs$ + 14);
+const _h$15 = /* @__PURE__ */ Symbol(_hs$ + 15);
+const _h$16 = /* @__PURE__ */ Symbol(_hs$ + 16);
+
+import {
+	defineUniversalComponent as __octaneDefineUniversalComponent,
+	universalPlan as __octaneUniversalPlan,
+	universalValue as __octaneUniversalValue,
+	universalComponent as __octaneUniversalComponent,
+	universalProps as __octaneUniversalProps,
+	universalIf as __octaneUniversalIf,
+	universalSwitch as __octaneUniversalSwitch,
+	universalFor as __octaneUniversalFor,
+	universalTry as __octaneUniversalTry,
+	universalChildren as __octaneUniversalChildren,
+	universalContext as __octaneUniversalContext,
+	universalActivity as __octaneUniversalActivity,
+	firstScreenEvent as __octaneFirstScreenEvent
+} from '@octanejs/lynx/main-renderer';
+
+const __octaneUniversalPlan0 = __octaneUniversalPlan('lynx', {
+	"kind": "host",
+	"type": "view",
+	"bindings": [["class", 0]],
+	"children": [
+		{
+			"kind": "host",
+			"type": "text",
+			"props": { "class": "col-id" },
+			"children": [{ "kind": "slot", "slot": 1 }]
+		},
+
+		{
+			"kind": "host",
+			"type": "text",
+			"props": { "class": "col-label" },
+			"bindings": [["bindtap", 2]],
+			"children": [{ "kind": "slot", "slot": 3 }]
+		},
+
+		{
+			"kind": "host",
+			"type": "text",
+			"props": { "class": "col-remove" },
+			"bindings": [["bindtap", 4]],
+			"children": [{ "kind": "slot", "slot": 5 }]
+		}
+	]
+});
+
+const __octaneUniversalPlan1 = __octaneUniversalPlan('lynx', { "kind": "slot", "slot": 0 });
+
+const __octaneUniversalPlan2 = __octaneUniversalPlan('lynx', {
+	"kind": "host",
+	"type": "view",
+	"props": { "class": "page" },
+	"children": [
+		{
+			"kind": "host",
+			"type": "text",
+			"props": { "class": "title" },
+			"children": [{ "kind": "slot", "slot": 0 }]
+		},
+
+		{
+			"kind": "host",
+			"type": "view",
+			"props": { "class": "toolbar" },
+			"children": [
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 1]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 2 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 3]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 4 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 5]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 6 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 7]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 8 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 9]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 10 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 11]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 12 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 13]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 14 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 15]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 16 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 17]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 18 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 19]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 20 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 21]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 22 }]
+						}
+					]
+				},
+
+				{
+					"kind": "host",
+					"type": "view",
+					"props": { "class": "btn" },
+					"bindings": [["bindtap", 23]],
+					"children": [
+						{
+							"kind": "host",
+							"type": "text",
+							"props": { "class": "btn-text" },
+							"children": [{ "kind": "slot", "slot": 24 }]
+						}
+					]
+				}
+			]
+		},
+
+		{
+			"kind": "host",
+			"type": "view",
+			"props": { "class": "rows" },
+			"children": [{ "kind": "slot", "slot": 25 }]
+		}
+	]
+});
+
+import { buildData, buildDataSeeded } from './data.js';
+
+const INITIAL_ROWS = __BENCH_AUTOROWS__ > 0 ? buildDataSeeded(__BENCH_AUTOROWS__) : [];
+const STORM_UPDATE_TICKS = 50;
+const STORM_SELECT_TICKS = 30;
+const _stormChannel = new MessageChannel();
+let _stormPending = null;
+
+_stormChannel.port1.onmessage = () => {
+	const cb = _stormPending;
+
+	_stormPending = null;
+
+	if (cb) cb();
+};
+
+function nextMacrotask(cb) {
+	_stormPending = cb;
+	_stormChannel.port2.postMessage(0);
+}
+
+function runStorm(ticks, step) {
+	let t = 0;
+
+	const tick = () => {
+		t += 1;
+		step(t);
+
+		if (t < ticks) nextMacrotask(tick);
+	};
+
+	nextMacrotask(tick);
+}
+
+const Row = __octaneDefineUniversalComponent(
+	'lynx',
+	function Row(props) {
+		return __octaneUniversalValue(__octaneUniversalPlan0, [
+			['row', props.isSelected && 'danger'],
+			String(props.row.id),
+			__octaneFirstScreenEvent,
+			props.row.label,
+			__octaneFirstScreenEvent,
+			'x'
+		]);
+	},
+	{ "module": "@octanejs/lynx/main-renderer" }
+);
+
+export const App = __octaneDefineUniversalComponent(
+	'lynx',
+	function App() {
+		const [rows, setRows] = useState(INITIAL_ROWS, _h$0);
+		const [selected, setSelected] = useState(undefined, _h$1);
+
+		const run = useCallback(
+			() => {
+				setRows(buildData());
+				setSelected(undefined);
+			},
+			[],
+			_h$2
+		);
+
+		const run3k = useCallback(
+			() => {
+				setRows(buildData(3000));
+				setSelected(undefined);
+			},
+			[],
+			_h$3
+		);
+
+		const run5k = useCallback(
+			() => {
+				setRows(buildData(5000));
+				setSelected(undefined);
+			},
+			[],
+			_h$4
+		);
+
+		const runLots = useCallback(
+			() => {
+				setRows(buildData(10000));
+				setSelected(undefined);
+			},
+			[],
+			_h$5
+		);
+
+		const run20k = useCallback(
+			() => {
+				setRows(buildData(20000));
+				setSelected(undefined);
+			},
+			[],
+			_h$6
+		);
+
+		const run30k = useCallback(
+			() => {
+				setRows(buildData(30000));
+				setSelected(undefined);
+			},
+			[],
+			_h$7
+		);
+
+		const add = useCallback(
+			() => {
+				setRows((prev) => prev.concat(buildData(1000)));
+			},
+			[],
+			_h$8
+		);
+
+		const update = useCallback(
+			() => {
+				setRows((prev) => {
+					const next = prev.slice();
+
+					for (let i = 0; i < next.length; i += 10) {
+						next[i] = { id: next[i].id, label: `${next[i].label} !!!` };
+					}
+
+					return next;
+				});
+			},
+			[],
+			_h$9
+		);
+
+		const select = useCallback(
+			(id) => {
+				setSelected(id);
+			},
+			[],
+			_h$10
+		);
+
+		const remove = useCallback(
+			(id) => {
+				setRows((prev) => {
+					const idx = prev.findIndex((d) => d.id === id);
+
+					return prev.slice(0, idx).concat(prev.slice(idx + 1));
+				});
+			},
+			[],
+			_h$11
+		);
+
+		const swapRows = useCallback(
+			() => {
+				setRows((prev) => {
+					if (prev.length <= 998) return prev;
+
+					const next = prev.slice();
+					const d1 = next[1];
+
+					next[1] = next[998];
+					next[998] = d1;
+
+					return next;
+				});
+			},
+			[],
+			_h$12
+		);
+
+		const clear = useCallback(
+			() => {
+				setRows([]);
+				setSelected(undefined);
+			},
+			[],
+			_h$13
+		);
+
+		const idsRef = useRef([], _h$14);
+
+		idsRef.current = rows.map((r) => r.id);
+
+		const stormUpdate = useCallback(
+			() => {
+				runStorm(STORM_UPDATE_TICKS, (t) => setRows((prev) => prev.map((r, i) => i % 10 === 0 ? { id: r.id, label: 'bench ' + t } : r)));
+			},
+			[],
+			_h$15
+		);
+
+		const stormSelect = useCallback(
+			() => {
+				runStorm(STORM_SELECT_TICKS, (t) => {
+					const ids = idsRef.current;
+
+					setSelected(t < STORM_SELECT_TICKS ? ids[t * 97 % ids.length] : ids[0]);
+				});
+			},
+			[],
+			_h$16
+		);
+
+		return __octaneUniversalValue(__octaneUniversalPlan2, [
+			'Octane UI Benchmark on Lynx · ready',
+			run == null ? undefined : __octaneFirstScreenEvent,
+			'Create 1,000 rows',
+			run3k == null ? undefined : __octaneFirstScreenEvent,
+			'Create 3,000 rows',
+			run5k == null ? undefined : __octaneFirstScreenEvent,
+			'Create 5,000 rows',
+			runLots == null ? undefined : __octaneFirstScreenEvent,
+			'Create 10,000 rows',
+			run20k == null ? undefined : __octaneFirstScreenEvent,
+			'Create 20,000 rows',
+			run30k == null ? undefined : __octaneFirstScreenEvent,
+			'Create 30,000 rows',
+			add == null ? undefined : __octaneFirstScreenEvent,
+			'Append 1,000 rows',
+			update == null ? undefined : __octaneFirstScreenEvent,
+			'Update every 10th row',
+			swapRows == null ? undefined : __octaneFirstScreenEvent,
+			'Swap Rows',
+			clear == null ? undefined : __octaneFirstScreenEvent,
+			'Clear',
+			stormUpdate == null ? undefined : __octaneFirstScreenEvent,
+			'Update storm',
+			stormSelect == null ? undefined : __octaneFirstScreenEvent,
+			'Select storm',
+			__octaneUniversalFor(rows, (row, __octaneUniversalIndex) => row.id, (row, __octaneUniversalIndex) => {
+				return __octaneUniversalValue(__octaneUniversalPlan1, [
+					__octaneUniversalComponent('lynx', Row, __octaneUniversalProps([
+						["set", "row", row],
+						["set", "isSelected", selected === row.id],
+						["set", "onSelect", select],
+						["set", "onRemove", remove]
+					]))
+				]);
+			})
+		]);
+	},
+	{ "module": "@octanejs/lynx/main-renderer" }
+);

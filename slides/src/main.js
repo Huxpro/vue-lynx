@@ -532,7 +532,11 @@ function last() {
 // We use this in BOTH the main deck and the embed iframes so
 // that "go to slide N" arrives in the right window.
 // =========================================================
-const channel = new BroadcastChannel('vue-lynx-deck');
+// A sibling deck page (e.g. compare.html) isolates its speaker/nav sync by
+// declaring <html data-deck-channel="…">; the main deck keeps the default.
+const channel = new BroadcastChannel(
+  document.documentElement.dataset.deckChannel || 'vue-lynx-deck',
+);
 
 function broadcastState() {
   if (embedMode) return;
@@ -939,6 +943,11 @@ const I18N_SELECTOR = [
   '.node__cap', '.xwire__count', '.xwire__payload',
 ].map((s) => `.slide ${s}`).join(', ') + ', .gate-legend span';
 
+// A deck page authored directly in its final language (compare.html) opts out
+// of the EN→ZH swap with <html data-i18n-off> — the ZH/ZH_NOTES tables are
+// index.html-shaped (notes are indexed by slide order) and must not apply.
+const I18N_OFF = document.documentElement.hasAttribute('data-i18n-off');
+
 let i18nEls = [];
 let noteEls = [];
 function initI18n() {
@@ -965,12 +974,12 @@ function translateSlide(slide, slideIndex) {
   if (!slide || !i18nEls.length) return;
   i18nEls.forEach(({ el, en, key }) => {
     if (!slide.contains(el)) return;
-    const zh = ZH[key];
+    const zh = I18N_OFF ? null : ZH[key];
     el.innerHTML = currentLang === 'zh' && zh != null ? zh : en;
   });
   const note = noteEls[slideIndex];
   if (note && slide.contains(note.el)) {
-    const zh = ZH_NOTES[slideIndex];
+    const zh = I18N_OFF ? null : ZH_NOTES[slideIndex];
     note.el.innerHTML = currentLang === 'zh' && zh != null ? zh : note.en;
   }
   if (slide.querySelector('.arch-mount')) initArch(currentLang, slide);
@@ -989,7 +998,7 @@ function applyLang(lang, opts = {}) {
   // Gate-legend lives outside slides.
   i18nEls.forEach(({ el, en, key }) => {
     if (el.closest('.slide')) return;
-    const zh = ZH[key];
+    const zh = I18N_OFF ? null : ZH[key];
     el.innerHTML = currentLang === 'zh' && zh != null ? zh : en;
   });
   setVerbLang(currentLang);
