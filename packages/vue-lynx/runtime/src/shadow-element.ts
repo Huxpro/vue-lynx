@@ -291,6 +291,8 @@ export class ShadowElement {
   declare _eventPropSigns?: Map<string, string>;
   /** Sparse marker for subtree teardown deferred until the ops batch closes. */
   declare _pendingRelease?: boolean;
+  /** Sparse marker for an id removed from the registry while detached. */
+  declare _pendingIdRestore?: boolean;
   /**
    * Inert nodes are template prototypes created by the Vapor HTML parser;
    * they exist only on the Background Thread and never emit ops. Cloning an

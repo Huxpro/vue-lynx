@@ -214,6 +214,18 @@ describe('event-prop subtree teardown', () => {
     expect(nodeOps.querySelector('#extracted-target')).toBe(child);
   });
 
+  it('does not change the existing winner for duplicate ids on ordinary insert', () => {
+    const parent = new ShadowElement('view');
+    const first = new ShadowElement('view');
+    const second = new ShadowElement('view');
+    first.setAttribute('id', 'duplicate');
+    second.setAttribute('id', 'duplicate');
+
+    parent.appendChild(first);
+
+    expect(nodeOps.querySelector('#duplicate')).toBe(second);
+  });
+
   it('does not resolve a Teleport target removed earlier in the same patch', async () => {
     const showTarget = ref(true);
     const showTeleport = ref(false);

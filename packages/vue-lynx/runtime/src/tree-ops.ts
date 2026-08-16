@@ -33,7 +33,10 @@ const removedRoots: ShadowElement[] = [];
 let pendingReleaseCount = 0;
 
 function unregisterSubtreeIds(el: ShadowElement): void {
-  if (el._id && idRegistry.get(el._id) === el) idRegistry.delete(el._id);
+  if (el._id && idRegistry.get(el._id) === el) {
+    idRegistry.delete(el._id);
+    el._pendingIdRestore = true;
+  }
   let child = el.firstChild;
   while (child) {
     unregisterSubtreeIds(child);
@@ -42,7 +45,10 @@ function unregisterSubtreeIds(el: ShadowElement): void {
 }
 
 function registerSubtreeIds(el: ShadowElement): void {
-  if (el._id) idRegistry.set(el._id, el);
+  if (el._pendingIdRestore) {
+    el._pendingIdRestore = false;
+    if (el._id) idRegistry.set(el._id, el);
+  }
   let child = el.firstChild;
   while (child) {
     registerSubtreeIds(child);
@@ -58,6 +64,7 @@ function registerSubtreeIds(el: ShadowElement): void {
  */
 export function releaseSubtree(el: ShadowElement): void {
   if (el._id && idRegistry.get(el._id) === el) idRegistry.delete(el._id);
+  delete el._pendingIdRestore;
   if (el._eventPropSigns) releaseEventProps(el);
   el._releaseOwnEvents();
   for (const hole of el._tplHoles ?? []) {
