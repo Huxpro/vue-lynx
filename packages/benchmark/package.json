@@ -16,7 +16,8 @@
     "bench:unified:smoke": "node harness/unified.mjs --campaign smoke",
     "bench:unified:full": "node harness/unified.mjs --campaign full",
     "bench:synthesize": "node harness/synthesize.mjs",
-    "bench:report": "node harness/report-unified.mjs"
+    "bench:report": "node harness/report-unified.mjs",
+    "test:native-bench": "node --test shared/native-bench.test.mjs"
   },
   "dependencies": {
     "vue-lynx": "workspace:*"
