@@ -60,6 +60,9 @@ export function releaseSubtree(el: ShadowElement): void {
   if (el._id && idRegistry.get(el._id) === el) idRegistry.delete(el._id);
   if (el._eventPropSigns) releaseEventProps(el);
   el._releaseOwnEvents();
+  for (const hole of el._tplHoles ?? []) {
+    releaseSubtree(hole);
+  }
   let child = el.firstChild;
   while (child) {
     releaseSubtree(child);
@@ -79,7 +82,6 @@ function cancelSubtreeRelease(el: ShadowElement): void {
   if (!el._pendingRelease) return;
   el._pendingRelease = false;
   pendingReleaseCount--;
-  registerSubtreeIds(el);
 }
 
 function releaseRemovedRoots(): void {
@@ -322,6 +324,7 @@ export function insertNode(
 
   // Always update the shadow tree (Vue needs it for internal diffing).
   parent._link(child, anchor ?? null);
+  registerSubtreeIds(child);
 
   // Shadow-only anchors: comments always, text while empty or under <list>.
   if (child.tag === '#comment') return;

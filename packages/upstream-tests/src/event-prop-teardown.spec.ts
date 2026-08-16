@@ -196,6 +196,24 @@ describe('event-prop subtree teardown', () => {
     expect(listener).toHaveBeenCalledTimes(1);
   });
 
+  it('restores descendant ids reparented from a pending removed ancestor', () => {
+    const source = new ShadowElement('view');
+    const target = new ShadowElement('view');
+    const root = new ShadowElement('view');
+    const child = new ShadowElement('view');
+    source.appendChild(root);
+    root.appendChild(child);
+    child.setAttribute('id', 'extracted-target');
+    takeOps();
+
+    root.remove();
+    target.appendChild(child);
+
+    expect(nodeOps.querySelector('#extracted-target')).toBe(child);
+    takeOps();
+    expect(nodeOps.querySelector('#extracted-target')).toBe(child);
+  });
+
   it('does not resolve a Teleport target removed earlier in the same patch', async () => {
     const showTarget = ref(true);
     const showTeleport = ref(false);
@@ -220,6 +238,30 @@ describe('event-prop subtree teardown', () => {
     expect(nodeOps.querySelector('#target')).toBeNull();
     expect(target.parent).toBeNull();
     expect(target.firstChild).toBeNull();
+  });
+
+  it('releases event owners stored in element-template holes', () => {
+    const parent = new ShadowElement('view');
+    const root = new ShadowElement('view');
+    const eventHole = new ShadowElement('#tpl-hole');
+    const handler = vi.fn();
+    root._tplHoles = [eventHole];
+    parent.appendChild(root);
+    const sign = bindSign(
+      paths[0]![1],
+      eventHole,
+      'onTap',
+      'tap',
+      handler,
+    );
+
+    root.remove();
+    takeOps();
+
+    expect(globalCounts()).toEqual([0, 0, 0]);
+    expect('_eventPropSigns' in eventHole).toBe(false);
+    publishEvent(sign, {});
+    expect(handler).not.toHaveBeenCalled();
   });
 
   it.each(paths)(
