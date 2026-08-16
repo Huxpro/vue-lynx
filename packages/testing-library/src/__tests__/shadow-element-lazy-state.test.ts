@@ -62,33 +62,43 @@ describe('ShadowElement lazy class state', () => {
   it('copy-on-writes scoped CSS and preserves removal isolation', () => {
     const first = new ShadowElement('view');
     const second = new ShadowElement('view');
-    const shared = first._scopeClasses;
 
     first.setAttribute('data-v-first', '');
     first.setAttribute('data-v-first', '');
-    expect(first._scopeClasses).not.toBe(shared);
-    expect(second._scopeClasses).toBe(shared);
+    expect(first._getScopeClasses()).not.toBe(second._getScopeClasses());
+    expect(second._getScopeClasses().size).toBe(0);
     expect(resolveClass(first)).toBe('data-v-first');
     expect(takeOps().filter((value) => value === OP.SET_CLASS)).toHaveLength(1);
 
     first.removeAttribute('data-v-first');
     expect(first._scopeClasses.size).toBe(0);
-    expect(second._scopeClasses).toBe(shared);
+    expect(second._getScopeClasses().size).toBe(0);
   });
 
   it('copy-on-writes transition classes and removes from owned state', () => {
     const first = new ShadowElement('view');
     const second = new ShadowElement('view');
-    const shared = first._transitionClasses;
 
     removeTransitionClass(first, 'v-enter-from');
-    expect(first._transitionClasses).toBe(shared);
+    expect(first._getTransitionClasses().size).toBe(0);
     addTransitionClass(first, 'v-enter-from');
-    expect(first._transitionClasses).not.toBe(shared);
-    expect(second._transitionClasses).toBe(shared);
+    expect(first._getTransitionClasses()).not.toBe(second._getTransitionClasses());
+    expect(second._getTransitionClasses().size).toBe(0);
     expect(resolveClass(first)).toBe('v-enter-from');
     removeTransitionClass(first, 'v-enter-from');
     expect(first._transitionClasses.size).toBe(0);
+  });
+
+  it('preserves direct transition-hook mutation without leaking to siblings', () => {
+    const first = new ShadowElement('view');
+    const second = new ShadowElement('view');
+
+    first._transitionClasses.add('hook-before-enter');
+    addTransitionClass(first, 'v-enter-from');
+
+    expect(resolveClass(first)).toBe('hook-before-enter v-enter-from');
+    expect(resolveClass(second)).toBe('');
+    expect(second._getTransitionClasses().size).toBe(0);
   });
 
   it('isolates granular clone scope state', () => {
