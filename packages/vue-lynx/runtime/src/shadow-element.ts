@@ -103,6 +103,7 @@ const STYLE_METHODS = new Set([
   'removeProperty',
   'item',
 ]);
+const EMPTY_STYLE: Record<string, unknown> = Object.freeze({});
 
 function createStyleFacade(el: ShadowElement): Record<string, unknown> {
   const methods = {
@@ -203,6 +204,9 @@ function createClassList(el: ShadowElement): ClassListFacade {
   };
 }
 
+const EMPTY_SCOPE_CLASSES: ReadonlySet<string> = new Set();
+const EMPTY_TRANSITION_CLASSES: ReadonlySet<string> = new Set();
+
 export class ShadowElement {
   static nextUid = 2; // 1 is reserved for the page root
 
@@ -228,7 +232,17 @@ export class ShadowElement {
 
   // Cached style object (last value passed to patchProp 'style').
   // Used by vShow to merge display:none without losing the original styles.
-  _style: Record<string, unknown> = {};
+  private _styleState: Record<string, unknown> = EMPTY_STYLE;
+  get _style(): Record<string, unknown> {
+    if (this._styleState === EMPTY_STYLE) this._styleState = {};
+    return this._styleState;
+  }
+  set _style(style: Record<string, unknown>) {
+    this._styleState = style;
+  }
+  _getStyle(): Record<string, unknown> {
+    return this._styleState;
+  }
   // Set to true by vShow when the element should be hidden.
   _vShowHidden = false;
 
@@ -238,8 +252,26 @@ export class ShadowElement {
   // _transitionClasses: classes added/removed by <Transition> hooks.
   // The effective class sent to MT = base + scopes + transitions.
   _baseClass = '';
-  _scopeClasses: Set<string> = new Set();
-  _transitionClasses: Set<string> = new Set();
+  declare private _scopeClassesState?: Set<string>;
+  get _scopeClasses(): Set<string> {
+    return this._scopeClassesState ??= new Set();
+  }
+  set _scopeClasses(classes: Set<string>) {
+    this._scopeClassesState = classes;
+  }
+  _getScopeClasses(): ReadonlySet<string> {
+    return this._scopeClassesState ?? EMPTY_SCOPE_CLASSES;
+  }
+  declare private _transitionClassesState?: Set<string>;
+  get _transitionClasses(): Set<string> {
+    return this._transitionClassesState ??= new Set();
+  }
+  set _transitionClasses(classes: Set<string>) {
+    this._transitionClassesState = classes;
+  }
+  _getTransitionClasses(): ReadonlySet<string> {
+    return this._transitionClassesState ?? EMPTY_TRANSITION_CLASSES;
+  }
   // Generation counter bumped each time whenTransitionEnds() starts waiting
   // on this element. Lets a stale/superseded finish() (fired by the fallback
   // timeout after a newer transition has already started) detect it's stale
@@ -635,11 +667,15 @@ export class ShadowElement {
     } else {
       pushOp(OP.CREATE, clone.uid, this.tag);
       clone._baseClass = this._baseClass;
-      clone._scopeClasses = new Set(this._scopeClasses);
+      const scopeClasses = this._getScopeClasses();
+      if (scopeClasses.size > 0) {
+        clone._scopeClasses = new Set(scopeClasses);
+      }
       const resolvedClass = resolveClass(clone);
       if (resolvedClass) pushOp(OP.SET_CLASS, clone.uid, resolvedClass);
-      if (Object.keys(this._style).length > 0) {
-        clone._style = { ...this._style };
+      const style = this._getStyle();
+      if (Object.keys(style).length > 0) {
+        clone._style = { ...style };
         pushOp(OP.SET_STYLE, clone.uid, clone._style);
       }
       if (this._attrs) {
@@ -806,7 +842,7 @@ export class ShadowElement {
         scheduleFlush();
       }
     } else if (key === 'style') {
-      if (Object.keys(this._style).length === 0) return;
+      if (Object.keys(this._getStyle()).length === 0) return;
       this._style = {};
       if (!this._inert) pushStyleOp(this);
     } else if (key === 'id') {
@@ -817,7 +853,7 @@ export class ShadowElement {
         setIdAttr(this, null);
       }
     } else if (key.startsWith('data-v-')) {
-      if (!this._scopeClasses.delete(key)) return;
+      if (!this._removeScopeClass(key)) return;
       if (!this._inert) {
         pushOp(OP.SET_CLASS, this.uid, resolveClass(this));
         scheduleFlush();
@@ -836,25 +872,41 @@ export class ShadowElement {
     if (key === 'class') return this._baseClass || null;
     if (key === 'id') return this._id ?? null;
     if (key === 'style') {
-      const css = serializeInlineStyle(this._style);
+      const css = serializeInlineStyle(this._getStyle());
       return css === '' ? null : css;
     }
     return this._attrs?.get(key) ?? null;
   }
 
   hasAttribute(key: string): boolean {
-    if (key.startsWith('data-v-')) return this._scopeClasses.has(key);
+    if (key.startsWith('data-v-')) return this._getScopeClasses().has(key);
     return this.getAttribute(key) != null;
   }
 
   /** Add a Vue scope token without allowing duplicate class emission. */
   _addScopeClass(scopeClass: string): void {
-    if (this._scopeClasses.has(scopeClass)) return;
-    this._scopeClasses.add(scopeClass);
+    const scopeClasses = this._scopeClasses;
+    if (scopeClasses.has(scopeClass)) return;
+    scopeClasses.add(scopeClass);
     if (!this._inert) {
       pushOp(OP.SET_CLASS, this.uid, resolveClass(this));
       scheduleFlush();
     }
+  }
+
+  /** @internal */
+  _removeScopeClass(scopeClass: string): boolean {
+    return this._scopeClassesState?.delete(scopeClass) ?? false;
+  }
+
+  /** @internal */
+  _addTransitionClass(transitionClass: string): void {
+    this._transitionClasses.add(transitionClass);
+  }
+
+  /** @internal */
+  _removeTransitionClass(transitionClass: string): boolean {
+    return this._transitionClassesState?.delete(transitionClass) ?? false;
   }
 
   // --- class / style -------------------------------------------------------------
@@ -1124,7 +1176,8 @@ function buildStructure(
   const props: TemplateNodeProps = {};
   const resolvedClass = resolveClass(proto);
   if (resolvedClass) props.c = resolvedClass;
-  if (hasAnyKey(proto._style)) props.s = { ...proto._style };
+  const style = proto._getStyle();
+  if (hasAnyKey(style)) props.s = { ...style };
   if (proto._attrs && proto._attrs.size > 0) props.a = [...proto._attrs];
   if (proto._id !== undefined) props.i = proto._id;
 
@@ -1172,8 +1225,12 @@ function buildShadowClone(
   }
 
   clone._baseClass = proto._baseClass;
-  clone._scopeClasses = new Set(proto._scopeClasses);
-  if (hasAnyKey(proto._style)) clone._style = { ...proto._style };
+  const scopeClasses = proto._getScopeClasses();
+  if (scopeClasses.size > 0) {
+    clone._scopeClasses = new Set(scopeClasses);
+  }
+  const style = proto._getStyle();
+  if (hasAnyKey(style)) clone._style = { ...style };
   if (proto._attrs) clone._attrs = new Map(proto._attrs);
   if (proto._id !== undefined) {
     clone._id = proto._id;
@@ -1256,8 +1313,12 @@ function buildShadowCloneSparse(
   }
 
   clone._baseClass = proto._baseClass;
-  clone._scopeClasses = new Set(proto._scopeClasses);
-  if (hasAnyKey(proto._style)) clone._style = { ...proto._style };
+  const scopeClasses = proto._getScopeClasses();
+  if (scopeClasses.size > 0) {
+    clone._scopeClasses = new Set(scopeClasses);
+  }
+  const style = proto._getStyle();
+  if (hasAnyKey(style)) clone._style = { ...style };
   if (proto._attrs) clone._attrs = new Map(proto._attrs);
   if (proto._id !== undefined) {
     clone._id = proto._id;

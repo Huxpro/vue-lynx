@@ -275,7 +275,10 @@ export { createPageRoot } from './shadow-element.js';
 
 function setVShowDisplay(el: ShadowElement, value: unknown): void {
   el._vShowHidden = !value;
-  const style = el._vShowHidden ? { ...el._style, display: 'none' } : el._style;
+  const currentStyle = el._getStyle();
+  const style = el._vShowHidden
+    ? { ...currentStyle, display: 'none' }
+    : currentStyle;
   pushOp(OP.SET_STYLE, el.uid, style);
   scheduleFlush();
 }

@@ -119,8 +119,8 @@ export function resetTreeOpsState(): void {
 export function resolveClass(el: ShadowElement): string {
   const parts: string[] = [];
   if (el._baseClass) parts.push(el._baseClass);
-  for (const cls of el._scopeClasses) parts.push(cls);
-  for (const cls of el._transitionClasses) parts.push(cls);
+  for (const cls of el._getScopeClasses()) parts.push(cls);
+  for (const cls of el._getTransitionClasses()) parts.push(cls);
   return parts.join(' ');
 }
 
@@ -130,9 +130,10 @@ export function resolveClass(el: ShadowElement): string {
 
 /** Emit SET_STYLE for the element's current style, respecting v-show. */
 export function pushStyleOp(el: ShadowElement): void {
+  const currentStyle = el._getStyle();
   const effective = el._vShowHidden
-    ? { ...el._style, display: 'none' }
-    : el._style;
+    ? { ...currentStyle, display: 'none' }
+    : currentStyle;
   pushOp(OP.SET_STYLE, el.uid, effective);
   scheduleFlush();
 }
