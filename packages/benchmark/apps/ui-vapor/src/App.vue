@@ -14,7 +14,7 @@ import type { RowData } from '../../../shared/data'
 const MODE = __BENCH_MODE__
 
 const selected = shallowRef<number | undefined>(undefined)
-const rows = shallowRef<RowData[]>([])
+const rows = shallowRef<RowData[]>(buildData(__BENCH_AUTOROWS__))
 const ready = ref('ready')
 
 function run() {

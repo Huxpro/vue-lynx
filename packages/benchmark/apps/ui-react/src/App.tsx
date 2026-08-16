@@ -62,7 +62,7 @@ const Row = memo(function Row({ row, isSelected, onSelect, onRemove }: RowProps)
 });
 
 export function App() {
-  const [rows, setRows] = useState<RowData[]>([]);
+  const [rows, setRows] = useState<RowData[]>(() => buildData(__BENCH_AUTOROWS__));
   const [selected, setSelected] = useState<number | undefined>(undefined);
 
   const run = useCallback(() => {
