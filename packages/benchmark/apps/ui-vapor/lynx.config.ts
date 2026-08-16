@@ -21,6 +21,11 @@ import { pluginVueLynx } from 'vue-lynx/plugin';
  *   frame via the compiled Code-Template create(); measurable on web
  */
 const cell = process.env.BENCH_CELL ?? 'off';
+const autoRowsRaw = process.env.BENCH_AUTOROWS;
+const autoRows = autoRowsRaw === undefined ? 0 : Number(autoRowsRaw);
+if (autoRowsRaw?.trim() === '' || !Number.isSafeInteger(autoRows) || autoRows < 0) {
+  throw new Error('BENCH_AUTOROWS must be a non-negative safe integer');
+}
 const enableIFR =
   cell === 'ifr' || cell === 'ifr-dense' || cell === 'ifr-sparse'
   || cell === 'ifr-engine-et' || cell === 'ifr-code-paint';
@@ -58,6 +63,7 @@ export default defineConfig({
     },
     define: {
       __BENCH_MODE__: JSON.stringify(modeLabel),
+      __BENCH_AUTOROWS__: JSON.stringify(autoRows),
     },
   },
   plugins: [
