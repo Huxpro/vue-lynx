@@ -2,7 +2,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import {
   ShadowElement,
+  Teleport,
+  _render,
+  createPageRoot,
+  h,
+  nextTick,
   nodeOps,
+  ref,
   resetForTesting,
   takeOps,
 } from 'vue-lynx';
@@ -181,13 +187,39 @@ describe('event-prop subtree teardown', () => {
     expect(listener).toHaveBeenCalledTimes(1);
 
     nodeOps.remove(root);
-    expect(nodeOps.querySelector('#move-target')).toBe(child);
+    expect(nodeOps.querySelector('#move-target')).toBeNull();
     expect(globalCounts()).toEqual([1, 0, 1]);
     takeOps();
     expect(nodeOps.querySelector('#move-target')).toBeNull();
     expect(globalCounts()).toEqual([0, 0, 0]);
     publishEvent(sign, {});
     expect(listener).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not resolve a Teleport target removed earlier in the same patch', async () => {
+    const showTarget = ref(true);
+    const showTeleport = ref(false);
+    const root = createPageRoot();
+    const view = () =>
+      h('view', [
+        showTarget.value ? h('view', { id: 'target' }) : null,
+        showTeleport.value
+          ? h(Teleport, { to: '#target' }, h('text', 'teleported'))
+          : null,
+      ]);
+
+    _render(view(), root);
+    await nextTick();
+    const target = nodeOps.querySelector('#target')!;
+    expect(target).not.toBeNull();
+
+    showTarget.value = false;
+    showTeleport.value = true;
+    _render(view(), root);
+
+    expect(nodeOps.querySelector('#target')).toBeNull();
+    expect(target.parent).toBeNull();
+    expect(target.firstChild).toBeNull();
   });
 
   it.each(paths)(

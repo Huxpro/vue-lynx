@@ -32,6 +32,24 @@ export const idRegistry: Map<string, ShadowElement> = new Map();
 const removedRoots: ShadowElement[] = [];
 let pendingReleaseCount = 0;
 
+function unregisterSubtreeIds(el: ShadowElement): void {
+  if (el._id && idRegistry.get(el._id) === el) idRegistry.delete(el._id);
+  let child = el.firstChild;
+  while (child) {
+    unregisterSubtreeIds(child);
+    child = child.next;
+  }
+}
+
+function registerSubtreeIds(el: ShadowElement): void {
+  if (el._id) idRegistry.set(el._id, el);
+  let child = el.firstChild;
+  while (child) {
+    registerSubtreeIds(child);
+    child = child.next;
+  }
+}
+
 /**
  * Single-walk teardown for a subtree being removed: clean up the Teleport id
  * registry and release event-prop / Vapor addEventListener registrations.
@@ -51,6 +69,7 @@ export function releaseSubtree(el: ShadowElement): void {
 
 function queueSubtreeRelease(el: ShadowElement): void {
   if (el._pendingRelease) return;
+  unregisterSubtreeIds(el);
   el._pendingRelease = true;
   pendingReleaseCount++;
   removedRoots.push(el);
@@ -60,6 +79,7 @@ function cancelSubtreeRelease(el: ShadowElement): void {
   if (!el._pendingRelease) return;
   el._pendingRelease = false;
   pendingReleaseCount--;
+  registerSubtreeIds(el);
 }
 
 function releaseRemovedRoots(): void {
