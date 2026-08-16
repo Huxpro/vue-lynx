@@ -17,7 +17,7 @@
 
 import { releaseEventProps } from './event-props.js';
 import { scheduleFlush } from './flush.js';
-import { OP, pushOp } from './ops.js';
+import { OP, pushOp, setBeforeTakeOpsHook } from './ops.js';
 import {
   normalizeStylePropertyName,
   normalizeStyleValue,
@@ -29,15 +29,17 @@ import type { ShadowElement } from './shadow-element.js';
 // ---------------------------------------------------------------------------
 
 export const idRegistry: Map<string, ShadowElement> = new Map();
+const removedRoots: ShadowElement[] = [];
+let pendingReleaseCount = 0;
 
 /**
  * Single-walk teardown for a subtree being removed: clean up the Teleport id
  * registry and release event-prop / Vapor addEventListener registrations.
- * One recursion instead of two — removal is a hot path (clearing a 10k-row
- * list visits every node).
+ * One recursion instead of multiple independent teardown walks — removal is
+ * a hot path (clearing a 10k-row list visits every node).
  */
 export function releaseSubtree(el: ShadowElement): void {
-  if (el._id) idRegistry.delete(el._id);
+  if (el._id && idRegistry.get(el._id) === el) idRegistry.delete(el._id);
   if (el._eventPropSigns) releaseEventProps(el);
   el._releaseOwnEvents();
   let child = el.firstChild;
@@ -45,6 +47,40 @@ export function releaseSubtree(el: ShadowElement): void {
     releaseSubtree(child);
     child = child.next;
   }
+}
+
+function queueSubtreeRelease(el: ShadowElement): void {
+  if (el._pendingRelease) return;
+  el._pendingRelease = true;
+  pendingReleaseCount++;
+  removedRoots.push(el);
+}
+
+function cancelSubtreeRelease(el: ShadowElement): void {
+  if (!el._pendingRelease) return;
+  el._pendingRelease = false;
+  pendingReleaseCount--;
+}
+
+function releaseRemovedRoots(): void {
+  for (const root of removedRoots) {
+    if (!root._pendingRelease) continue;
+    root._pendingRelease = false;
+    pendingReleaseCount--;
+    releaseSubtree(root);
+  }
+  removedRoots.length = 0;
+}
+
+setBeforeTakeOpsHook(releaseRemovedRoots);
+
+export function getRemovedRootCountForTesting(): number {
+  return pendingReleaseCount;
+}
+
+export function resetTreeOpsState(): void {
+  releaseRemovedRoots();
+  idRegistry.clear();
 }
 
 // ---------------------------------------------------------------------------
@@ -249,6 +285,8 @@ export function insertNode(
   parent: ShadowElement,
   anchor?: ShadowElement | null,
 ): void {
+  cancelSubtreeRelease(child);
+
   // The parent may carry an aliased only-child #text node (Vapor template
   // clone fast path) that has no Main Thread counterpart yet — materialize
   // it before the child list changes structurally.
@@ -308,11 +346,11 @@ export function removeNode(child: ShadowElement): void {
     // component instances inside slots get proper unmount lifecycles.
     if (child._tplSlots) teardownTemplateSlotsHook?.(child);
     parent._unlink(child);
-    releaseSubtree(child);
+    queueSubtreeRelease(child);
     if (materialized) {
       pushRemoveOp(parent, child);
-      scheduleFlush();
     }
+    scheduleFlush();
     if (child.tag === '#text') child._mtInserted = false;
   }
 }
@@ -332,7 +370,7 @@ export function setElementTextContent(el: ShadowElement, text: string): void {
     const child = el.firstChild;
     const materialized = isMaterialized(child);
     el._unlink(child);
-    releaseSubtree(child);
+    queueSubtreeRelease(child);
     if (materialized) pushOp(OP.REMOVE, el.uid, child.uid);
     if (child.tag === '#text') child._mtInserted = false;
   }

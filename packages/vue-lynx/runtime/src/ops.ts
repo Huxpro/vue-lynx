@@ -5,6 +5,11 @@
 export { OP } from 'vue-lynx/internal/ops';
 
 let buffer: unknown[] = [];
+let beforeTakeOpsHook: (() => void) | null = null;
+
+export function setBeforeTakeOpsHook(hook: (() => void) | null): void {
+  beforeTakeOpsHook = hook;
+}
 
 export function pushOp(...args: unknown[]): void {
   for (const arg of args) {
@@ -13,6 +18,7 @@ export function pushOp(...args: unknown[]): void {
 }
 
 export function takeOps(): unknown[] {
+  beforeTakeOpsHook?.();
   const b = buffer;
   buffer = [];
   return b;
