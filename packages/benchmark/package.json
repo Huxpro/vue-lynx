@@ -18,7 +18,8 @@
     "bench:synthesize": "node harness/synthesize.mjs",
     "bench:report": "node harness/report-unified.mjs",
     "test:autorows": "node --test tests/autorows-seeded.test.mjs",
-    "test:native-bench": "node --test shared/native-bench.test.mjs"
+    "test:native-bench": "node --test shared/native-bench.test.mjs",
+    "test:artifact": "node --test tests/artifact-contract.test.mjs"
   },
   "dependencies": {
     "vue-lynx": "workspace:*"
