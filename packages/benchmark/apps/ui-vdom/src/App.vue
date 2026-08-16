@@ -7,13 +7,16 @@
 // by hand. The React variant (apps/ui-react) mirrors these operations with
 // idiomatic React state.
 import { ref, shallowRef, triggerRef } from 'vue'
-import { buildData } from '../../../shared/data'
+import { buildData, buildDataSeeded } from '../../../shared/data'
 import type { RowData } from '../../../shared/data'
 
 const MODE = __BENCH_MODE__
+const INITIAL_ROWS_SEED = 42
 
 const selected = shallowRef<number | undefined>(undefined)
-const rows = shallowRef<RowData[]>([])
+const rows = shallowRef<RowData[]>(
+  buildDataSeeded(__BENCH_AUTOROWS__, INITIAL_ROWS_SEED),
+)
 const ready = ref('ready')
 
 function run() {

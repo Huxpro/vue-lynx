@@ -41,3 +41,27 @@ export function buildData(count = 1000): RowData[] {
   }
   return data;
 }
+
+export function buildDataSeeded(count: number, seed: number): RowData[] {
+  let state = seed >>> 0;
+  const random = () => {
+    state |= 0;
+    state = (state + 0x6d2b79f5) | 0;
+    let value = Math.imul(state ^ (state >>> 15), 1 | state);
+    value = (value + Math.imul(value ^ (value >>> 7), 61 | value)) ^ value;
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+  const pick = (max: number) => Math.round(random() * 1000) % max;
+  const data: RowData[] = [];
+  for (let i = 0; i < count; i++) {
+    data.push({
+      id: ID++,
+      label: adjectives[pick(adjectives.length)]
+        + ' '
+        + colours[pick(colours.length)]
+        + ' '
+        + nouns[pick(nouns.length)],
+    });
+  }
+  return data;
+}

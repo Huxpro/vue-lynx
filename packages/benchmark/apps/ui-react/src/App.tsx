@@ -4,10 +4,12 @@
 // immutable state updates + memoized row component.
 import { memo, useCallback, useEffect, useRef, useState } from '@lynx-js/react';
 
-import { buildData } from './data';
+import { buildData, buildDataSeeded } from './data';
 import type { RowData } from './data';
 
 import './App.css';
+
+const INITIAL_ROWS_SEED = 42;
 
 // -- storms: N sequential state→render→DOM ticks from one click --------------
 // Each tick runs in its own macrotask (MessageChannel avoids the nested
@@ -62,7 +64,9 @@ const Row = memo(function Row({ row, isSelected, onSelect, onRemove }: RowProps)
 });
 
 export function App() {
-  const [rows, setRows] = useState<RowData[]>([]);
+  const [rows, setRows] = useState<RowData[]>(() =>
+    buildDataSeeded(__BENCH_AUTOROWS__, INITIAL_ROWS_SEED),
+  );
   const [selected, setSelected] = useState<number | undefined>(undefined);
 
   const run = useCallback(() => {
