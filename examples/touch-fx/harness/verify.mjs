@@ -10,6 +10,8 @@
 //   4. a firework burst appears at release
 //   5. the system settles back to idle afterwards
 //   6. a second rapid zigzag drag still spawns effects (pool recycling)
+//   7. the hidden switch (the hint label) flips the release mode both ways: the
+//      orb stays where it was dropped, then re-homes when the switch goes back
 //
 // Screenshots land in harness/shots/ for eyeballing.
 import { spawn } from 'node:child_process';
@@ -94,10 +96,14 @@ async function stats(png, poi) {
   );
 }
 
-async function shot(name, poi) {
+async function shotPng(name) {
   const png = await page.screenshot({ clip: { x: 0, y: 0, width: W, height: H } });
   fs.writeFileSync(path.join(SHOTS, name), png);
-  return await stats(png, poi);
+  return png;
+}
+
+async function shot(name, poi) {
+  return await stats(await shotPng(name), poi);
 }
 
 const cdp = await ctx.newCDPSession(page);
@@ -200,6 +206,62 @@ await touch('touchEnd', []);
 check('stress: effects still spawn at end of rapid zigzag', zig.near > 300, `green near finger=${zig.near}`);
 await page.waitForTimeout(400);
 await shot('06-zigzag-boom.png');
+
+// --- easter egg: the hint label is a hidden mode switch ---------------------------
+// It sits in a 20px-tall box, half the stage wide, 52px off the bottom — see
+// .hint in touch-fx.css. Pressing and releasing it flips the release mode.
+const SWITCH = [W / 2, H - 62];
+async function pressSwitch() {
+  await touch('touchStart', [SWITCH]);
+  await page.waitForTimeout(60);
+  await touch('touchEnd', []);
+  await page.waitForTimeout(250);
+}
+
+// Wait for the stage to go quiet again (frame-based decay, so poll).
+async function settle(name, poi) {
+  let s;
+  for (let i = 0; i < 15; i++) {
+    await page.waitForTimeout(1000);
+    s = await shot(name, poi);
+    if (s.total < idle.total * 1.35) break;
+  }
+  return s;
+}
+
+await settle('07-pre-egg.png', HOME);
+await pressSwitch();
+
+// Free mode: drag the orb somewhere far from home and let go — it should stay.
+const DROP = { x: 300, y: 620, r: 150 };
+await touch('touchStart', [[DROP.x, DROP.y]]);
+for (let i = 1; i <= 20; i++) {
+  await touch('touchMove', [[DROP.x, DROP.y - 20 + i]]);
+  await page.waitForTimeout(16);
+}
+await touch('touchEnd', []);
+let freePng;
+for (let i = 0; i < 15; i++) {
+  await page.waitForTimeout(1000);
+  freePng = await shotPng('08-free-mode.png');
+  if ((await stats(freePng, DROP)).total < idle.total * 1.35) break;
+}
+const atDrop = await stats(freePng, DROP);
+const atHome = await stats(freePng, HOME);
+check(
+  'easter egg: the switch makes the orb stay where it is dropped',
+  atDrop.near > 2000 && atHome.near < 2000,
+  `near drop=${atDrop.near}, near home=${atHome.near}`,
+);
+
+// Press it again: back to homing mode, and the orb springs home on its own.
+await pressSwitch();
+const rehomed = await settle('09-rehomed.png', HOME);
+check(
+  'easter egg: pressing the switch again re-homes the orb',
+  rehomed.near > 2000,
+  `near home=${rehomed.near} (idle=${idle.near})`,
+);
 
 // --- summary -----------------------------------------------------------------------
 const failed = results.filter((r) => !r.ok);
