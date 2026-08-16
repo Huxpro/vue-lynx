@@ -71,6 +71,39 @@ const CELLS = [
     staging: 'engine',
     coord: 'Engine/Sparse/recovered/Split·Durable (stub-capable)',
   },
+  // `+ifr:h` (D1): Handover column moved ALONE — same durable tree, same
+  // paint staging, same MT driver; only hydration changes from stream
+  // equality to structural adoption of the painted elements.
+  {
+    name: 'content-vapor-ifr-tree',
+    mode: 'vapor',
+    ifr: '1',
+    et: '0',
+    sparse: '1',
+    ifrHandover: 'tree',
+    coord: 'Data/Sparse/recovered/Split·Durable+Ephemeral(tree handover)',
+  },
+  // Naming × Handover interaction probe: the same tree handover on a
+  // block-named (Code-Template) VDOM cell, where the adoption walk has one
+  // entry per template instance instead of one per node.
+  {
+    name: 'content-vdom-ifr-et-tree',
+    mode: 'vdom',
+    ifr: '1',
+    et: '1',
+    sparse: '1',
+    ifrHandover: 'tree',
+    coord: 'Code/Sparse/intrinsic/Split·Durable+Ephemeral(tree handover)',
+  },
+  {
+    name: 'content-vdom-ifr-tree',
+    mode: 'vdom',
+    ifr: '1',
+    et: '0',
+    sparse: '1',
+    ifrHandover: 'tree',
+    coord: 'OpStream/Dense/intrinsic/Split·Durable+Ephemeral(tree handover)',
+  },
   {
     name: 'content-vapor-ifr-engine-et',
     mode: 'vapor',
@@ -84,10 +117,17 @@ const CELLS = [
 
 const gz = (buf) => zlib.gzipSync(buf, { level: 9 }).length;
 
+// Optional subset filter so a single-factor re-run does not rebuild the
+// whole matrix: BENCH_CELLS=content-vapor-ifr,content-vapor-ifr-tree
+const only = process.env['BENCH_CELLS']
+  ? new Set(process.env['BENCH_CELLS'].split(',').map((s) => s.trim()))
+  : null;
+
 fs.mkdirSync(outDir, { recursive: true });
 const sizes = [];
 
 for (const cell of CELLS) {
+  if (only && !only.has(cell.name)) continue;
   generateProbe(cell.mode, nCards);
   fs.rmSync(path.join(_dirname, 'node_modules/.cache'), {
     recursive: true,
@@ -112,6 +152,9 @@ for (const cell of CELLS) {
         SFC_PROBE_SPARSE: cell.sparse,
         ...(cell.staging ? { SFC_PROBE_STAGING: cell.staging } : {}),
         ...(cell.ifrPaint ? { SFC_PROBE_IFR_PAINT: cell.ifrPaint } : {}),
+        ...(cell.ifrHandover
+          ? { SFC_PROBE_IFR_HANDOVER: cell.ifrHandover }
+          : {}),
       },
     },
   );
@@ -137,6 +180,7 @@ for (const cell of CELLS) {
       templateStaging: cell.staging
         ?? (cell.mode === 'vapor' ? 'data' : (cell.et === '1' ? 'code' : 'opstream')),
       ifrPaint: cell.ifrPaint ?? (cell.ifr === '1' ? 'plain' : null),
+      ifrHandover: cell.ifr === '1' ? (cell.ifrHandover ?? 'stream') : null,
       slots: cell.et === '1' ? 'on' : 'off',
       naming: cell.mode === 'vapor'
         ? (cell.sparse === '1' ? 'sparse' : 'dense')

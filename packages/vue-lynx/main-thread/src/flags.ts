@@ -34,6 +34,25 @@ function paintDefine(): string | undefined {
     | undefined;
 }
 
+/** Axis-E IFR handover (`stream|tree`), or undefined in bare realms. */
+function handoverDefine(): string | undefined {
+  return (typeof __VUE_LYNX_IFR_HANDOVER__ !== 'undefined'
+    ? __VUE_LYNX_IFR_HANDOVER__
+    : (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_HANDOVER__']) as
+    | string
+    | undefined;
+}
+
+/**
+ * Tree handover (`+ifr:h`, D1): hydrate by adopting painted elements through a
+ * structural match instead of comparing the background stream against a
+ * recorded op stream. Default stays `stream` until the benchmark says
+ * otherwise.
+ */
+export function treeHandoverRequested(): boolean {
+  return handoverDefine() === 'tree';
+}
+
 /** True while the IFR main thread is painting the throwaway first frame. */
 function ifrMtActive(): boolean {
   return (globalThis as Record<string, unknown>)['__VUE_LYNX_IFR_MT__'] === true;

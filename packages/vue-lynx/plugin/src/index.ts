@@ -21,6 +21,7 @@
  */
 
 import {
+  IFR_HANDOVER_GLOBAL,
   IFR_PAINT_GLOBAL,
   TEMPLATE_DELIVERY_GLOBAL,
   TEMPLATE_STAGING_GLOBAL,
@@ -252,6 +253,24 @@ export interface PluginVueLynxOptions {
     | 'engine-et';
 
   /**
+   * Axis E — **IFR handover**: how the main-thread first frame and the
+   * background render are reconciled when {@link enableIFR} is on.
+   *
+   * - `'stream'` — today's behavior: the background stream is compared
+   *   frame-by-frame against the recorded main-thread stream; any structural
+   *   deviation tears the painted tree down and replays the background
+   *   history. Requires a deterministic first-screen render.
+   * - `'tree'` — the first frame is kept as a paint tree and the background
+   *   allocations adopt painted elements through a structural match
+   *   (prefix-per-parent). Divergence costs the diverging nodes instead of
+   *   the page, so determinism becomes a performance property rather than a
+   *   correctness requirement.
+   *
+   * @defaultValue 'stream'
+   */
+  ifrHandover?: 'stream' | 'tree';
+
+  /**
    * Whether Vapor `CLONE_TREE` may use sparse A2 naming.
    *
    * @deprecated Use {@link templateNaming} (`false` ≡ `'dense'`). When both
@@ -363,6 +382,7 @@ export function pluginVueLynx(
     vapor = false,
     enableSparseNaming = true,
     ifrPaint = 'plain',
+    ifrHandover = 'stream',
   } = options;
   const enableElementTemplates = resolveElementTemplatesFlag(options);
 
@@ -498,6 +518,7 @@ export function pluginVueLynx(
                 [TEMPLATE_STAGING_GLOBAL]: JSON.stringify(stagingDefine),
                 [TEMPLATE_DELIVERY_GLOBAL]: JSON.stringify(templateDelivery),
                 [IFR_PAINT_GLOBAL]: JSON.stringify(paintDefine),
+                [IFR_HANDOVER_GLOBAL]: JSON.stringify(ifrHandover),
                 // Lynx's runtime wrapper injects `document`/`window` as
                 // undefined function parameters that shadow globals inside
                 // the Background Thread bundle. @vue/runtime-vapor references

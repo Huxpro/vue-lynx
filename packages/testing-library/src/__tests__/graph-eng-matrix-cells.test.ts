@@ -118,6 +118,34 @@ describe('legalCells (terminology v2)', () => {
     );
   });
 
+  it('carries Driver/Handover as columns orthogonal to the residual coordinate', () => {
+    // Non-IFR cells: no first-frame render to drive, nothing to reconcile.
+    const base = getCell('vapor-data-block');
+    expect(base?.driver).toBe('bts');
+    expect(base?.handover).toBe('none');
+
+    // Today's IFR: the MT bundle carries the full framework, and hydration
+    // compares op streams.
+    const ifr = getCell('vapor-data-block-ifr');
+    expect(ifr?.driver).toBe('mts-runtime');
+    expect(ifr?.handover).toBe('stream');
+
+    // `+ifr:h` (D1) moves the Handover column ALONE — every residual column
+    // and the coordinate string are identical to the cell above.
+    const tree = getCell('vapor-data-block-ifr-tree');
+    expect(tree?.handover).toBe('tree');
+    expect(tree?.driver).toBe('mts-runtime');
+    expect(tree?.staging).toBe('data');
+    expect(tree?.naming).toBe('block');
+    expect(tree?.ifrPaint).toBe('plain');
+    expect(tree?.coordinate).toBe(ifr?.coordinate);
+    expect(getCell('vapor-ifr-tree')?.id).toBe('vapor-data-block-ifr-tree');
+
+    const vdomTree = getCell('vdom-ops-node-ifr-tree');
+    expect(vdomTree?.handover).toBe('tree');
+    expect(vdomTree?.coordinate).toBe(getCell('vdom-ops-node-ifr')?.coordinate);
+  });
+
   it('uses the unified mechanism terms', () => {
     expect(getCell('vapor-data-node')?.term).toBe('Named Tree');
     expect(getCell('vapor-data-block')?.term).toBe('Data-Template');

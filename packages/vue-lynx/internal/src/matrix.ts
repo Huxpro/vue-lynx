@@ -75,6 +75,30 @@ export type IfrPaintMode = 'plain' | 'code-paint' | 'native-paint';
 /** Legacy paint spellings. */
 export type LegacyIfrPaintMode = 'disposable-et' | 'engine-et';
 
+/**
+ * Driver — WHO executes the first-frame render, in what shape. Orthogonal to
+ * the six residual columns above: those say how a template materializes, this
+ * says who calls the materializer (see
+ * `plans/0731-1-rl-render-to-opcodes-insights.md` §2).
+ *  - `bts`: no IFR — the Background renders and ships ops.
+ *  - `mts-runtime`: the MT bundle carries the complete framework (today's IFR).
+ *  - `mts-oneshot`: the MT runs a stripped one-pass renderer (D2).
+ *  - `build`: the frame is rendered off-device and replayed (D6).
+ */
+export type IfrDriver = 'bts' | 'mts-runtime' | 'mts-oneshot' | 'build';
+
+/**
+ * Handover — how the main-thread frame and the background render are
+ * reconciled.
+ *  - `none`: no IFR.
+ *  - `stream`: frame-by-frame equality against a recorded op stream; any
+ *    deviation tears the page down and replays (the original IFR).
+ *  - `tree`: painted elements are adopted through a structural match and the
+ *    background id is aliased onto them; divergence costs the diverging nodes
+ *    (D1 — ReactLynx's `hydrate()` + `swap`, built MT-side).
+ */
+export type IfrHandover = 'none' | 'stream' | 'tree';
+
 export type RenderModel = 'vdom' | 'vapor';
 
 export function normalizeStaging(
@@ -128,6 +152,13 @@ export const TEMPLATE_DELIVERY_GLOBAL = '__VUE_LYNX_TEMPLATE_DELIVERY__';
 export const IFR_PAINT_GLOBAL = '__VUE_LYNX_IFR_PAINT__';
 
 /**
+ * Build-time define carrying the IFR handover (`ifrHandover`, D1):
+ * `'stream'` (default — recorded op stream, teardown on divergence) or
+ * `'tree'` (paint tree + adopting hydration).
+ */
+export const IFR_HANDOVER_GLOBAL = '__VUE_LYNX_IFR_HANDOVER__';
+
+/**
  * Cell lifecycle status — the retirement lever (one enum edit per cell):
  *  - `product`: shipping configuration; benches keep it measured, flag
  *    combinations resolve without warnings.
@@ -157,11 +188,21 @@ export interface MatrixCell {
   lifetimes: TemplateLifetime[];
   ifr: boolean;
   ifrPaint: IfrPaintMode | null;
+  /** Who executes the first-frame render (Driver column). */
+  driver: IfrDriver;
+  /** How the two renders are reconciled (Handover column). */
+  handover: IfrHandover;
   /** When the residual reaches the MT; null for ops staging. */
   delivery: TemplateDelivery | null;
   /** Lifecycle status; new cells default to `probe` until promoted. */
   status: CellStatus;
-  /** Six-column coordinate, e.g. `data/block/traversal+recover/BTS/persistent/runtime`. */
+  /**
+   * Six-column RESIDUAL coordinate, e.g.
+   * `data/block/traversal+recover/BTS/persistent/runtime`. Driver and
+   * handover are deliberately NOT part of it: they describe who runs the
+   * first-frame render and how it is reconciled, which is orthogonal to how
+   * a template's residual materializes.
+   */
   coordinate: string;
   /** Mechanism name in the unified terminology. */
   term: string;
@@ -208,6 +249,10 @@ interface CellSpec {
   naming: TemplateNaming;
   ifr?: boolean;
   ifrPaint?: IfrPaintMode;
+  /** Driver override; defaults to `mts-runtime` under IFR, `bts` without. */
+  driver?: IfrDriver;
+  /** Handover override; defaults to `stream` under IFR, `none` without. */
+  handover?: IfrHandover;
   aliasOf?: string;
   /**
    * Delivery override: `data` staging defaults to `runtime` delivery, but
@@ -227,10 +272,14 @@ function makeCell(spec: CellSpec): MatrixCell {
     naming,
     ifr = false,
     ifrPaint,
+    driver: driverOverride,
+    handover: handoverOverride,
     aliasOf,
     delivery: deliveryOverride,
     status = 'probe',
   } = spec;
+  const driver: IfrDriver = driverOverride ?? (ifr ? 'mts-runtime' : 'bts');
+  const handover: IfrHandover = handoverOverride ?? (ifr ? 'stream' : 'none');
   const addressing = addressingOf(render, staging, naming);
   const providers: TemplateProvider[] =
     staging === 'native' ? ['engine'] : ['bts'];
@@ -260,6 +309,8 @@ function makeCell(spec: CellSpec): MatrixCell {
     lifetimes,
     ifr,
     ifrPaint: ifr ? (ifrPaint ?? 'plain') : null,
+    driver,
+    handover,
     status,
     delivery,
     coordinate: `${staging}/${naming}/${addressing}/${provLabel}/${lifetimes.join('+')}/${delivery ?? '—'}${
@@ -290,6 +341,18 @@ export function legalCells(): MatrixCell[] {
     // --- VDOM ---------------------------------------------------------------
     C({ id: 'vdom-ops-node', legacyId: 'vdom', render: 'vdom', staging: 'ops', naming: 'node', status: 'product' }),
     C({ id: 'vdom-ops-node-ifr', legacyId: 'vdom-ifr', render: 'vdom', staging: 'ops', naming: 'node', ifr: true, status: 'product' }),
+    // `+ifr:h` (D1): Handover column moved alone — the durable tree, the
+    // paint staging and the driver are untouched; only the reconciliation
+    // changes from stream equality to structural adoption.
+    C({
+      id: 'vdom-ops-node-ifr-tree',
+      legacyId: 'vdom-ifr-tree',
+      render: 'vdom',
+      staging: 'ops',
+      naming: 'node',
+      ifr: true,
+      handover: 'tree',
+    }),
     C({ id: 'vdom-code-block', legacyId: 'vdom-et', render: 'vdom', staging: 'code', naming: 'block', status: 'product' }),
     // First-class now (was only reachable as a paint variant before):
     // Code staging on BOTH the durable tree and the ephemeral first frame.
@@ -304,6 +367,16 @@ export function legalCells(): MatrixCell[] {
     C({ id: 'vapor-data-node', legacyId: 'vapor-dense', render: 'vapor', staging: 'data', naming: 'node' }),
     C({ id: 'vapor-data-block-ifr', legacyId: 'vapor-ifr', render: 'vapor', staging: 'data', naming: 'block', ifr: true, status: 'product' }),
     C({ id: 'vapor-data-node-ifr', legacyId: 'vapor-ifr-dense', render: 'vapor', staging: 'data', naming: 'node', ifr: true }),
+    // `+ifr:h` (D1) on the product-default Vapor cell.
+    C({
+      id: 'vapor-data-block-ifr-tree',
+      legacyId: 'vapor-ifr-tree',
+      render: 'vapor',
+      staging: 'data',
+      naming: 'block',
+      ifr: true,
+      handover: 'tree',
+    }),
     C({
       id: 'vapor-data-block-ifr-native-paint',
       legacyId: 'vapor-ifr-engine-et',

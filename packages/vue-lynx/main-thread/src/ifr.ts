@@ -38,6 +38,18 @@ import {
   pageUniqueId,
   setPageUniqueId,
 } from './element-registry.js';
+import { treeHandoverRequested } from './flags.js';
+import {
+  type Adoption,
+  consumeOps,
+  createAdoption,
+  createOpTree,
+  filterBatch,
+  matchTrees,
+  type OpTree,
+  sweepUnclaimed,
+  teardownPaintTree,
+} from './ifr-tree.js';
 import { isPlatformInfoAttr } from './list-apply.js';
 import {
   applyOps,
@@ -58,6 +70,16 @@ let backgroundHistory: unknown[][] = [];
 let warnedPostHydrationOps = false;
 let renderSealed = false;
 let inSyncRender = false;
+
+/**
+ * Tree handover state (`+ifr:h`). `paintTree` is the tree the first frame
+ * produced; `incomingTree` accumulates the background stream so the structural
+ * match can run top-down across batch boundaries.
+ */
+let treeHandover = false;
+let paintTree: OpTree = createOpTree();
+let incomingTree: OpTree = createOpTree();
+let adoption: Adoption = createAdoption();
 
 /**
  * Value-bearing frames whose final payload does not define tree identity.
@@ -134,12 +156,20 @@ export function enableIFR(): void {
     g['clearTimeout'] = (): void => undefined;
   }
   phase = 'enabled';
-  recordedOps = [];
-  recordedCursor = 0;
-  backgroundHistory = [];
+  resetHandoverState();
   warnedPostHydrationOps = false;
   renderSealed = false;
   inSyncRender = false;
+}
+
+function resetHandoverState(): void {
+  treeHandover = treeHandoverRequested();
+  recordedOps = [];
+  recordedCursor = 0;
+  backgroundHistory = [];
+  paintTree = createOpTree();
+  incomingTree = createOpTree();
+  adoption = createAdoption();
 }
 
 function recordAndApply(ops: unknown[]): void {
@@ -160,8 +190,11 @@ function recordAndApply(ops: unknown[]): void {
     return;
   }
 
-  recordedOps.push(...ops);
   applyOps(ops, !inSyncRender);
+  // Fold into the paint tree AFTER applying: capturing element handles needs
+  // the registry to already hold them.
+  if (treeHandover) consumeOps(paintTree, ops, true);
+  else recordedOps.push(...ops);
 }
 
 /** Freeze the MT first-frame stream before the Background realm starts. */
@@ -173,9 +206,7 @@ export function sealIfrRender(): void {
 export function runIfrRender(): void {
   if (phase === 'inactive') return;
 
-  recordedOps = [];
-  recordedCursor = 0;
-  backgroundHistory = [];
+  resetHandoverState();
   phase = 'enabled';
   renderSealed = false;
 
@@ -223,6 +254,20 @@ export function runIfrRender(): void {
  */
 export function completeIfrHydration(): void {
   if (phase !== 'rendered') return;
+  if (treeHandover) {
+    // Everything the background never claimed is divergence: remove exactly
+    // those nodes, keep the rest of the painted frame.
+    try {
+      if (sweepUnclaimed(paintTree, adoption)) {
+        const page = elements.get(PAGE_ROOT_ID);
+        if (page) __FlushElementTree(page);
+      }
+    } catch (error) {
+      console.error('[vue-lynx] IFR sweep failed.', error);
+    }
+    finishHydration();
+    return;
+  }
   if (recordedCursor < recordedOps.length) {
     fallbackToBackground();
   } else {
@@ -240,6 +285,7 @@ export function completeIfrHydration(): void {
  */
 export function interceptPatchUpdate(data: string): boolean {
   if (phase !== 'rendered') return false;
+  if (treeHandover) return hydrateByAdoption(data);
 
   const incoming = JSON.parse(data) as unknown[];
   backgroundHistory.push(incoming);
@@ -352,6 +398,31 @@ export function interceptPatchUpdate(data: string): boolean {
   return true;
 }
 
+/**
+ * Tree handover: fold the batch into the incoming tree, re-derive the
+ * structural match (idempotent, so a batch that only extends the tree only
+ * extends adoption), then apply what adoption did not already satisfy.
+ */
+function hydrateByAdoption(data: string): boolean {
+  const incoming = JSON.parse(data) as unknown[];
+  consumeOps(incomingTree, incoming, false);
+  matchTrees(paintTree, incomingTree, adoption);
+  const remainder = filterBatch(incoming, paintTree, adoption);
+  try {
+    // The duplicate-allocator guard must not fire here: a background id
+    // colliding with a painted one is the normal case, and adoption is the
+    // mechanism that resolves it.
+    applyOps(remainder, true, true);
+  } catch (error) {
+    console.error(
+      '[vue-lynx] IFR adoption failed; the page may be incomplete.',
+      error,
+    );
+    finishHydration(false);
+  }
+  return true;
+}
+
 function fallbackToBackground(): void {
   if (__DEV__) {
     console.warn(
@@ -389,6 +460,9 @@ function finishHydration(adoptIfrTree = true): void {
   recordedOps = [];
   recordedCursor = 0;
   backgroundHistory = [];
+  paintTree = createOpTree();
+  incomingTree = createOpTree();
+  adoption = createAdoption();
 }
 
 /**
@@ -397,6 +471,16 @@ function finishHydration(adoptIfrTree = true): void {
  * must survive fallback because Lynx owns it outside Vue's op protocol.
  */
 function teardownIfrTree(): void {
+  if (treeHandover) {
+    const page = elements.get(PAGE_ROOT_ID);
+    const nativePageUniqueId = pageUniqueId;
+    if (teardownPaintTree(paintTree) && page) __FlushElementTree(page);
+    resetMainThreadState();
+    if (page) elements.set(PAGE_ROOT_ID, page);
+    setPageUniqueId(nativePageUniqueId);
+    return;
+  }
+
   const rootChildren = new Set<number>();
   let cursor = 0;
   while (cursor < recordedOps.length) {
@@ -440,9 +524,7 @@ function teardownIfrTree(): void {
 export function resetIfrForTesting(): void {
   clearIfrSelectorAttributeDeferral();
   phase = 'inactive';
-  recordedOps = [];
-  recordedCursor = 0;
-  backgroundHistory = [];
+  resetHandoverState();
   warnedPostHydrationOps = false;
   renderSealed = false;
   inSyncRender = false;
@@ -458,4 +540,27 @@ export function resetIfrForTesting(): void {
 /** Current state for diagnostics and protocol tests. */
 export function getIfrPhase(): IfrPhase {
   return phase;
+}
+
+/**
+ * Tree-handover diagnostics: how much of the painted frame the background
+ * actually adopted. Valid until `finishHydration` clears the trees — the
+ * benchmark samples it right after the last batch.
+ */
+export function getIfrAdoptionStats(): {
+  handover: 'stream' | 'tree';
+  paintedNodes: number;
+  paintedRoots: number;
+  claimed: number;
+  aliased: number;
+  materialized: number;
+} {
+  return {
+    handover: treeHandover ? 'tree' : 'stream',
+    paintedNodes: paintTree.alloc.size,
+    paintedRoots: (paintTree.children.get(String(PAGE_ROOT_ID)) ?? []).length,
+    claimed: adoption.claimed.size,
+    aliased: adoption.paintIdOf.size,
+    materialized: adoption.materialized.size,
+  };
 }
