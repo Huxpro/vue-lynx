@@ -15,6 +15,7 @@
  *   node-ops.ts ──▶ shadow-element.ts ──▶ tree-ops.ts (types only)
  */
 
+import { releaseEventProps } from './event-props.js';
 import { scheduleFlush } from './flush.js';
 import { OP, pushOp } from './ops.js';
 import {
@@ -31,12 +32,13 @@ export const idRegistry: Map<string, ShadowElement> = new Map();
 
 /**
  * Single-walk teardown for a subtree being removed: clean up the Teleport id
- * registry AND release Vapor addEventListener registrations. One recursion
- * instead of two — removal is a hot path (clearing a 10k-row list visits
- * every node).
+ * registry and release event-prop / Vapor addEventListener registrations.
+ * One recursion instead of two — removal is a hot path (clearing a 10k-row
+ * list visits every node).
  */
 export function releaseSubtree(el: ShadowElement): void {
   if (el._id) idRegistry.delete(el._id);
+  if (el._eventPropSigns) releaseEventProps(el);
   el._releaseOwnEvents();
   let child = el.firstChild;
   while (child) {

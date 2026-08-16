@@ -287,6 +287,8 @@ export class ShadowElement {
   _classList: ClassListFacade | undefined = undefined;
   /** addEventListener bindings, keyed by Lynx event name. */
   _events: Map<string, EventBinding> | undefined = undefined;
+  /** Sparse event-prop owner; `declare` emits no per-node initialization. */
+  declare _eventPropSigns?: Map<string, string>;
   /**
    * Inert nodes are template prototypes created by the Vapor HTML parser;
    * they exist only on the Background Thread and never emit ops. Cloning an

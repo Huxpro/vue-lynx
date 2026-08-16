@@ -71,6 +71,11 @@ export function publishEvent(sign: string, data: unknown): void {
   getRegistryState().handlers.get(sign)?.(data);
 }
 
+/** Inspect retained handlers – for testing only. */
+export function getEventRegistrySizeForTesting(): number {
+  return getRegistryState().handlers.size;
+}
+
 /** Reset all state – for testing only. */
 export function resetRegistry(): void {
   const state = getRegistryState();
