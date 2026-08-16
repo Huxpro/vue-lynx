@@ -39,13 +39,13 @@ const FALLBACK_TIMEOUT_MS = 4000;
 let endId = 0;
 
 export function addTransitionClass(el: ShadowElement, cls: string): void {
-  el._transitionClasses.add(cls);
+  el._addTransitionClass(cls);
   pushOp(OP.SET_CLASS, el.uid, resolveClass(el));
   scheduleFlush();
 }
 
 export function removeTransitionClass(el: ShadowElement, cls: string): void {
-  el._transitionClasses.delete(cls);
+  el._removeTransitionClass(cls);
   pushOp(OP.SET_CLASS, el.uid, resolveClass(el));
   scheduleFlush();
 }

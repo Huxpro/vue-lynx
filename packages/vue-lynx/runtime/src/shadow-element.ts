@@ -203,6 +203,9 @@ function createClassList(el: ShadowElement): ClassListFacade {
   };
 }
 
+const EMPTY_SCOPE_CLASSES = new Set<string>();
+const EMPTY_TRANSITION_CLASSES = new Set<string>();
+
 export class ShadowElement {
   static nextUid = 2; // 1 is reserved for the page root
 
@@ -238,8 +241,8 @@ export class ShadowElement {
   // _transitionClasses: classes added/removed by <Transition> hooks.
   // The effective class sent to MT = base + scopes + transitions.
   _baseClass = '';
-  _scopeClasses: Set<string> = new Set();
-  _transitionClasses: Set<string> = new Set();
+  _scopeClasses: ReadonlySet<string> = EMPTY_SCOPE_CLASSES;
+  _transitionClasses: ReadonlySet<string> = EMPTY_TRANSITION_CLASSES;
   // Generation counter bumped each time whenTransitionEnds() starts waiting
   // on this element. Lets a stale/superseded finish() (fired by the fallback
   // timeout after a newer transition has already started) detect it's stale
@@ -629,7 +632,9 @@ export class ShadowElement {
     } else {
       pushOp(OP.CREATE, clone.uid, this.tag);
       clone._baseClass = this._baseClass;
-      clone._scopeClasses = new Set(this._scopeClasses);
+      if (this._scopeClasses.size > 0) {
+        clone._scopeClasses = new Set(this._scopeClasses);
+      }
       const resolvedClass = resolveClass(clone);
       if (resolvedClass) pushOp(OP.SET_CLASS, clone.uid, resolvedClass);
       if (Object.keys(this._style).length > 0) {
@@ -811,7 +816,7 @@ export class ShadowElement {
         setIdAttr(this, null);
       }
     } else if (key.startsWith('data-v-')) {
-      if (!this._scopeClasses.delete(key)) return;
+      if (!this._removeScopeClass(key)) return;
       if (!this._inert) {
         pushOp(OP.SET_CLASS, this.uid, resolveClass(this));
         scheduleFlush();
@@ -844,11 +849,35 @@ export class ShadowElement {
   /** Add a Vue scope token without allowing duplicate class emission. */
   _addScopeClass(scopeClass: string): void {
     if (this._scopeClasses.has(scopeClass)) return;
-    this._scopeClasses.add(scopeClass);
+    const scopeClasses = this._scopeClasses === EMPTY_SCOPE_CLASSES
+      ? (this._scopeClasses = new Set())
+      : this._scopeClasses as Set<string>;
+    scopeClasses.add(scopeClass);
     if (!this._inert) {
       pushOp(OP.SET_CLASS, this.uid, resolveClass(this));
       scheduleFlush();
     }
+  }
+
+  /** @internal */
+  _removeScopeClass(scopeClass: string): boolean {
+    return this._scopeClasses !== EMPTY_SCOPE_CLASSES
+      && (this._scopeClasses as Set<string>).delete(scopeClass);
+  }
+
+  /** @internal */
+  _addTransitionClass(transitionClass: string): void {
+    const transitionClasses =
+      this._transitionClasses === EMPTY_TRANSITION_CLASSES
+        ? (this._transitionClasses = new Set())
+        : this._transitionClasses as Set<string>;
+    transitionClasses.add(transitionClass);
+  }
+
+  /** @internal */
+  _removeTransitionClass(transitionClass: string): boolean {
+    return this._transitionClasses !== EMPTY_TRANSITION_CLASSES
+      && (this._transitionClasses as Set<string>).delete(transitionClass);
   }
 
   // --- class / style -------------------------------------------------------------
@@ -1166,7 +1195,9 @@ function buildShadowClone(
   }
 
   clone._baseClass = proto._baseClass;
-  clone._scopeClasses = new Set(proto._scopeClasses);
+  if (proto._scopeClasses.size > 0) {
+    clone._scopeClasses = new Set(proto._scopeClasses);
+  }
   if (hasAnyKey(proto._style)) clone._style = { ...proto._style };
   if (proto._attrs) clone._attrs = new Map(proto._attrs);
   if (proto._id !== undefined) {
@@ -1250,7 +1281,9 @@ function buildShadowCloneSparse(
   }
 
   clone._baseClass = proto._baseClass;
-  clone._scopeClasses = new Set(proto._scopeClasses);
+  if (proto._scopeClasses.size > 0) {
+    clone._scopeClasses = new Set(proto._scopeClasses);
+  }
   if (hasAnyKey(proto._style)) clone._style = { ...proto._style };
   if (proto._attrs) clone._attrs = new Map(proto._attrs);
   if (proto._id !== undefined) {
