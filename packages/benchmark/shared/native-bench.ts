@@ -10,6 +10,8 @@ export const NATIVE_BENCH_WORKLOADS = [
   'selectStorm',
 ] as const
 
+export const NATIVE_BENCH_PROTOCOL = 'vue-lynx-native-bench-v1'
+
 export type NativeBenchWorkload = typeof NATIVE_BENCH_WORKLOADS[number]
 
 type Task = () => void
@@ -76,7 +78,13 @@ export function createNativeBench(
           const endMs = globals.Date.now()
           globals.console.log(
             '__NATIVE_BENCH_RESULT__',
-            JSON.stringify({ name, startMs, endMs, latencyMs: endMs - startMs }),
+            JSON.stringify({
+              protocol: NATIVE_BENCH_PROTOCOL,
+              name,
+              startMs,
+              endMs,
+              latencyMs: endMs - startMs,
+            }),
           )
         })
       })
