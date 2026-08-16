@@ -57,10 +57,6 @@ function parseEventProp(key: string): EventSpec | null {
   return null;
 }
 
-// Track the sign registered for each (element, propKey) so we can unregister
-// on prop removal / update.
-const elementEventSigns = new Map<number, Map<string, string>>();
-
 // For once-events (onXxxOnce prop keys): the once-wrapper closes over a
 // mutable `inner` reference so re-renders can update the underlying handler
 // without resetting the `called` state.
@@ -84,7 +80,7 @@ export function patchEventProp(
   const event = parseEventProp(key);
   if (!event) return false;
 
-  let signs = elementEventSigns.get(el.uid);
+  let signs = el._eventPropSigns;
   const oldSign = signs?.get(key);
 
   if (nextValue != null) {
@@ -109,7 +105,7 @@ export function patchEventProp(
         onceWrappers.set(sign, wrapper);
         if (!signs) {
           signs = new Map<string, string>();
-          elementEventSigns.set(el.uid, signs);
+          el._eventPropSigns = signs;
         }
         signs.set(key, sign);
         // Respect _lynxCatch even on once-events (e.g. @tap.once.stop).
@@ -134,7 +130,7 @@ export function patchEventProp(
       const sign = register(handler);
       if (!signs) {
         signs = new Map<string, string>();
-        elementEventSigns.set(el.uid, signs);
+        el._eventPropSigns = signs;
       }
       signs.set(key, sign);
       pushOp(OP.SET_EVENT, el.uid, eventType, event.name, sign);
@@ -144,6 +140,7 @@ export function patchEventProp(
     onceWrappers.delete(oldSign);
     unregister(oldSign);
     signs!.delete(key);
+    if (signs!.size === 0) delete el._eventPropSigns;
     pushOp(OP.REMOVE_EVENT, el.uid, event.type, event.name);
   }
 
@@ -151,8 +148,23 @@ export function patchEventProp(
   return true;
 }
 
+/** Release THIS element's event-prop registrations (non-recursive). */
+export function releaseEventProps(el: ShadowElement): void {
+  const signs = el._eventPropSigns;
+  if (!signs) return;
+  for (const sign of signs.values()) {
+    onceWrappers.delete(sign);
+    unregister(sign);
+  }
+  delete el._eventPropSigns;
+}
+
+/** Inspect retained once wrappers – for testing only. */
+export function getOnceWrapperCountForTesting(): number {
+  return onceWrappers.size;
+}
+
 /** Reset module state – for testing only. */
 export function resetEventPropState(): void {
-  elementEventSigns.clear();
   onceWrappers.clear();
 }

@@ -22,6 +22,7 @@ import {
   idRegistry,
   insertNode,
   removeNode,
+  resetTreeOpsState,
   resolveClass,
   setElementTextContent,
   setIdAttr,
@@ -277,6 +278,6 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
 
 /** Reset module state – for testing only. */
 export function resetNodeOpsState(): void {
+  resetTreeOpsState();
   resetEventPropState();
-  idRegistry.clear();
 }
