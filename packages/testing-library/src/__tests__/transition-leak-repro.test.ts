@@ -49,6 +49,22 @@ async function advance(ms: number): Promise<void> {
   await vi.advanceTimersByTimeAsync(ms);
 }
 
+/**
+ * Drain the registry back to `baseline`. Each cycle advances past the
+ * fallback ceiling (so every pending fallback timer force-finishes) and then
+ * flushes (so a re-render armed during the cascade can finish its own
+ * enter/leave). How many cycles the tail of the re-arm cascade needs depends
+ * on flush cadence, which is scheduling-sensitive — so loop until drained,
+ * bounded, instead of assuming a fixed cycle count. The assertion after the
+ * loop still fails if entries never clear (a real leak).
+ */
+async function settleRegistry(baseline: number): Promise<void> {
+  for (let i = 0; i < 10 && registrySize() !== baseline; i++) {
+    await advance(FALLBACK_TIMEOUT_MS + 100);
+    await flush();
+  }
+}
+
 beforeEach(() => {
   vi.useFakeTimers();
 });
@@ -99,10 +115,9 @@ describe('Transition event-registry leak (fixed)', () => {
     // fires and unregisters its sign. finish()'s unregister() itself runs
     // synchronously once the timer callback executes, but nextFrame()'s own
     // rAF/setTimeout(16) chain (armed by the *next* pending re-render, if
-    // any) needs a settle pass too, so flush + re-advance once more.
-    await advance(FALLBACK_TIMEOUT_MS + 100);
-    await flush();
-    await advance(FALLBACK_TIMEOUT_MS + 100);
+    // any) needs its own settle pass — settleRegistry loops until the
+    // cascade's tail drains.
+    await settleRegistry(baseline);
 
     expect(registrySize()).toBe(baseline);
   });
@@ -131,9 +146,7 @@ describe('Transition event-registry leak (fixed)', () => {
     }
 
     // Let every fallback timer armed during the hammering settle.
-    await advance(FALLBACK_TIMEOUT_MS + 100);
-    await flush();
-    await advance(FALLBACK_TIMEOUT_MS + 100);
+    await settleRegistry(baseline);
 
     expect(registrySize()).toBe(baseline);
   });
