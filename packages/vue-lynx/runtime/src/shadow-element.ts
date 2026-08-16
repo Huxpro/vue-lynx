@@ -103,6 +103,7 @@ const STYLE_METHODS = new Set([
   'removeProperty',
   'item',
 ]);
+const EMPTY_STYLE: Record<string, unknown> = Object.freeze({});
 
 function createStyleFacade(el: ShadowElement): Record<string, unknown> {
   const methods = {
@@ -231,7 +232,17 @@ export class ShadowElement {
 
   // Cached style object (last value passed to patchProp 'style').
   // Used by vShow to merge display:none without losing the original styles.
-  _style: Record<string, unknown> = {};
+  private _styleState: Record<string, unknown> = EMPTY_STYLE;
+  get _style(): Record<string, unknown> {
+    if (this._styleState === EMPTY_STYLE) this._styleState = {};
+    return this._styleState;
+  }
+  set _style(style: Record<string, unknown>) {
+    this._styleState = style;
+  }
+  _getStyle(): Record<string, unknown> {
+    return this._styleState;
+  }
   // Set to true by vShow when the element should be hidden.
   _vShowHidden = false;
 
@@ -656,8 +667,9 @@ export class ShadowElement {
       }
       const resolvedClass = resolveClass(clone);
       if (resolvedClass) pushOp(OP.SET_CLASS, clone.uid, resolvedClass);
-      if (Object.keys(this._style).length > 0) {
-        clone._style = { ...this._style };
+      const style = this._getStyle();
+      if (Object.keys(style).length > 0) {
+        clone._style = { ...style };
         pushOp(OP.SET_STYLE, clone.uid, clone._style);
       }
       if (this._attrs) {
@@ -824,7 +836,7 @@ export class ShadowElement {
         scheduleFlush();
       }
     } else if (key === 'style') {
-      if (Object.keys(this._style).length === 0) return;
+      if (Object.keys(this._getStyle()).length === 0) return;
       this._style = {};
       if (!this._inert) pushStyleOp(this);
     } else if (key === 'id') {
@@ -854,7 +866,7 @@ export class ShadowElement {
     if (key === 'class') return this._baseClass || null;
     if (key === 'id') return this._id ?? null;
     if (key === 'style') {
-      const css = serializeInlineStyle(this._style);
+      const css = serializeInlineStyle(this._getStyle());
       return css === '' ? null : css;
     }
     return this._attrs?.get(key) ?? null;
@@ -1158,7 +1170,8 @@ function buildStructure(
   const props: TemplateNodeProps = {};
   const resolvedClass = resolveClass(proto);
   if (resolvedClass) props.c = resolvedClass;
-  if (hasAnyKey(proto._style)) props.s = { ...proto._style };
+  const style = proto._getStyle();
+  if (hasAnyKey(style)) props.s = { ...style };
   if (proto._attrs && proto._attrs.size > 0) props.a = [...proto._attrs];
   if (proto._id !== undefined) props.i = proto._id;
 
@@ -1210,7 +1223,8 @@ function buildShadowClone(
   if (scopeClasses.size > 0) {
     clone._scopeClasses = new Set(scopeClasses);
   }
-  if (hasAnyKey(proto._style)) clone._style = { ...proto._style };
+  const style = proto._getStyle();
+  if (hasAnyKey(style)) clone._style = { ...style };
   if (proto._attrs) clone._attrs = new Map(proto._attrs);
   if (proto._id !== undefined) {
     clone._id = proto._id;
@@ -1297,7 +1311,8 @@ function buildShadowCloneSparse(
   if (scopeClasses.size > 0) {
     clone._scopeClasses = new Set(scopeClasses);
   }
-  if (hasAnyKey(proto._style)) clone._style = { ...proto._style };
+  const style = proto._getStyle();
+  if (hasAnyKey(style)) clone._style = { ...style };
   if (proto._attrs) clone._attrs = new Map(proto._attrs);
   if (proto._id !== undefined) {
     clone._id = proto._id;
