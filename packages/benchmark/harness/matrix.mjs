@@ -170,6 +170,19 @@ export const ARCHITECTURES = [
     tableApp: 'ui-vapor',
   },
   {
+    // Octane's private Lynx renderer (octanejs/octane packages/lynx).
+    // Not a Vue cell and not a flag permutation — a third framework family,
+    // black-box only (no vue-lynx flush hook, same as the react cells).
+    // Built out-of-tree by harness/build-octane.mjs; see its header.
+    id: 'octane',
+    family: 'octane',
+    ifr: null,
+    et: null,
+    label: 'Octane (universal core)',
+    tableDist: 'octane/dist',
+    tableApp: 'octane',
+  },
+  {
     id: 'react',
     family: 'reactlynx',
     ifr: null,

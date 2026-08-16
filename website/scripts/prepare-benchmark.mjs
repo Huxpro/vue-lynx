@@ -23,9 +23,13 @@ const MODES = {
 };
 
 function ensureLibBuilt() {
-  const libBuilt = fs.existsSync(
-    path.join(REPO_ROOT, 'packages/vue-lynx/plugin/dist/index.js'),
-  );
+  // `internal/dist` matters independently of `plugin/dist`: report-unified.mjs
+  // imports `vue-lynx/internal/matrix` at load time for the coordinate table,
+  // so a warm plugin dist with a cold internal dist would crash the report.
+  const libBuilt = [
+    'packages/vue-lynx/plugin/dist/index.js',
+    'packages/vue-lynx/internal/dist/matrix.js',
+  ].every((rel) => fs.existsSync(path.join(REPO_ROOT, rel)));
   if (!libBuilt) {
     console.info('Building vue-lynx library (required by benchmark apps)...');
     execSync('pnpm build', {
@@ -112,6 +116,9 @@ function copyIfrScaleTrends() {
 
 console.info('Preparing benchmark playground assets...');
 fs.rmSync(DEST, { recursive: true, force: true });
+// Unconditionally, not just when app bundles are missing: the report needs
+// the library even when every bundle is already built.
+ensureLibBuilt();
 ensureBundles();
 copyBundles();
 generateTable();

@@ -76,6 +76,10 @@ function ingestTableStorms(unified) {
     // Build-time-parse sweep (#337 `+b:c` / #338 `+b!`): all vue cells +
     // vapor-code / vapor-bang, one same-host session, 1k/10k/30k.
     'results/cross-storms-graph-eng-b2.json',
+    // Octane vs its four Vue comparators, one same-host session, once
+    // octanejs/octane#459 closed the cross-realm gap that made every
+    // click-driven metric unmeasurable on Lynx for Web (see OCTANE.md).
+    'results/cross-storms-octane-web.json',
   ];
   const seen = new Map();
   for (const rel of files) {
@@ -430,6 +434,7 @@ const UNIFIED_ARCH_BY_CELL = {
   'vue-vapor-ifr-engine-et': 'vapor-ifr-engine-et',
   'vue-vapor-ifr-code-paint': 'vapor-ifr-code-paint',
   react: 'react',
+  octane: 'octane',
 };
 
 function ingestUnifiedContentFcp(unified) {
@@ -442,6 +447,11 @@ function ingestUnifiedContentFcp(unified) {
     // b2 host at every rung it covers.
     ['results/unified-content-b2-x1.json', 1],
     ['results/unified-content-b2-x4.json', 4],
+    // Octane content cell + its four Vue comparators as same-session controls
+    // (octanejs/octane#459). Ingested last, so it is single-provenance for
+    // every (arch, scale) it covers.
+    ['results/unified-octane-x1.json', 1],
+    ['results/unified-octane-x4.json', 4],
   ]) {
     const p = pickNewest(file);
     const data = readJson(p);

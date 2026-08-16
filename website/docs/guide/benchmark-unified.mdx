@@ -12,7 +12,7 @@ compare those two curves as if they were the same workload.
   srcZh="/benchmark/unified.zh.html"
   title="Unified benchmark matrix"
   titleZh="统一基准矩阵"
-  height={2400}
+  height={2600}
 />
 
 ## What this page is
@@ -39,6 +39,9 @@ Sibling pages keep only what this matrix does **not** cover:
 
 1. **Conclusions** — digestible product guidance; numbers are for checking.
 2. **Storm table / charts** — point (select) vs batch (update) latency.
+   The third framework family, [Octane](https://github.com/octanejs/octane),
+   is a full column here, and this is where its result is most lopsided —
+   see below.
 3. **FCP table / charts** — content-probe first-frame ladder (separate instrument!).
 4. **Optimization-flag matrix** — every legal combination in V4 notation
    `render [+b[:d|c|e]] [+ifr[:c|e]]` (baseline = per-node; `+b` = block
@@ -46,6 +49,42 @@ Sibling pages keep only what this matrix does **not** cover:
    engine-painted first frame only), measured for create/update with
    per-flag marginal factor deltas and a full flag legend on the page.
    Formalization: [`GRAPH-ENG-REPORT.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/ifr-bench/GRAPH-ENG-REPORT.md) §1.3c.
+
+## Octane (third framework family)
+
+[octanejs/octane](https://github.com/octanejs/octane) ships its own private
+Lynx renderer (`@octanejs/lynx`). It appears in the storm tables and the FCP
+ladder through **the same two instruments as every other cell** — it has no
+workload of its own.
+
+That needed an upstream fix. Until
+[octanejs/octane#459](https://github.com/octanejs/octane/pull/459), Octane
+received no taps at all on Lynx for Web and its background thread never
+committed: the two Lynx threads are separate JS realms on web (the background
+runs in an iframe), and Octane's validators used a realm-local
+`getPrototypeOf(v) === Object.prototype` check, so main rejected every message
+the background sent. **Octane figures published here before that fix are
+superseded**, including a startup/mount-create section that has since been
+removed.
+
+The result lines up by *how much of the tree each operation touches*:
+
+| operation | tree touched | octane vs `vdom` |
+|---|---|---|
+| `select` | one row | 13–19× |
+| `update10th` | every 10th row | 10–12× |
+| `create` / FCP | whole tree | 1.2–2.1× |
+| `updateStorm` | every row, repeatedly | 1.11× → **0.86×** |
+
+The penalty scales with the number of *operations*, not the number of nodes.
+Octane's protocol is per-node object commands posted through structured clone,
+so changing one row still ships that row's node commands as fresh objects,
+where the Vue cells collapse the same edit into a few numbers in a flat ops
+array. When everything changes anyway, that per-node cost stops being overhead
+and Octane's directness wins.
+
+Method, caveats and the full reading:
+[`packages/benchmark/OCTANE.md`](https://github.com/Huxpro/vue-lynx/blob/vapor/packages/benchmark/OCTANE.md).
 
 ## Environment rules
 

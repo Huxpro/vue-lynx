@@ -19,6 +19,8 @@ import { parseArgs } from 'node:util';
 import { copy, buildConclusions } from './report-i18n.mjs';
 import { THEME_BRIDGE_CSS, THEME_BRIDGE_SCRIPT } from './theme-bridge.mjs';
 
+import { legalCells, externalCells } from 'vue-lynx/internal/matrix';
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: args } = parseArgs({
   options: {
@@ -48,6 +50,9 @@ const graphEng4axisFullStorms = readJson('results/cross-storms-graph-eng-4axis-f
 // new cells re-measured in ONE same-host session; newest-date merge below
 // makes it supersede the earlier per-key samples for the cells it covers.
 const graphEngB2Storms = readJson('results/cross-storms-graph-eng-b2.json');
+// Octane + its four Vue comparators in ONE same-host session, measurable at
+// all since octanejs/octane#459 closed the cross-realm gap (see OCTANE.md).
+const octaneStorms = readJson('results/cross-storms-octane-web.json');
 
 function mergePerOp(...sources) {
   const out = {};
@@ -74,6 +79,7 @@ const perOp = mergePerOp(
   graphEng4axisStorms,
   graphEng4axisFullStorms,
   graphEngB2Storms,
+  octaneStorms,
 );
 
 /**
@@ -106,6 +112,8 @@ const COLUMN_KEYS = [
   'vapor-engine',
   'vapor-ifr-engine-et',
   'react',
+  // Third framework family — N/A here by measurement, not by filtering.
+  'octane',
 ];
 
 const STORM_ROW_KEYS = [
@@ -138,6 +146,7 @@ const FCP_ARCH_KEYS = [
   // code-paint (#340) renders a real measured number, unlike the engine cells.
   { key: 'vapor-ifr-code-paint', color: '#db2777' },
   { key: 'react', color: '#eda100' },
+  { key: 'octane', color: '#db2777' },
 ];
 const FCP_SCALES = ['1k', '3k', '5k', '10k', '20k', '30k'];
 /** CPU ×4: Vue campaigns only cover through 10k — clip display so React ≠ lone 30k tail. */
@@ -553,6 +562,7 @@ function stormSeries(op, t, ticks = 1, pred = null) {
     '#6b7280', '#374151', // vdom, vdom-et (grays)
     '#2563eb', '#7c3aed', // vdom-ifr, vdom-ifr-et
     '#eda100', // react
+    '#db2777', // octane — third framework family
   ];
   return cols
     .filter((c) => !isEngineNa(c.key) && (!pred || pred(c.key)))
@@ -624,6 +634,15 @@ function conclusionNumbers() {
     bgSelectD: unified.cells.find(
       (c) => c.architecture === 'vdom' && c.metric === 'select_bg' && c.instrumented,
     )?.median,
+    // Octane interaction, measurable since octanejs/octane#459.
+    octSelect10k: g('octane', '10k', 'select'),
+    octUpdate10th10k: g('octane', '10k', 'update10th'),
+    octCreate10k: g('octane', '10k', 'create'),
+    octUpdateStorm30k: g('octane', '30k', 'updateStorm'),
+    vdomSelect10k: g('vdom', '10k', 'select'),
+    vdomUpdate10th10k: g('vdom', '10k', 'update10th'),
+    vdomCreate10k: g('vdom', '10k', 'create'),
+    vdomUpdateStorm30k: g('vdom', '30k', 'updateStorm'),
   };
 }
 
@@ -638,6 +657,47 @@ function renderConclusions(lang, t, published) {
     </article>`;
   }
   return { html: `${html}</div>`, count: conclusions.length };
+}
+
+/**
+ * Where each published cell sits in the eight-column space of
+ * `vue-lynx/internal/matrix`. Worth showing next to the numbers because two
+ * cells can agree on every structural column and still differ by an order of
+ * magnitude on the two transport columns — `vdom +ifr` and `octane` are
+ * exactly that pair.
+ */
+function coordinateTable(t) {
+  const cells = [...legalCells(), ...externalCells()];
+  const byLegacy = new Map(cells.map((c) => [c.legacyId, c]));
+  // Union of both tables' cells: `+ifr:c` is FCP-only but still has a
+  // coordinate. ReactLynx has no cell in internal/matrix (it is not a Vue
+  // mode and nobody has located it in this vocabulary), so it drops out.
+  const rows = [...new Set([...COLUMN_KEYS, ...FCP_ARCH_KEYS.map((a) => a.key)])]
+    .filter((k) => !isEngineNa(k) && byLegacy.has(k));
+  if (rows.length === 0) return '';
+  let html = '<table><thead><tr>'
+    + `<th>${escapeHtml(t.scenario)}</th><th>mechanism</th>`
+    + '<th>render</th><th>staging</th><th>naming</th><th>addressing</th>'
+    + '<th>encoding</th><th>validation</th>'
+    + '</tr></thead><tbody>';
+  for (const key of rows) {
+    const c = byLegacy.get(key);
+    const label = t.colLabels?.[key] ?? key;
+    // The two transport columns are the ones this report added; mark any cell
+    // that departs from the Vue default so the outlier is visible at a glance.
+    const odd = (v, def) =>
+      v === def ? `<td class="c plain">${v}</td>` : `<td class="c warn"><b>${v}</b></td>`;
+    html += `<tr><td class="op">${escapeHtml(label)} <code>${escapeHtml(key)}</code></td>`
+      + `<td class="c plain">${escapeHtml(c.term)}</td>`
+      + `<td class="c plain">${c.render}</td>`
+      + `<td class="c plain">${c.staging}</td>`
+      + `<td class="c plain">${c.naming}</td>`
+      + `<td class="c plain">${c.addressing}</td>`
+      + odd(c.encoding, 'numeric-flat')
+      + odd(c.validation, 'none')
+      + '</tr>';
+  }
+  return `${html}</tbody></table>`;
 }
 
 function coverageTable(t) {
@@ -1345,6 +1405,7 @@ function renderReport(lang, outPath) {
 <p class="sub">${escapeHtml(t.subConclusions)}</p>
 ${conclusionsHtml}
 
+
 <h2>${escapeHtml(t.hStorms)}</h2>
 <p class="sub">${t.subStorms}</p>
 <div class="scroll">${renderTable(rows, cols, t)}</div>
@@ -1435,6 +1496,11 @@ ${conclusionsHtml}
 <p class="sub">${t.subGraphEng}</p>
 <div class="scroll">${graphEngNamingTable(t)}</div>
 ${graphEngFactorsSection(t)}
+
+
+<h2>${escapeHtml(t.hCoordinates)}</h2>
+<p class="sub">${t.subCoordinates}</p>
+<div class="scroll">${coordinateTable(t)}</div>
 
 <h2>${escapeHtml(t.hCoverage)}</h2>
 <p class="sub">${escapeHtml(t.subCoverage)}</p>

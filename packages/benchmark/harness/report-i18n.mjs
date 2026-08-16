@@ -73,6 +73,21 @@ export function copy(lang) {
     subGraphEngFactors: zh
       ? '统一 table app（真实点击、双线程），全部合法优化组合（cell 名 = 基线 × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>，见下方图例；因子 = 单个 flag 的 marginal Δ%）各测 create / update10th / updateStorm / select / selectStorm（1k/10k，reps=2 — ±10% 内视为噪声）。因子 = 单轴 marginal Δ%。engine cells 在本环境（Lynx for Web，无引擎 ET PAPI）数据记为 <b>N/A</b>，默认从表格滤除（顶部开关可显示）；其解释回退的对照原始样本仍在 results JSON 中。详见 <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3。'
       : 'Unified table app (real clicks, dual-thread), every legal optimization combination (cell name = baseline × <code>+b[:t|c|e]</code> × <code>+ifr[:c|e]</code>, see the legend below; a factor = per-flag marginal Δ%), each measured for create / update10th / updateStorm / select / selectStorm (1k/10k, reps=2 — read ±10% as noise). Factors = single-axis marginal Δ%. Engine cells are recorded as <b>N/A</b> on this host (Lynx for Web has no engine ET PAPI) and filtered out of the tables by default (toggle at the top reveals them); their interpretation-fallback control samples remain in the results JSON. See <code>ifr-bench/GRAPH-ENG-REPORT.md</code> §3.3.',
+    hCoordinates: zh
+      ? '坐标 — 每格在矩阵里的位置'
+      : 'Coordinates — where each cell sits in the matrix',
+    subCoordinates: zh
+      ? '八列坐标见 <code>vue-lynx/internal/matrix</code>。这里列出结构四列加上两列<strong>传输</strong>列'
+        + '（encoding / validation）——后者是本轮新加的，因为它们能解释结构列解释不了的差距：'
+        + '<code>vdom +ifr</code> 与 <code>octane</code> 在前六列<strong>完全相同</strong>，只差这两列，'
+        + '而 <code>select@10k</code> 差 13×。偏离 Vue 默认值的格子已高亮。'
+        + 'ReactLynx 不在这套词汇里（它不是 Vue 模式，也还没人把它定位到这个空间），故不列出。'
+      : 'Eight-column coordinates live in <code>vue-lynx/internal/matrix</code>. Shown here: the four structural '
+        + 'columns plus the two <strong>transport</strong> columns (encoding / validation) added in this round, '
+        + 'because they explain a gap the structural ones cannot — <code>vdom +ifr</code> and <code>octane</code> '
+        + 'are <strong>identical in the first six columns</strong> and differ only in these two, while '
+        + '<code>select@10k</code> differs by 13×. Cells departing from the Vue default are highlighted. '
+        + 'ReactLynx is absent: it is not a Vue mode and has not been located in this vocabulary.',
     hCoverage: zh ? '覆盖面' : 'Coverage',
     subCoverage: zh
       ? '每种架构在统一 schema 里量过什么。'
@@ -103,6 +118,8 @@ export function copy(lang) {
       'vdom-ifr': 'vdom +ifr',
       'vdom-ifr-et': 'vdom +b +ifr',
       react: zh ? 'rl（Snapshot+IFR+memo）' : 'rl (Snapshot+IFR+memo)',
+      // Third framework family — not a Vue flag permutation, so no V4 notation.
+      octane: zh ? 'octane（universal core）' : 'octane (universal core)',
     },
     stormRowLabels: zh
       ? {
@@ -152,6 +169,7 @@ export function copy(lang) {
         ? 'vapor +b +ifr:e（N/A）'
         : 'vapor +b +ifr:e (N/A)',
       'vapor-ifr-code-paint': 'vapor +b +ifr:c',
+      octane: zh ? 'octane（universal core）' : 'octane (universal core)',
     },
     charts: {
       selectStorm: {
@@ -241,6 +259,14 @@ export function buildConclusions(d, lang) {
     fcpVaporIfrSparse4,
     bgSelectV,
     bgSelectD,
+    octSelect10k,
+    octUpdate10th10k,
+    octCreate10k,
+    octUpdateStorm30k,
+    vdomSelect10k,
+    vdomUpdate10th10k,
+    vdomCreate10k,
+    vdomUpdateStorm30k,
   } = d;
 
   const out = [];
@@ -356,6 +382,43 @@ export function buildConclusions(d, lang) {
           + (d4 != null
             ? ` · ×4 ${d4 >= 0 ? '+' : ''}${d4.toFixed(0)}%`
             : ''),
+    });
+  }
+
+  if (octSelect10k != null && vdomSelect10k != null) {
+    const sel = octSelect10k / vdomSelect10k;
+    const upd =
+      octUpdate10th10k != null && vdomUpdate10th10k != null
+        ? octUpdate10th10k / vdomUpdate10th10k
+        : null;
+    const cre =
+      octCreate10k != null && vdomCreate10k != null ? octCreate10k / vdomCreate10k : null;
+    const batch =
+      octUpdateStorm30k != null && vdomUpdateStorm30k != null
+        ? octUpdateStorm30k / vdomUpdateStorm30k
+        : null;
+    out.push({
+      tone: sel > 10 ? 'serious' : 'warn',
+      title: zh
+        ? `Octane：点状更新 ${sel.toFixed(0)}× vdom，批量与创建却接近持平`
+        : `Octane: ${sel.toFixed(0)}× vdom on point updates, yet level on batch and create`,
+      why: zh
+        ? '差距只出在“改一点点”的场景。它的 per-node 对象命令协议每次更新都要重发整节点命令并走 structured clone，'
+          + '没有 Vue 那种把点状更新压成极小 op 载荷的路径；批量更新时每节点成本被摊薄，差距就消失了。'
+          + '选型含义：Octane 适合首屏与整块重绘，不适合高频点状交互。'
+        : 'The gap is specific to touching a little. Its per-node object command protocol re-ships whole-node commands '
+          + 'through structured clone on every update, with no equivalent of the tiny op payload Vue collapses a point '
+          + 'update into; under batch updates the per-node cost amortizes and the gap closes. Product read: Octane suits '
+          + 'first screen and wholesale repaints, not high-frequency point interaction.',
+      evidence: zh
+        ? `select@10k ${octSelect10k.toFixed(0)} vs vdom ${vdomSelect10k.toFixed(0)} ms（${sel.toFixed(1)}×）`
+          + (upd != null ? ` · update10th@10k ${upd.toFixed(1)}×` : '')
+          + (cre != null ? ` · create@10k ${cre.toFixed(2)}×` : '')
+          + (batch != null ? ` · updateStorm@30k ${batch.toFixed(2)}×` : '')
+        : `select@10k ${octSelect10k.toFixed(0)} vs vdom ${vdomSelect10k.toFixed(0)} ms (${sel.toFixed(1)}×)`
+          + (upd != null ? ` · update10th@10k ${upd.toFixed(1)}×` : '')
+          + (cre != null ? ` · create@10k ${cre.toFixed(2)}×` : '')
+          + (batch != null ? ` · updateStorm@30k ${batch.toFixed(2)}×` : ''),
     });
   }
 

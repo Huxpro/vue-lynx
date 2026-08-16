@@ -32,6 +32,21 @@ Defined in [`harness/matrix.mjs`](./harness/matrix.mjs).
 `vapor +ifr` (`vapor-ifr-dense`) · `vapor +b +ifr:e`
 (`vapor-ifr-engine-et`, N/A) · `rl` (`react`)
 
+Since #343 the coordinate carries **eight** columns, not six: Staging ·
+Naming · Addressing · Provider · Lifetime · Delivery · **Encoding** ·
+**Validation**. The last two describe the transport rather than the residual —
+`numeric-flat` (opcode + operands in one array, what every Vue cell sends) vs
+`object-clone` (one object per command through structured clone), and whether
+the receiver re-validates each message. They were added because they explain a
+gap the structural columns cannot:
+
+```
+vdom +ifr  ops/node/random-access/BTS+MTS/persistent+ephemeral/—/numeric-flat/none
+octane     ops/node/random-access/BTS+MTS/persistent+ephemeral/—/object-clone/always
+```
+
+Identical in the first six columns, 13× apart on `select@10k`.
+
 Notation: `render [+b[:d|c|e]] [+ifr[:c|e]]` — baseline (per-node,
 plainest/safest) × stacked optimizations; `+b` = block templates (staging
 defaults per model: vdom→:c, vapor→:d), `+b:e` = engine staging
@@ -48,6 +63,35 @@ engine-staging probe (honest `stub` on web —
 `__VUE_LYNX_ENGINE_ET_STATUS__`), `vapor-ifr-engine-et` = engine-et
 ephemeral paint. (`react` = ReactLynx Snapshot+IFR + manual memo;
 `react-naive` / `react-compiler` are not part of the published matrix.)
+
+### Third framework family: `octane`
+
+`octane` has a formal coordinate: `vdom-ops-node-ifr-clone`, from
+`externalCells()` in `vue-lynx/internal/matrix`. Its render model is `vdom` —
+Octane compiles, but it still builds a fresh node tree per render and
+reconciles it against the committed one (`Blueprint*` vs `LogicalRecord` in
+`universal-core.ts`). So it does not open a new structural point: it lands on
+the coordinate `vdom +ifr` already occupies, and differs only in Encoding and
+Validation. `externalCells()` is deliberately separate from
+`legalCells()`: the per-flag factor decomposition varies one Vue flag at a
+time and would be meaningless across a different framework.
+
+`octane` is not a Vue cell and not a flag permutation — it is
+[octanejs/octane](https://github.com/octanejs/octane)'s private Lynx renderer,
+measured black-box like the react cells and through **exactly the same two
+instruments**: `cross.mjs --storms` for the `table` workload and
+`harness/unified-content.mjs` for `content-probe` FCP. It carries no
+bespoke workload of its own.
+
+Both need `OCTANE_REPO` pointing at an octane checkout — the package is private
+and pins a different Rspeedy major, so its sources are staged there, built with
+octane's toolchain, and only the bundles come back
+(`harness/build-octane.mjs`, `buildOctaneContentRung`).
+
+Full coverage requires [octanejs/octane#459](https://github.com/octanejs/octane/pull/459),
+which fixed a realm-local `Object.prototype` check that made the main thread
+reject every message the background sent on Lynx for Web. Method, results and
+the retraction of the pre-#459 numbers: **[OCTANE.md](./OCTANE.md)**.
 
 Run the all-permutation create/update sweep + factor decomposition:
 
