@@ -85,9 +85,10 @@ const getEngine = () => {
     homeX,
     homeY,
     grabbed: false,
-    // Release mode (see `setFree` below). `free` is the easter egg; `restX/Y`
-    // is where the orb settles once you let go — home, or the drop point.
-    free: false,
+    // Release mode (see `setFree` below). Free is the default; homing is the
+    // easter egg. `restX/Y` is where the orb settles once you let go — the
+    // drop point, or home.
+    free: true,
     restX: homeX,
     restY: homeY,
     // Finger tracking (for velocity-biased spark trails).
@@ -174,10 +175,10 @@ const getEngine = () => {
   };
 
   // ------------------------------------------------------------------------
-  // Easter egg: the release mode.
+  // The release mode.
   //
-  //   free = false (default) — let go and the orb springs back to the centre.
-  //   free = true            — let go and the orb stays where you dropped it.
+  //   free = true (default) — let go and the orb stays where you dropped it.
+  //   free = false          — let go and the orb springs back to the centre.
   //
   // Both hint lines are rendered by the Background Thread once; switching
   // modes only crossfades their opacity from here, so the flip costs nothing
@@ -518,7 +519,7 @@ const onTouchEnd = (e: LynxTouchEvent) => {
       hidden switch, so both copies carry the toggle handlers.
     -->
     <text
-      class="hint"
+      class="hint hint-homing"
       :main-thread-ref="hintHomingRef"
       :main-thread-bindtouchstart="onHintDown"
       :main-thread-bindtouchend="onHintUp"

@@ -8,10 +8,11 @@
 //   3. CONTINUITY — during one long drag, green effect pixels keep tracking
 //      the finger at every sample point, start to finish
 //   4. a firework burst appears at release
-//   5. the system settles back to idle afterwards
+//   5. the orb settles where it was dropped — the default release mode — and
+//      the particles die out
 //   6. a second rapid zigzag drag still spawns effects (pool recycling)
-//   7. the hidden switch (the hint label) flips the release mode both ways: the
-//      orb stays where it was dropped, then re-homes when the switch goes back
+//   7. the hidden switch (the hint label) flips the release mode both ways:
+//      to homing (the orb springs back to the centre) and back to free
 //
 // Screenshots land in harness/shots/ for eyeballing.
 import { spawn } from 'node:child_process';
@@ -173,6 +174,14 @@ check(
 );
 
 // --- release firework -----------------------------------------------------------
+// Finish the drag in a corner far from home first: settling at the drop point
+// and springing back to the centre have to be tellable apart by pixels alone.
+for (let i = 1; i <= 10; i++) {
+  p = [cx + (125 * i) / 10, cy + (280 * i) / 10];
+  await touch('touchMove', [p]);
+  await page.waitForTimeout(16);
+}
+const DROPPED = { x: p[0], y: p[1], r: 170 };
 await touch('touchEnd', []);
 await page.waitForTimeout(200);
 const boom = await shot('03-firework.png', { x: p[0], y: p[1], r: 200 });
@@ -181,16 +190,19 @@ check('release: firework burst at release point', boom.near > 300, `green near r
 // --- settle ----------------------------------------------------------------------
 // Frame-based animation timing: headless Chromium can run well below 60fps,
 // so poll (up to 15s wall clock) instead of assuming a fixed decay time.
+let settledPng;
 let settled;
 for (let i = 0; i < 15; i++) {
   await page.waitForTimeout(1000);
-  settled = await shot('04-settled.png', HOME);
+  settledPng = await shotPng('04-settled.png');
+  settled = await stats(settledPng, DROPPED);
   if (settled.near > 2000 && settled.total < idle.total * 1.35) break;
 }
+const settledHome = await stats(settledPng, HOME);
 check(
-  'settle: orb returns home, particles die out',
-  settled.near > 2000 && settled.total < idle.total * 1.35,
-  `near home=${settled.near}, total=${settled.total} (idle=${idle.total})`,
+  'settle: orb rests where it was dropped, particles die out',
+  settled.near > 2000 && settledHome.near < 2000 && settled.total < idle.total * 1.35,
+  `near drop=${settled.near}, near home=${settledHome.near}, total=${settled.total} (idle=${idle.total})`,
 );
 
 // --- rapid zigzag (pool recycling under stress) -----------------------------------
@@ -219,7 +231,7 @@ async function pressSwitch() {
 }
 
 // Wait for the stage to go quiet again (frame-based decay, so poll).
-async function settle(name, poi) {
+async function settleAt(name, poi) {
   let s;
   for (let i = 0; i < 15; i++) {
     await page.waitForTimeout(1000);
@@ -229,38 +241,61 @@ async function settle(name, poi) {
   return s;
 }
 
-await settle('07-pre-egg.png', HOME);
-await pressSwitch();
-
-// Free mode: drag the orb somewhere far from home and let go — it should stay.
-const DROP = { x: 300, y: 620, r: 150 };
-await touch('touchStart', [[DROP.x, DROP.y]]);
-for (let i = 1; i <= 20; i++) {
-  await touch('touchMove', [[DROP.x, DROP.y - 20 + i]]);
-  await page.waitForTimeout(16);
+// Fling the orb to a corner and let go, so the mode under test decides where
+// it ends up.
+const FLUNG = { x: 310, y: 660, r: 170 };
+async function flingToCorner() {
+  await touch('touchStart', [[FLUNG.x, FLUNG.y - 40]]);
+  for (let i = 1; i <= 10; i++) {
+    await touch('touchMove', [[FLUNG.x, FLUNG.y - 40 + i * 4]]);
+    await page.waitForTimeout(16);
+  }
+  await touch('touchEnd', []);
 }
-await touch('touchEnd', []);
+
+await settleAt('07-pre-egg.png', HOME);
+
+// Press once: homing mode. The orb leaves the corner it was parked in and
+// heads home on its own, without being touched.
+await pressSwitch();
+const flipped = await settleAt('08-switched-to-homing.png', HOME);
+check(
+  'easter egg: the switch sends the parked orb home',
+  flipped.near > 2000,
+  `near home=${flipped.near} (idle=${idle.near})`,
+);
+
+// ...and the mode sticks: drag it out again and it comes back by itself.
+await flingToCorner();
+let homingPng;
+for (let i = 0; i < 15; i++) {
+  await page.waitForTimeout(1000);
+  homingPng = await shotPng('09-homing.png');
+  if ((await stats(homingPng, HOME)).total < idle.total * 1.35) break;
+}
+const homingHome = await stats(homingPng, HOME);
+const homingCorner = await stats(homingPng, FLUNG);
+check(
+  'easter egg: homing mode springs the orb back after every release',
+  homingHome.near > 2000 && homingCorner.near < 2000,
+  `near home=${homingHome.near}, near corner=${homingCorner.near}`,
+);
+
+// Press again: back to the default, and the orb stays put once more.
+await pressSwitch();
+await flingToCorner();
 let freePng;
 for (let i = 0; i < 15; i++) {
   await page.waitForTimeout(1000);
-  freePng = await shotPng('08-free-mode.png');
-  if ((await stats(freePng, DROP)).total < idle.total * 1.35) break;
+  freePng = await shotPng('10-back-to-free.png');
+  if ((await stats(freePng, FLUNG)).total < idle.total * 1.35) break;
 }
-const atDrop = await stats(freePng, DROP);
-const atHome = await stats(freePng, HOME);
+const freeCorner = await stats(freePng, FLUNG);
+const freeHome = await stats(freePng, HOME);
 check(
-  'easter egg: the switch makes the orb stay where it is dropped',
-  atDrop.near > 2000 && atHome.near < 2000,
-  `near drop=${atDrop.near}, near home=${atHome.near}`,
-);
-
-// Press it again: back to homing mode, and the orb springs home on its own.
-await pressSwitch();
-const rehomed = await settle('09-rehomed.png', HOME);
-check(
-  'easter egg: pressing the switch again re-homes the orb',
-  rehomed.near > 2000,
-  `near home=${rehomed.near} (idle=${idle.near})`,
+  'easter egg: pressing the switch again restores the default free mode',
+  freeCorner.near > 2000 && freeHome.near < 2000,
+  `near corner=${freeCorner.near}, near home=${freeHome.near}`,
 );
 
 // --- summary -----------------------------------------------------------------------

@@ -184,11 +184,15 @@
    * stage wide and 20px tall — big enough to aim at, small enough to stay out
    * of the way of playing. Opacity (not the colour alpha) carries both the
    * press feedback and the crossfade; keep .42 in sync with HINT_IDLE. */
-  opacity: 0.42;
   transition: opacity 160ms ease;
 }
 
-/* The easter-egg line starts hidden behind the default one. */
+/* Free is the default mode, so its label is the one showing at startup. */
 .hint-free {
+  opacity: 0.42;
+}
+
+/* The easter-egg line waits, hidden, in the same spot. */
+.hint-homing {
   opacity: 0;
 }

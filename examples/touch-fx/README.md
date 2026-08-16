@@ -9,10 +9,10 @@ A black stage, a glowing green orb, and a finger.
 - **Firework sparks** burst on touch-down and release, and an ember trail
   follows every move. Multi-touch: each extra finger splashes on its own.
 
-There is one secret: the hint line at the bottom is a switch. Press it and
-the orb stops springing home — it now stays wherever you drop it, and the
-label reads `TOUCH·DRAG·DROP` instead of `TOUCH·DRAG·FLICK`. Press it again
-to go back.
+Let go and the orb stays wherever you dropped it. There is one secret: the
+hint line at the bottom is a switch. Press it and the orb starts springing
+back to the centre instead, with the label reading `TOUCH·DRAG·FLICK` in
+place of `TOUCH·DRAG·DROP`. Press it again to go back.
 
 Everything animated — orb spring physics, ripple rings, spark particles —
 runs **on the Main Thread** via `'main thread'` worklets and a
@@ -56,9 +56,12 @@ pnpm web:verify   # builds nothing; drives real CDP touch events in
 `harness/verify.mjs` performs a 4-second circular drag and asserts that
 green effect pixels track the finger at **every** sample along the way
 (the continuity requirement), that fireworks fire on release, that the
-system settles back to idle, that a rapid zigzag still spawns effects
+system settles back down, that a rapid zigzag still spawns effects
 (particle pool recycling), and that the hidden switch flips the release
 mode both ways. Screenshots land in `harness/shots/`.
+
+The settle check is the one that pins the default down: after a drag into a
+corner, the orb has to be *there* and not at the centre.
 
 `pnpm web:serve` serves the harness at <http://localhost:8976/> for
 interactive play in a normal browser (use touch emulation in devtools).

@@ -2,14 +2,14 @@
 
 A black stage, a glowing green orb, and your finger. Poke it, drag it, flick it — it reacts like a cat toy:
 
-- **The orb chases your finger** with a damped spring, squashing & stretching along its velocity vector. Flick and release, and it wobbles back home.
+- **The orb chases your finger** with a damped spring, squashing & stretching along its velocity vector. Let go and it wobbles to a stop right where you left it.
 - **Water ripples** pulse continuously under your finger for the *entire* drag — a fresh ring every ~150 ms, endlessly re-triggerable.
 - **Firework sparks** burst on touch-down and release, and an ember trail follows every move. Multi-touch works too: each extra finger splashes on its own.
 
 <Go example="touch-fx" defaultFile="src/App.vue" />
 
 :::details There is a switch hidden on this page
-The hint line under the orb is a button. Press it and the orb stops springing home — it stays wherever you drop it, and the label changes from `TOUCH·DRAG·FLICK` to `TOUCH·DRAG·DROP`. Press it again to put it back.
+The hint line under the orb is a button. Press it and the orb starts springing back to the centre when you let go, instead of staying where you dropped it — and the label changes from `TOUCH·DRAG·DROP` to `TOUCH·DRAG·FLICK`. Press it again to put it back.
 
 It needs no gesture recognition and no timers, which is the point: the label carries its own `main-thread-bindtouchstart/end`, and those run *before* the stage's handlers because touch events bubble. The label raises a flag, the stage sees it and stands down for the rest of the gesture — so pressing the switch never grabs the orb, never splashes, never fires the goodbye firework.
 
@@ -38,6 +38,6 @@ The example ships with a Lynx-for-Web harness (`examples/touch-fx/harness/`) tha
 ```bash
 cd examples/touch-fx
 pnpm build
-pnpm web:verify   # 9/9 checks: boot, splash, continuity, energy, firework,
-                  # settle, stress, and the hidden switch both ways
+pnpm web:verify   # 10/10 checks: boot, splash, continuity, energy, firework,
+                  # settle-where-dropped, stress, and the switch both ways
 ```
