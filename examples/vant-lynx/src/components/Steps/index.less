@@ -1,0 +1,22 @@
+:root {
+  --van-steps-background: var(--van-background-2, #fff);
+}
+
+.van-steps {
+  background-color: var(--van-steps-background);
+
+  &--horizontal {
+    padding: 10px 10px 0;
+
+    .van-steps__items {
+      position: relative;
+      display: flex;
+      margin: 0 0 10px;
+      padding-bottom: 22px;
+    }
+  }
+
+  &--vertical {
+    padding: 0 0 0 var(--van-padding-xl, 32px);
+  }
+}

@@ -1,0 +1,106 @@
+:root {
+  --van-tag-padding: 0 var(--van-padding-base, 4px);
+  --van-tag-text-color: var(--van-white, #fff);
+  --van-tag-font-size: var(--van-font-size-sm, 12px);
+  --van-tag-radius: 2px;
+  --van-tag-line-height: 16px;
+  --van-tag-medium-padding: 2px 6px;
+  --van-tag-large-padding: var(--van-padding-base, 4px) var(--van-padding-xs, 8px);
+  --van-tag-large-radius: var(--van-radius-md, 4px);
+  --van-tag-large-font-size: var(--van-font-size-md, 14px);
+  --van-tag-round-radius: var(--van-radius-max, 999px);
+  --van-tag-danger-color: var(--van-danger-color, #ee0a24);
+  --van-tag-primary-color: var(--van-primary-color, #1989fa);
+  --van-tag-success-color: var(--van-success-color, #07c160);
+  --van-tag-warning-color: var(--van-warning-color, #ff976a);
+  --van-tag-default-color: var(--van-gray-6, #969799);
+  --van-tag-plain-background: var(--van-background-2, #fff);
+}
+
+.van-tag {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: var(--van-tag-padding);
+  color: var(--van-tag-text-color);
+  font-size: var(--van-tag-font-size);
+  line-height: var(--van-tag-line-height);
+  border-radius: var(--van-tag-radius);
+
+  &--default {
+    background: var(--van-tag-default-color);
+
+    &.van-tag--plain {
+      color: var(--van-tag-default-color);
+    }
+  }
+
+  &--danger {
+    background: var(--van-tag-danger-color);
+
+    &.van-tag--plain {
+      color: var(--van-tag-danger-color);
+    }
+  }
+
+  &--primary {
+    background: var(--van-tag-primary-color);
+
+    &.van-tag--plain {
+      color: var(--van-tag-primary-color);
+    }
+  }
+
+  &--success {
+    background: var(--van-tag-success-color);
+
+    &.van-tag--plain {
+      color: var(--van-tag-success-color);
+    }
+  }
+
+  &--warning {
+    background: var(--van-tag-warning-color);
+
+    &.van-tag--plain {
+      color: var(--van-tag-warning-color);
+    }
+  }
+
+  &--plain {
+    background: var(--van-tag-plain-background);
+    border: 1px solid currentColor;
+  }
+
+  &--medium {
+    padding: var(--van-tag-medium-padding);
+  }
+
+  &--large {
+    padding: var(--van-tag-large-padding);
+    font-size: var(--van-tag-large-font-size);
+    border-radius: var(--van-tag-large-radius);
+  }
+
+  &--mark {
+    border-radius: 0 var(--van-tag-round-radius) var(--van-tag-round-radius) 0;
+  }
+
+  &--round {
+    border-radius: var(--van-tag-round-radius);
+  }
+
+  &__close {
+    margin-left: 2px;
+  }
+}
+
+// Fade transition for closeable tag
+.van-fade-enter-active,
+.van-fade-leave-active {
+  transition: opacity 0.3s;
+}
+.van-fade-enter-from,
+.van-fade-leave-to {
+  opacity: 0;
+}

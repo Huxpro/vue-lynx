@@ -1,0 +1,148 @@
+<!--
+  Lynx Limitations:
+  - titleClass: Applied via parent Tabs component, CSS class support depends on Lynx
+  - url/to/replace: Lynx has no vue-router, navigation props are no-op
+  - animated/swipeable: Lynx lacks CSS transition on translateX for content swap
+  - scrollspy: Lynx has no scroll position tracking for content panels
+  - role/tabindex/aria-* attributes: Not applicable in Lynx
+-->
+<script setup lang="ts">
+import { computed, inject, onMounted, onUnmounted, watch, ref, useSlots, nextTick, type CSSProperties } from 'vue-lynx';
+import { createNamespace } from '../../utils';
+import './index.less';
+import { TABS_KEY, type Numeric, type TabsProvide } from '../Tabs/types';
+
+const [, bem] = createNamespace('tab');
+
+const props = withDefaults(defineProps<{
+  title?: string;
+  disabled?: boolean;
+  dot?: boolean;
+  badge?: Numeric;
+  name?: Numeric;
+  titleClass?: unknown;
+  titleStyle?: string | CSSProperties;
+  showZeroBadge?: boolean;
+  url?: string;
+  to?: string | Record<string, unknown>;
+  replace?: boolean;
+}>(), {
+  title: '',
+  disabled: false,
+  dot: false,
+  showZeroBadge: true,
+  replace: false,
+});
+
+const slots = useSlots();
+
+const tabsContext = inject<TabsProvide>(TABS_KEY);
+
+if (!tabsContext) {
+  if (process.env.NODE_ENV !== 'production') {
+    console.error('[Vant] <Tab> must be a child component of <Tabs>.');
+  }
+}
+
+const autoIndex = tabsContext ? tabsContext.getTabIndex() : 0;
+
+const tabName = computed((): Numeric => {
+  return props.name !== undefined ? props.name : autoIndex;
+});
+
+const isActive = computed(() => {
+  return tabsContext ? tabsContext.active.value === tabName.value : false;
+});
+
+const inited = ref(false);
+
+const shouldRender = computed(() => {
+  if (inited.value) return true;
+  if (tabsContext?.scrollspy.value) return true;
+  if (tabsContext && !tabsContext.lazyRender.value) return true;
+  return isActive.value;
+});
+
+watch(isActive, (val) => {
+  if (val && !inited.value) {
+    inited.value = true;
+    if (tabsContext?.lazyRender.value) {
+      nextTick(() => {
+        tabsContext.onRendered(tabName.value, props.title);
+      });
+    }
+  }
+}, { immediate: true });
+
+onMounted(() => {
+  if (tabsContext) {
+    tabsContext.registerTab({
+      name: tabName.value,
+      title: props.title,
+      disabled: props.disabled,
+      dot: props.dot,
+      badge: props.badge,
+      showZeroBadge: props.showZeroBadge,
+      titleSlot: !!slots.title,
+      titleStyle: props.titleStyle,
+      titleClass: props.titleClass,
+      index: autoIndex,
+    });
+  }
+});
+
+onUnmounted(() => {
+  if (tabsContext) {
+    tabsContext.unregisterTab(tabName.value);
+  }
+});
+
+watch(
+  () => [props.title, props.disabled, props.dot, props.badge, props.showZeroBadge, props.titleClass],
+  () => {
+    if (tabsContext) {
+      tabsContext.updateTab(tabName.value, {
+        title: props.title,
+        disabled: props.disabled,
+        dot: props.dot,
+        badge: props.badge,
+        showZeroBadge: props.showZeroBadge,
+        titleStyle: props.titleStyle,
+        titleClass: props.titleClass,
+      });
+    }
+  },
+);
+
+const titleStyleKey = computed(() =>
+  props.titleStyle ? JSON.stringify(props.titleStyle) : '',
+);
+
+watch(titleStyleKey, () => {
+  if (tabsContext) {
+    tabsContext.updateTab(tabName.value, {
+      titleStyle: props.titleStyle,
+    });
+  }
+});
+
+const panelClass = computed(() => bem('panel'));
+
+const panelStyle = computed(() => {
+  const show = tabsContext?.scrollspy.value || isActive.value;
+  return show ? undefined : { display: 'none' };
+});
+
+defineExpose({
+  tabName,
+  isActive,
+});
+</script>
+
+<template>
+  <view :class="panelClass" :style="panelStyle">
+    <template v-if="shouldRender">
+      <slot />
+    </template>
+  </view>
+</template>

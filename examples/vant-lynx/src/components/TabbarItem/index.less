@@ -1,0 +1,34 @@
+:root {
+  --van-tabbar-item-font-size: var(--van-font-size-sm, 12px);
+  --van-tabbar-item-text-color: var(--van-text-color, #323233);
+  --van-tabbar-item-active-color: var(--van-primary-color, #1989fa);
+  --van-tabbar-item-active-background: var(--van-background-2, #fff);
+  --van-tabbar-item-line-height: 1;
+  --van-tabbar-item-icon-size: 22px;
+  --van-tabbar-item-icon-margin-bottom: var(--van-padding-base, 4px);
+}
+
+.van-tabbar-item {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--van-tabbar-item-text-color);
+  font-size: var(--van-tabbar-item-font-size);
+  line-height: var(--van-tabbar-item-line-height);
+
+  &__icon {
+    margin-bottom: var(--van-tabbar-item-icon-margin-bottom);
+    font-size: var(--van-tabbar-item-icon-size);
+  }
+
+  &__text {
+    // text wrapper
+  }
+
+  &--active {
+    color: var(--van-tabbar-item-active-color);
+    background-color: var(--van-tabbar-item-active-background);
+  }
+}
