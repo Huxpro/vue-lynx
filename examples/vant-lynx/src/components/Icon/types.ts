@@ -1,6 +1,18 @@
 import { makeStringProp, numericProp } from '../../utils';
-import type { ExtractPropTypes, PropType } from 'vue-lynx';
-import type { BadgeProps } from '../badge/types';
+import type { PropType } from 'vue-lynx';
+import type { BadgeProps } from '../Badge/types';
+
+export interface IconProps {
+  dot?: boolean;
+  spin?: boolean;
+  tag?: string;
+  name?: string;
+  size?: number | string;
+  badge?: number | string;
+  color?: string;
+  badgeProps?: Partial<BadgeProps>;
+  classPrefix?: string;
+}
 
 export const iconProps = {
   dot: Boolean,
@@ -13,5 +25,3 @@ export const iconProps = {
   badgeProps: Object as PropType<Partial<BadgeProps>>,
   classPrefix: String,
 };
-
-export type IconProps = ExtractPropTypes<typeof iconProps>;

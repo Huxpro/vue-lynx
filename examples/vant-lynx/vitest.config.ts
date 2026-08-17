@@ -19,35 +19,35 @@ export default defineConfig({
         find: 'vue-lynx-testing-library',
         replacement: path.resolve(
           __dirname,
-          '../../testing-library/src/index.ts',
+          '../../packages/testing-library/src/index.ts',
         ),
       },
       {
         find: 'vue-lynx/entry-background',
         replacement: path.resolve(
           __dirname,
-          '../../runtime/src/entry-background.ts',
+          '../../packages/vue-lynx/runtime/src/entry-background.ts',
         ),
       },
       {
         find: 'vue-lynx/main-thread',
         replacement: path.resolve(
           __dirname,
-          '../../main-thread/src/entry-main.ts',
+          '../../packages/vue-lynx/main-thread/src/entry-main.ts',
         ),
       },
       {
         find: 'vue-lynx/internal/ops',
         replacement: path.resolve(
           __dirname,
-          '../../internal/src/ops.ts',
+          '../../packages/vue-lynx/internal/src/ops.ts',
         ),
       },
       {
         find: /^vue-lynx$/,
         replacement: path.resolve(
           __dirname,
-          '../../runtime/src/index.ts',
+          '../../packages/vue-lynx/runtime/src/index.ts',
         ),
       },
     ],

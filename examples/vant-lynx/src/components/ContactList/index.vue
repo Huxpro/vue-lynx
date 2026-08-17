@@ -25,6 +25,7 @@ export interface ContactListProps {
 
 const props = withDefaults(defineProps<ContactListProps>(), {
   list: () => [],
+  addText: '添加联系人',
 });
 
 const emit = defineEmits<{
@@ -76,7 +77,16 @@ function onAdd() {
           <Radio :class="bem('radio')" :name="item.id" />
         </template>
         <template #default>
-          <view :class="bem('name')">{{ item.name }}，{{ item.tel }}</view>
+          <view :class="bem('name')">
+            <text>{{ item.name }}，{{ item.tel }}</text>
+            <Tag
+              v-if="item.isDefault && defaultTagText"
+              type="danger"
+              :class="bem('item-tag')"
+            >
+              {{ defaultTagText }}
+            </Tag>
+          </view>
         </template>
         <template #right-icon>
           <Icon name="edit" :class="bem('edit')" @click.stop="onEdit(item, index)" />

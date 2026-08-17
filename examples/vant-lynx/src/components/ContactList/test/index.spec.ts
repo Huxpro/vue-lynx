@@ -90,10 +90,7 @@ describe('ContactList', () => {
     );
     const editIcon = container.querySelector('.van-contact-list__edit');
     expect(editIcon).toBeTruthy();
-    // The edit icon is inside a catchtap wrapper
-    const editWrapper = editIcon!.parentElement;
-    expect(editWrapper).toBeTruthy();
-    fireEvent.tap(editWrapper!);
+    fireEvent.tap(editIcon!);
     expect(onEdit).toHaveBeenCalledTimes(1);
     expect(onEdit).toHaveBeenCalledWith(contactInfo, 0);
   });

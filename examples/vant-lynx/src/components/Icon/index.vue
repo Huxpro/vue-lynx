@@ -11,12 +11,17 @@ import { computed, inject } from 'vue-lynx';
 import { createNamespace, addUnit, isImage } from '../../utils';
 import Badge from '../Badge/index.vue';
 import { CONFIG_PROVIDER_KEY } from '../ConfigProvider/types';
-import { iconProps } from './types';
+import { iconCharMap } from './icon-map';
+import type { IconProps } from './types';
 import './index.less';
 
 const [name, bem] = createNamespace('icon');
 
-const props = defineProps(iconProps);
+const props = withDefaults(defineProps<IconProps>(), {
+  dot: false,
+  spin: false,
+  tag: 'i',
+});
 
 const emit = defineEmits<{
   (e: 'click', event: any): void;
@@ -29,6 +34,9 @@ const classPrefix = computed(
 );
 
 const isImageIcon = computed(() => isImage(props.name));
+const iconChar = computed(() =>
+  props.name ? iconCharMap[props.name] || props.name : '',
+);
 
 const iconStyle = computed(() => {
   const style: Record<string, string> = {};
@@ -58,12 +66,13 @@ function onTap(event: any) {
     :class="[
       classPrefix,
       isImageIcon ? '' : `${classPrefix}-${props.name}`,
-      bem({ spin: props.spin }),
+      bem([{ spin: props.spin }]),
     ]"
     :style="iconStyle"
     @tap="onTap"
   >
     <slot />
+    <text v-if="!isImageIcon" :style="iconStyle">{{ iconChar }}</text>
     <image
       v-if="isImageIcon"
       :src="props.name"

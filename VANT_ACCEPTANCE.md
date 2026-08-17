@@ -21,7 +21,7 @@
 ### 检查方法
 ```bash
 # 获取 Vant 组件的所有 props
-curl -s "https://raw.githubusercontent.com/youzan/vant/main/packages/vant/src/{component}/{Component}.tsx" | grep -E "^\s+\w+:" 
+curl -s "https://raw.githubusercontent.com/youzan/vant/main/packages/vant/src/{component}/{Component}.tsx" | grep -E "^\s+\w+:"
 # 或查看 shared.ts / types.ts
 ```
 
@@ -256,7 +256,7 @@ type CloseIconPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-righ
 - [ ] 所有 Vant props 已实现 (X/Y)
 - [ ] 默认值与 Vant 一致
 
-### Events  
+### Events
 - [ ] 所有 events 已实现
 - [ ] opened/closed 在动画后触发
 
@@ -267,7 +267,7 @@ type CloseIconPosition = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-righ
 
 ### Composables
 - [ ] lockScroll
-- [ ] lazyRender  
+- [ ] lazyRender
 - [ ] globalZIndex
 
 ### CSS

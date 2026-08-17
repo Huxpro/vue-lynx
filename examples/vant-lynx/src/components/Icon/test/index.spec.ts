@@ -7,71 +7,63 @@ import Icon from '../index.vue';
 
 describe('Icon', () => {
   it('should render icon with builtin icon name correctly', () => {
-    const { container } = render(Icon, {
-      props: { name: 'success' },
-    });
+    const { container } = render(Icon, { name: 'success' });
     expect(container.innerHTML).toMatchSnapshot();
   });
 
   it('should render icon with url name correctly', () => {
     const { container } = render(Icon, {
-      props: { name: 'https://example.com/icon.png' },
+      name: 'https://example.com/icon.png',
     });
     expect(container.innerHTML).toMatchSnapshot();
   });
 
   it('should render icon with local image correctly', () => {
-    const { container } = render(Icon, {
-      props: { name: '/assets/icon.jpg' },
-    });
+    const { container } = render(Icon, { name: '/assets/icon.jpg' });
     expect(container.innerHTML).toMatchSnapshot();
   });
 
   it('should render default slot correctly', () => {
-    const { getByText } = render(Icon, {
-      slots: {
-        default: () => 'Default Slot',
-      },
-    });
+    const { getByText } = render(
+      defineComponent({
+        render() {
+          return h(Icon, null, {
+            default: () => h('text', null, 'Default Slot'),
+          });
+        },
+      }),
+    );
     expect(getByText('Default Slot')).toBeTruthy();
   });
 
   it('should accept tag prop', () => {
     const { container } = render(Icon, {
-      props: {
-        tag: 'div',
-        name: 'success',
-      },
+      tag: 'div',
+      name: 'success',
     });
     expect(container.innerHTML).toContain('div');
   });
 
   it('should render dot correctly', () => {
     const { container } = render(Icon, {
-      props: {
-        name: 'success',
-        dot: true,
-      },
+      name: 'success',
+      dot: true,
     });
     expect(container.querySelector('.van-badge--dot')).toBeTruthy();
   });
 
   it('should render badge correctly', () => {
     const { container } = render(Icon, {
-      props: {
-        name: 'success',
-        badge: '1',
-      },
+      name: 'success',
+      badge: '1',
     });
     expect(container.querySelector('.van-badge')?.textContent).toBe('1');
   });
 
   it('should change icon size when using size prop', () => {
     const { container } = render(Icon, {
-      props: {
-        name: 'success',
-        size: '2rem',
-      },
+      name: 'success',
+      size: '2rem',
     });
     const icon = container.querySelector('.van-icon');
     expect(icon.style.fontSize).toBe('2rem');
@@ -79,10 +71,8 @@ describe('Icon', () => {
 
   it('should apply color prop correctly', () => {
     const { container } = render(Icon, {
-      props: {
-        name: 'success',
-        color: 'red',
-      },
+      name: 'success',
+      color: 'red',
     });
     const icon = container.querySelector('.van-icon');
     expect(icon.style.color).toBe('red');
@@ -91,12 +81,8 @@ describe('Icon', () => {
   it('should handle click event correctly', async () => {
     const onClick = vi.fn();
     const { container } = render(Icon, {
-      props: {
-        name: 'success',
-      },
-      listeners: {
-        click: onClick,
-      },
+      name: 'success',
+      onClick,
     });
 
     await fireEvent.tap(container.firstChild);
@@ -105,12 +91,9 @@ describe('Icon', () => {
 
   it('should render spin icon correctly', () => {
     const { container } = render(Icon, {
-      props: {
-        name: 'success',
-        spin: true,
-      },
+      name: 'success',
+      spin: true,
     });
     expect(container.querySelector('.van-icon--spin')).toBeTruthy();
   });
 });
-
