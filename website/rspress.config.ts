@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { defineConfig } from '@rspress/core';
 import { pluginLlms } from '@rspress/plugin-llms';
+import { pluginRss } from '@rspress/plugin-rss';
 import { pluginSass } from '@rsbuild/plugin-sass';
 import {
   transformerNotationDiff,
@@ -9,16 +10,82 @@ import {
   transformerNotationHighlight,
 } from '@shikijs/transformers';
 
+const PUBLISH_URL = 'https://vue.lynxjs.org/';
+
 const apiSidebar = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'api-sidebar.json'), 'utf-8'),
 );
+
+/** Prefix all `link` values in sidebar items with the given prefix (e.g. "/zh"). */
+function prefixSidebarLinks(
+  items: Array<Record<string, unknown>>,
+  prefix: string,
+): Array<Record<string, unknown>> {
+  return items.map((item) => {
+    const out = { ...item };
+    if (typeof out.link === 'string') {
+      out.link = `${prefix}${out.link}`;
+    }
+    if (Array.isArray(out.items)) {
+      out.items = prefixSidebarLinks(
+        out.items as Array<Record<string, unknown>>,
+        prefix,
+      );
+    }
+    return out;
+  });
+}
 
 export default defineConfig({
   root: 'docs',
   title: 'Vue Lynx',
   description: 'Vue 3 framework for building Lynx apps',
-  icon: '/favicon.png',
-  plugins: [pluginLlms()],
+  icon: '/favicon.svg',
+  logo: '/assets/brand/vue-lynx-logo.svg',
+  logoText: 'Vue Lynx',
+  lang: 'en',
+  locales: [
+    {
+      lang: 'en',
+      label: 'English',
+      title: 'Vue Lynx',
+      description: 'Vue 3 framework for building Lynx apps',
+    },
+    {
+      lang: 'zh',
+      label: '简体中文',
+      title: 'Vue Lynx',
+      description: 'Vue 3 框架，用于构建 Lynx 应用',
+    },
+  ],
+  plugins: [
+    pluginLlms(),
+    pluginRss({
+      siteUrl: PUBLISH_URL,
+      feed: [
+        {
+          id: 'blog-rss',
+          test: '/blog',
+          title: 'Vue Lynx Blog',
+          language: 'en',
+          output: {
+            type: 'rss',
+            filename: 'blog-rss.xml',
+          },
+        },
+        {
+          id: 'blog-rss-zh',
+          test: '/zh/blog',
+          title: 'Vue Lynx 博客',
+          language: 'zh-CN',
+          output: {
+            type: 'rss',
+            filename: 'blog-rss-zh.xml',
+          },
+        },
+      ],
+    }),
+  ],
   markdown: {
     shiki: {
       transformers: [
@@ -29,6 +96,13 @@ export default defineConfig({
     },
     globalComponents: [
       path.join(__dirname, 'src/components/go/Go.tsx'),
+      path.join(__dirname, 'src/components/technique-video/TechniqueVideo.tsx'),
+      path.join(__dirname, 'src/components/BlogList.tsx'),
+      path.join(__dirname, 'src/components/BlogHeader.tsx'),
+      path.join(
+        __dirname,
+        'src/components/home-comps/showcase/ScaleCompare.tsx',
+      ),
     ],
   },
   route: {
@@ -43,7 +117,7 @@ export default defineConfig({
       },
     ],
     footer: {
-      message: `\u00a9 ${new Date().getFullYear()} Vue Lynx Authors. All Rights Reserved.`,
+      message: `\u00a9 ${new Date().getFullYear()} Xuan Huang (huxpro). All Rights Reserved.`,
     },
     sidebar: {
       '/guide/': [
@@ -52,20 +126,16 @@ export default defineConfig({
           dividerType: 'solid',
         },
         {
-          sectionHeaderText: 'VueLynx Essentials',
+          sectionHeaderText: 'Learn VueLynx',
         },
         { text: 'What is VueLynx?', link: '/guide/introduction' },
         { text: 'Vue Compatibility', link: '/guide/vue-compatibility' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
-        {
-          dividerType: 'solid',
-        },
-        {
-          sectionHeaderText: 'Tutorials',
-        },
-        { text: 'Product Gallery', link: '/guide/tutorial-gallery' },
-        { text: 'Product Swiper', link: '/guide/tutorial-swiper' },
-        { text: '7GUIs Benchmark', link: '/guide/7guis' },
+        { text: 'Instant First-Frame Rendering (IFR)', link: '/guide/ifr', tag: 'v0.5' },
+        { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
+        { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
+        { text: 'Playground: Touch FX', link: '/guide/touch-fx' },
+        { text: 'scroll-view vs list', link: '/guide/scroll-view-vs-list' },
         {
           dividerType: 'solid',
         },
@@ -77,6 +147,18 @@ export default defineConfig({
         { text: 'Vue Query', link: '/guide/data-fetching' },
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
         { text: 'VueLynx Testing Library', link: '/guide/testing-library' },
+        { text: 'TypeScript', link: '/guide/typescript' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: 'Benchmark',
+        },
+        { text: 'TodoMVC', link: '/guide/todomvc' },
+        { text: '7GUIs', link: '/guide/7guis' },
+        { text: 'HackerNews', link: '/guide/hackernews' },
+        { text: 'AI Chat', link: '/guide/ai-chat' },
+        { text: 'Elk (Mastodon Client)', link: '/guide/elk' },
         {
           dividerType: 'solid',
         },
@@ -85,12 +167,114 @@ export default defineConfig({
         },
         ...apiSidebar,
       ],
+      '/zh/guide/': [
+        { text: '快速开始', link: '/zh/guide/quick-start' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: '学习 VueLynx',
+        },
+        { text: '什么是 VueLynx？', link: '/zh/guide/introduction' },
+        { text: 'Vue 兼容性', link: '/zh/guide/vue-compatibility' },
+        { text: '主线程脚本', link: '/zh/guide/main-thread-script' },
+        { text: '首屏直出（IFR）', link: '/zh/guide/ifr', tag: 'v0.5' },
+        { text: '教程：商品画廊', link: '/zh/guide/tutorial-gallery' },
+        { text: '教程：商品轮播', link: '/zh/guide/tutorial-swiper' },
+        { text: '玩一玩：触摸特效', link: '/zh/guide/touch-fx' },
+        { text: 'scroll-view 与 list', link: '/zh/guide/scroll-view-vs-list' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: '生态系统',
+        },
+        { text: 'Vue Router', link: '/zh/guide/routing' },
+        { text: 'Pinia', link: '/zh/guide/pinia' },
+        { text: 'Vue Query', link: '/zh/guide/data-fetching' },
+        { text: 'Tailwind CSS', link: '/zh/guide/tailwindcss' },
+        { text: 'VueLynx 测试库', link: '/zh/guide/testing-library' },
+        { text: 'TypeScript', link: '/zh/guide/typescript' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: '基准测试',
+        },
+        { text: 'TodoMVC', link: '/zh/guide/todomvc' },
+        { text: '7GUIs', link: '/zh/guide/7guis' },
+        { text: 'HackerNews', link: '/zh/guide/hackernews' },
+        { text: 'AI Chat', link: '/zh/guide/ai-chat' },
+        { text: 'Elk（Mastodon 客户端）', link: '/zh/guide/elk' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: 'API 参考',
+        },
+        ...prefixSidebarLinks(apiSidebar, '/zh'),
+      ],
     },
     llmsUI: true,
     nav: [
       {
         text: 'Guide',
-        link: '/guide/introduction',
+        link: '/guide/quick-start',
+        activeMatch: '/guide/',
+      },
+      {
+        text: 'API',
+        link: '/guide/api/vue-lynx/',
+        activeMatch: '/guide/api/',
+      },
+      {
+        text: 'Blog',
+        link: '/blog/',
+        activeMatch: '/blog/',
+      },
+    ],
+    locales: [
+      {
+        lang: 'en',
+        label: 'English',
+        nav: [
+          {
+            text: 'Guide',
+            link: '/guide/quick-start',
+            activeMatch: '/guide/',
+          },
+          {
+            text: 'API',
+            link: '/guide/api/vue-lynx/',
+            activeMatch: '/guide/api/',
+          },
+          {
+            text: 'Blog',
+            link: '/blog/',
+            activeMatch: '/blog/',
+          },
+        ],
+      },
+      {
+        lang: 'zh',
+        label: '简体中文',
+        nav: [
+          {
+            text: '指南',
+            link: '/zh/guide/quick-start',
+            activeMatch: '/zh/guide/',
+          },
+          {
+            text: 'API',
+            link: '/zh/guide/api/vue-lynx/',
+            activeMatch: '/zh/guide/api/',
+          },
+          {
+            text: '博客',
+            link: '/zh/blog/',
+            activeMatch: '/zh/blog/',
+          },
+        ],
       },
     ],
   },
@@ -99,10 +283,29 @@ export default defineConfig({
     source: {
       alias: {
         '@comp': path.join(__dirname, 'src/components'),
+        '@site': path.join(__dirname),
       },
     },
     server: {
       open: 'http://localhost:<port>/',
+    },
+    html: {
+      tags: [
+        // App icons + PWA manifest — favicon is handled by `icon` above
+        { tag: 'link', attrs: { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' }, append: false },
+        { tag: 'link', attrs: { rel: 'alternate icon', type: 'image/png', href: '/favicon.png' }, append: false },
+        { tag: 'link', attrs: { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' }, append: false },
+        { tag: 'link', attrs: { rel: 'manifest', href: '/site.webmanifest' }, append: false },
+        { tag: 'meta', attrs: { name: 'theme-color', content: '#42B883' }, append: false },
+        // OG tags — RSPress head[] doesn't inject into static HTML, so use Rsbuild html.tags
+        { tag: 'meta', attrs: { property: 'og:image', content: 'https://vue.lynxjs.org/og-image.png' }, append: false },
+        { tag: 'meta', attrs: { property: 'og:url', content: 'https://vue.lynxjs.org' }, append: false },
+        // Twitter Card
+        { tag: 'meta', attrs: { name: 'twitter:card', content: 'summary_large_image' }, append: false },
+        { tag: 'meta', attrs: { name: 'twitter:title', content: 'Vue Lynx' }, append: false },
+        { tag: 'meta', attrs: { name: 'twitter:description', content: 'Vue 3 framework for building Lynx apps' }, append: false },
+        { tag: 'meta', attrs: { name: 'twitter:image', content: 'https://vue.lynxjs.org/og-image.png' }, append: false },
+      ],
     },
   },
 });

@@ -1,0 +1,506 @@
+[
+  {
+    "example": "hello-world",
+    "entry": "main",
+    "cfg": "off",
+    "ok": true,
+    "buildMs": 1548,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 87209,
+        "gzip": 31322
+      },
+      "lynx": {
+        "bytes": 89327,
+        "gzip": 37015
+      }
+    }
+  },
+  {
+    "example": "hello-world",
+    "entry": "main",
+    "cfg": "et",
+    "ok": true,
+    "buildMs": 1492,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 90079,
+        "gzip": 31808
+      },
+      "lynx": {
+        "bytes": 91787,
+        "gzip": 37721
+      }
+    }
+  },
+  {
+    "example": "hello-world",
+    "entry": "main",
+    "cfg": "ifr",
+    "ok": true,
+    "buildMs": 1571,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 152293,
+        "gzip": 55057
+      },
+      "lynx": {
+        "bytes": 178538,
+        "gzip": 80698
+      }
+    }
+  },
+  {
+    "example": "hello-world",
+    "entry": "main",
+    "cfg": "ifr-et",
+    "ok": true,
+    "buildMs": 1564,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 154747,
+        "gzip": 55707
+      },
+      "lynx": {
+        "bytes": 180616,
+        "gzip": 81344
+      }
+    }
+  },
+  {
+    "example": "todomvc",
+    "entry": "main",
+    "cfg": "off",
+    "ok": true,
+    "buildMs": 1533,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 94857,
+        "gzip": 33048
+      },
+      "lynx": {
+        "bytes": 96761,
+        "gzip": 38566
+      }
+    }
+  },
+  {
+    "example": "todomvc",
+    "entry": "main",
+    "cfg": "et",
+    "ok": true,
+    "buildMs": 1534,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 99080,
+        "gzip": 33592
+      },
+      "lynx": {
+        "bytes": 100425,
+        "gzip": 39341
+      }
+    }
+  },
+  {
+    "example": "todomvc",
+    "entry": "main",
+    "cfg": "ifr",
+    "ok": true,
+    "buildMs": 1717,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 165028,
+        "gzip": 58094
+      },
+      "lynx": {
+        "bytes": 191480,
+        "gzip": 84842
+      }
+    }
+  },
+  {
+    "example": "todomvc",
+    "entry": "main",
+    "cfg": "ifr-et",
+    "ok": true,
+    "buildMs": 1662,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 169062,
+        "gzip": 58884
+      },
+      "lynx": {
+        "bytes": 195038,
+        "gzip": 85720
+      }
+    }
+  },
+  {
+    "example": "todomvc-day1",
+    "entry": "main",
+    "cfg": "off",
+    "ok": true,
+    "buildMs": 1477,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 92425,
+        "gzip": 32342
+      },
+      "lynx": {
+        "bytes": 94381,
+        "gzip": 37899
+      }
+    }
+  },
+  {
+    "example": "todomvc-day1",
+    "entry": "main",
+    "cfg": "et",
+    "ok": true,
+    "buildMs": 1583,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 97386,
+        "gzip": 32970
+      },
+      "lynx": {
+        "bytes": 98651,
+        "gzip": 38798
+      }
+    }
+  },
+  {
+    "example": "todomvc-day1",
+    "entry": "main",
+    "cfg": "ifr",
+    "ok": true,
+    "buildMs": 1677,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 161180,
+        "gzip": 56994
+      },
+      "lynx": {
+        "bytes": 187715,
+        "gzip": 83582
+      }
+    }
+  },
+  {
+    "example": "todomvc-day1",
+    "entry": "main",
+    "cfg": "ifr-et",
+    "ok": true,
+    "buildMs": 1689,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 165728,
+        "gzip": 57850
+      },
+      "lynx": {
+        "bytes": 191680,
+        "gzip": 84487
+      }
+    }
+  },
+  {
+    "example": "gallery",
+    "entry": "GalleryComplete",
+    "cfg": "off",
+    "ok": true,
+    "buildMs": 2404,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 91300,
+        "gzip": 34079
+      },
+      "lynx": {
+        "bytes": 93427,
+        "gzip": 39073
+      }
+    }
+  },
+  {
+    "example": "gallery",
+    "entry": "GalleryComplete",
+    "cfg": "et",
+    "ok": true,
+    "buildMs": 2405,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 91776,
+        "gzip": 34130
+      },
+      "lynx": {
+        "bytes": 93854,
+        "gzip": 39221
+      }
+    }
+  },
+  {
+    "example": "gallery",
+    "entry": "GalleryComplete",
+    "cfg": "ifr",
+    "ok": true,
+    "buildMs": 2885,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 160713,
+        "gzip": 60564
+      },
+      "lynx": {
+        "bytes": 186758,
+        "gzip": 84284
+      }
+    }
+  },
+  {
+    "example": "gallery",
+    "entry": "GalleryComplete",
+    "cfg": "ifr-et",
+    "ok": true,
+    "buildMs": 2700,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 161165,
+        "gzip": 60719
+      },
+      "lynx": {
+        "bytes": 187166,
+        "gzip": 84435
+      }
+    }
+  },
+  {
+    "example": "hackernews-css",
+    "entry": "main",
+    "cfg": "off",
+    "ok": true,
+    "buildMs": 1948,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 214061,
+        "gzip": 70127
+      },
+      "lynx": {
+        "bytes": 213961,
+        "gzip": 75176
+      }
+    }
+  },
+  {
+    "example": "hackernews-css",
+    "entry": "main",
+    "cfg": "et",
+    "ok": true,
+    "buildMs": 1908,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 221587,
+        "gzip": 71379
+      },
+      "lynx": {
+        "bytes": 220416,
+        "gzip": 76736
+      }
+    }
+  },
+  {
+    "example": "hackernews-css",
+    "entry": "main",
+    "cfg": "ifr",
+    "ok": true,
+    "buildMs": 2164,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 398465,
+        "gzip": 131444
+      },
+      "lynx": {
+        "bytes": 450611,
+        "gzip": 187255
+      }
+    }
+  },
+  {
+    "example": "hackernews-css",
+    "entry": "main",
+    "cfg": "ifr-et",
+    "ok": true,
+    "buildMs": 2162,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 404999,
+        "gzip": 132804
+      },
+      "lynx": {
+        "bytes": 456741,
+        "gzip": 188975
+      }
+    }
+  },
+  {
+    "example": "ai-chat",
+    "entry": "main",
+    "cfg": "off",
+    "ok": true,
+    "buildMs": 2610,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 275213,
+        "gzip": 94493
+      },
+      "lynx": {
+        "bytes": 271109,
+        "gzip": 100267
+      }
+    }
+  },
+  {
+    "example": "ai-chat",
+    "entry": "main",
+    "cfg": "et",
+    "ok": true,
+    "buildMs": 2617,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 287043,
+        "gzip": 96282
+      },
+      "lynx": {
+        "bytes": 281486,
+        "gzip": 102534
+      }
+    }
+  },
+  {
+    "example": "ai-chat",
+    "entry": "main",
+    "cfg": "ifr",
+    "ok": true,
+    "buildMs": 2705,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 506521,
+        "gzip": 177485
+      },
+      "lynx": {
+        "bytes": 550776,
+        "gzip": 234580
+      }
+    }
+  },
+  {
+    "example": "ai-chat",
+    "entry": "main",
+    "cfg": "ifr-et",
+    "ok": true,
+    "buildMs": 2658,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 516991,
+        "gzip": 179183
+      },
+      "lynx": {
+        "bytes": 560074,
+        "gzip": 236696
+      }
+    }
+  },
+  {
+    "example": "elk",
+    "entry": "main",
+    "cfg": "off",
+    "ok": true,
+    "buildMs": 2248,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 299967,
+        "gzip": 86187
+      },
+      "lynx": {
+        "bytes": 300115,
+        "gzip": 93387
+      }
+    }
+  },
+  {
+    "example": "elk",
+    "entry": "main",
+    "cfg": "et",
+    "ok": true,
+    "buildMs": 2243,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 316733,
+        "gzip": 88872
+      },
+      "lynx": {
+        "bytes": 314795,
+        "gzip": 96347
+      }
+    }
+  },
+  {
+    "example": "elk",
+    "entry": "main",
+    "cfg": "ifr",
+    "ok": true,
+    "buildMs": 2503,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 530212,
+        "gzip": 158635
+      },
+      "lynx": {
+        "bytes": 581349,
+        "gzip": 219865
+      }
+    }
+  },
+  {
+    "example": "elk",
+    "entry": "main",
+    "cfg": "ifr-et",
+    "ok": true,
+    "buildMs": 2576,
+    "err": "",
+    "sizes": {
+      "web": {
+        "bytes": 545258,
+        "gzip": 161165
+      },
+      "lynx": {
+        "bytes": 594583,
+        "gzip": 222928
+      }
+    }
+  }
+]

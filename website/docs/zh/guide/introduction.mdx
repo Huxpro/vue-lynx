@@ -1,0 +1,165 @@
+# 什么是 Vue Lynx？
+
+**Vue Lynx** 是一个用于 [Lynx](https://lynxjs.org) 的 Vue 3 自定义渲染器，让你能够使用 Vue 熟悉的组合式 API、单文件组件和响应式数据模型来构建原生 Lynx 应用。
+
+如果你了解 Vue 3 并且熟悉 Lynx，那你已经知道如何使用 Vue Lynx 了。
+
+## 主要特性
+
+- **熟悉的 Vue 3 API** — 使用 `ref()`、`computed()`、`v-for`、`v-if`、SFC `<script setup>` 以及 Vue 中你喜爱的一切功能。
+- **跨平台原生渲染** — Lynx 在移动端和桌面端提供高性能原生渲染引擎，同时具备一流的 Web 渲染支持。
+- **双线程架构** — Vue 运行在后台线程；主线程负责原生渲染。这种分离使你的应用始终保持流畅响应。对于延迟敏感的交互（拖拽、滚动），[主线程脚本](/zh/guide/main-thread-script)允许你使用 `'main thread'` 标记函数，使其直接在主线程上运行，消除跨线程延迟。
+
+## 面向 Vue Web 开发者
+
+如果你从 Web 端的 Vue 转过来，你所知道的大部分内容都可以沿用。以下是一些关键差异。
+
+### 更改你的 `import`
+
+Vue Lynx 重新导出了 Vue API，因此你可以将 `vue` 替换为 `vue-lynx`：
+
+```diff
+- import { ref, computed, onMounted } from 'vue';
++ import { ref, computed, onMounted } from 'vue-lynx';
+```
+
+### 不同的元素
+
+Lynx 提供原生元素而非 HTML。使用 `<view>`、`<text>`、`<image>` 等来替代 `<div>`、`<span>`、`<img>`：
+
+```diff
+- <div class="card">
+-   <span>{{ message }}</span>
+- </div>
++ <view class="card">
++   <text>{{ message }}</text>
++ </view>
+```
+
+:::info
+文本内容必须包裹在 `<text>` 中 — Lynx 不支持 `<view>` 内的裸文本节点。
+:::
+
+### 不同的事件
+
+Lynx 使用自己的事件系统。与 DOM 只靠事件名标识事件不同，每个 Lynx 事件在注册时都带有一个**类型**，用来控制冒泡与线程归属：`bind`（冒泡）、`catch`（阻止冒泡）、`global-bind`（来自 [GlobalEventEmitter](https://lynxjs.org/api/lynx-api/lynx/lynx-get-js-module.html) 的应用级全局事件），以及 `main-thread` 变体（处理器为主线程脚本，直接在主线程上运行）。Vue Lynx 对所有这些类型都沿用 Lynx 原生的属性命名，Lynx 文档中的任何事件都可以原样写成属性绑定：
+
+```vue
+<view
+  :bindtap="onTap"
+  :catchtap="onTapAndStop"
+  :global-bindkeyboardstatuschanged="onKeyboard"
+  :main-thread-bindtap="onMainThreadTap"
+/>
+```
+
+对于最常用的 `bind` 类型，Vue 熟悉的 `@` 语法可以作为语法糖。`@tap` 等价于 `:bindtap`，而 `.stop` 修饰符会把注册升级为原生 `catch`（`@tap.stop` ≙ `:catchtap`）：
+
+```diff
+- <div @click="handleClick" @touchstart="onTouch">
++ <view @tap="handleClick" @touchstart="onTouch">
+```
+
+`global-bind*` 与 `main-thread-*` 没有对应的 `@` 形式：它们承载的注册语义超出了 Vue `v-on` 的表达能力。特别是 `main-thread` 处理器是[主线程脚本](/zh/guide/main-thread-script)函数，不是普通函数，完全绕过 `v-on` 管线。
+
+更多详情请参阅 [Lynx 事件处理指南](https://lynxjs.org/guide/interaction/event-handling.html)。
+
+### 没有 `document` 或 `window`
+
+Lynx 不提供浏览器全局对象。依赖 `document` 或 `window` 的库需要适配才能使用。Lynx 通过 [`lynx`](https://lynxjs.org/next/api/lynx-api/lynx.html) 全局对象提供自己的 [API](https://lynxjs.org/next/api/lynx-api/lynx)：
+
+- [全局 API](https://lynxjs.org/next/api/lynx-api/global.html)，如 `setTimeout()` 和 `console.log()`，在两个线程上都可用，与 Web 相同。
+- 类 DOM 查询（例如 `querySelector`、`getBoundingClientRect`）可通过[异步后台线程 API](https://lynxjs.org/next/api/lynx-api/nodes-ref.html) 或[同步主线程 API](https://lynxjs.org/next/api/lynx-api/main-thread.html) 使用，具体取决于你需要在哪个线程上使用。
+- 平台原生能力通过 [NativeModules](https://lynxjs.org/guide/use-native-modules.html) 和[自定义元素](https://lynxjs.org/guide/custom-native-component.html)提供。
+
+## 理解双线程模型
+
+你应该期望你的 Vue 代码在 Lynx 上可以直接运行。Vue Lynx 直接复用 `@vue/runtime-core`，因此 Vue API 的行为与 Web 上完全一致 -- 详细的功能对照请参阅 [Vue 兼容性](/zh/guide/vue-compatibility)。
+
+主要的不同之处在于线程模型。如果你使用过 Web Workers，Lynx 的架构会让你感到熟悉。Vue 运行在**后台线程**上，而原生渲染发生在**主线程**上 -- 就像将工作交给 Web Worker 以保持 UI 线程的流畅响应。不同之处在于，在 Lynx 中，这是_默认_行为 -- Vue 的协调过程永远不会阻塞主线程。（设计原理请参阅[负责任地使用主线程实现交互性](https://lynxjs.org/next/blog/lynx-unlock-native-for-more#use-the-main-thread-responsibly-for-interactivity)。）
+
+在底层，Vue Lynx 使用[自定义渲染器](https://vuejs.org/api/custom-renderer)在后台线程上构建 **ShadowElement** 树。变更被批量收集为 **ops** 并刷新到主线程。用户交互以**事件**的形式回传。这形成了一个类似于浏览器事件循环的周期：
+
+```
+        ┌────────────────────────────────────────────────────────────┐
+        │                     Background Thread                      │
+        │  Vue 3 runtime · reactivity · lifecycle · your code        │
+        └──────────────┬──────────────────────▲──────────────────────┘
+                  ops  │                      │  events
+                       ▼                      │
+        ┌─────────────────────────────────────┴──────────────────────┐
+        │                        Main Thread                         │
+        │  Native elements · layout · rendering · Main Thread Script │
+        └────────────────────────────────────────────────────────────┘
+```
+
+一个完整的周期 — ops 向下、事件向上 — 就是一个 **tick**。Vue Lynx 的 `nextTick` 在一个完整周期后 resolve，因此当你的回调触发时，原生元素已经完全创建完毕。这与 Vue 在 Web 上的 `nextTick`（等待 DOM 更新）是相同的心智模型，只是扩展到了跨线程场景。
+
+### 这在实践中意味着什么
+
+在日常开发中，双线程模型基本上是透明的。只需要记住两点：
+
+#### 生命周期运行在后台线程 — 使用 `nextTick` 等待主线程
+
+就像在 Web 上一样，`onMounted` 表示"组件树已构建完成"。不同之处在于原生元素是在主线程上异步创建的。如果你需要在挂载后与原生元素交互，请等待一个 tick：
+
+```vue
+<script setup lang="ts">
+import { onMounted, nextTick } from 'vue-lynx'
+
+onMounted(() => {
+  nextTick(() => {
+    // Native elements are now ready
+    lynx.createSelectorQuery().select('.my-list').invoke(...)
+  })
+})
+</script>
+```
+
+如果你的 `onMounted` 只是设置响应式状态、定时器或数据请求，则不需要 `nextTick` — 这些操作不依赖原生元素。
+
+#### 主线程脚本实现零延迟交互（进阶）
+
+从后台线程访问原生元素始终是异步的。对于大多数场景这已经足够。模板 `ref` 返回一个 `ShadowElement`（原生元素在后台线程上的引用），而 `getBoundingClientRect()` 等布局查询可通过[异步 API](https://lynxjs.org/next/api/lynx-api/nodes-ref.html) 使用：
+
+```vue
+<script setup lang="ts">
+import { onMounted, nextTick } from 'vue-lynx'
+
+onMounted(() => {
+  nextTick(() => {
+    lynx.createSelectorQuery()
+      .select('.target')
+      .invoke({
+        method: 'boundingClientRect',
+        success: (res) => console.log(res),
+      })
+      .exec()
+  })
+})
+</script>
+```
+
+当你需要同步访问 — 流畅的动画、手势处理、布局测量 — 请使用[主线程脚本](/zh/guide/main-thread-script)。使用 `'main thread'` 标记的函数直接在主线程上运行，可以调用[主线程 API](https://lynxjs.org/next/api/lynx-api/main-thread.html)（如 [`getComputedStyleProperty()`](https://lynxjs.org/next/api/lynx-api/main-thread/element-get-computed-style.html)）、监听 `main-thread-bindlayoutchange`，以及通过 `useMainThreadRef()` 访问原生元素：
+
+```vue
+<script setup lang="ts">
+import { ref, useMainThreadRef } from 'vue-lynx'
+
+const divRef = ref(null)               // ShadowElement (background thread)
+const mtRef = useMainThreadRef(null)    // Native element (Main Thread Script only)
+</script>
+
+<template>
+  <view ref="divRef" :main-thread-ref="mtRef" />
+</template>
+```
+
+详细的功能特性说明和不支持的功能，请参阅 [Vue 功能兼容性](/zh/guide/vue-compatibility)。
+
+## 下一步
+
+- [Vue 兼容性](/zh/guide/vue-compatibility) — 逐项了解哪些功能可用、哪些有差异
+- [主线程脚本](/zh/guide/main-thread-script) — 在主线程上运行性能关键的逻辑
+- [教程：商品画廊](/zh/guide/tutorial-gallery) — 构建一个支持点赞、自动滚动和主线程脚本滚动条的瀑布流画廊
+- [教程：商品详情](/zh/guide/tutorial-swiper) — 构建一个支持触摸滑动和吸附动画的图片轮播

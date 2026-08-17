@@ -1,6 +1,8 @@
 # TodoMVC
 
-Classic [TodoMVC](https://todomvc.com) built with Vue 3 × Lynx using CSS Selector styling.
+Classic [TodoMVC](https://todomvc.com) built with Vue 3 × Lynx using CSS Selector styling. This version features iteratively improved UI, layout, and scrolling behaviors matching the modern reference clone.
+
+*(For the original unpolished version, see `examples/todomvc-day1`)*
 
 ## Features Exercised
 

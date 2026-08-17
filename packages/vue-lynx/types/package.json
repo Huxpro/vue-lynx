@@ -1,0 +1,17 @@
+{
+  "name": "vue-lynx-types",
+  "version": "0.1.0",
+  "private": true,
+  "description": "vue-lynx types",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "build": "rslib build",
+    "dev": "rslib build --watch",
+    "generate:native-tags": "node scripts/generate-native-tags.mjs",
+    "test:types": "tsc -p tsconfig.type-tests.json --noEmit"
+  },
+  "dependencies": {
+    "@lynx-js/types": "workspace:*"
+  }
+}

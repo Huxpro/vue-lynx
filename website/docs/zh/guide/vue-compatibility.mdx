@@ -1,0 +1,237 @@
+# Vue 特性兼容性
+
+Vue Lynx 构建在官方 Vue 3 运行时核心（`@vue/runtime-core`）之上，因此你应该期望你的 Vue 代码可以直接运行。核心渲染路径 -- 组合式 API、单文件组件、响应式系统、模板指令 -- 与标准 Vue 的使用方式完全一致，无需任何 Lynx 特定的适配。
+
+下面是我们已在 Lynx 上验证的 Vue 特性的逐项说明。如果存在 Lynx 特有的注意事项，会在对应位置标注。关于双线程架构底层工作原理的详细信息，请参阅[理解双线程模型](/zh/guide/introduction#understanding-the-dual-thread-model)。
+
+## 响应式系统 + 组合式函数
+
+Vue Lynx 100% 复用了 Vue 的响应式核心（`@vue/reactivity`）。每个响应式 API 的行为与标准 Vue 完全一致，没有任何 Lynx 特有的注意事项或适配。
+
+下面的示例展示了 [`reactive()`](https://vuejs.org/api/reactivity-core.html#reactive) + [`toRefs()`](https://vuejs.org/api/reactivity-utilities.html#torefs)，以及一个封装了响应式状态的 `useStopwatch()` 组合式函数：
+
+<Go
+  example="reactivity"
+  defaultFile="src/App.vue"
+/>
+
+## SFC CSS 特性
+
+普通 `<style>` 块、导入的 `.css` 文件、[`<style module>`](https://vuejs.org/api/sfc-css-features.html#css-modules)、[`<style scoped>`](https://vuejs.org/api/sfc-css-features.html#scoped-css) 和 [`v-bind()` CSS 绑定](https://vuejs.org/api/sfc-css-features.html#v-bind-in-css) 都可以在 Lynx 上使用。
+
+:::details 特性支持详情
+
+| 特性 | 状态 |
+|---------|--------|
+| `<style>`（普通） | 可用 |
+| 导入 `.css` 文件 | 可用 |
+| `<style module>` | 可用 |
+| `<style>` 中的 `v-bind()` | 可用（需要配置，见下方） |
+| `<style scoped>` | 可用（见下方注意事项） |
+
+:::warning `<style scoped>` 注意事项
+[`:deep()`](https://vuejs.org/api/sfc-css-features.html#deep-selectors)、[`:slotted()`](https://vuejs.org/api/sfc-css-features.html#slotted-selectors) 和 [`:global()`](https://vuejs.org/api/sfc-css-features.html#global-selectors) 暂不支持（[#164](https://github.com/Huxpro/vue-lynx/issues/164)、[#165](https://github.com/Huxpro/vue-lynx/issues/165)）。
+
+作用域不会叠加。在 Web 上，Vue 会给子组件的根元素同时加上子组件和父组件的 `data-v-*` 属性，因此[父组件的 scoped 样式也能命中该根元素](https://vuejs.org/api/sfc-css-features.html#scoped-css)。Lynx 中每个元素只能关联一个 CSS 作用域，Vue Lynx 始终保留创建该元素的组件的作用域——组件自己的 scoped 规则总能作用于它的根节点。父组件若需要为子组件的根节点设置样式，可以传入一个由子组件自行应用的 class，或者自己加一层包裹元素。
+:::
+
+`<style>` 中的 `v-bind()` 需要两个配置选项，以便 Lynx 引擎识别内联样式中的 CSS 自定义属性并将其级联到后代元素：
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  enableCSSInlineVariables: true,
+  enableCSSInheritance: true,
+})
+```
+
+:::warning 已知限制
+通过 `v-bind()` 驱动的影响布局的属性（如 `font-size`）在初始渲染时可以正确应用，但在响应式更新时可能不会更新视觉效果。这是 Lynx 引擎的限制。解决方法：在元素上直接通过 `:style` 绑定来驱动布局属性。
+:::
+
+:::
+
+<Go
+  example="css-features"
+  defaultFile="src/App.vue"
+/>
+
+## v-model
+
+Vue 的 `v-model` 可以创建双向绑定。在**组件**上，子组件使用 [`defineModel()`](https://vuejs.org/api/sfc-script-setup.html#definemodel)（Vue 3.4+）声明模型 prop，父组件通过 `v-model` 进行绑定。在**原生 `<input>` 和 `<textarea>` 元素**上，`v-model` 的使用方式与标准 Vue 一致，支持 `.lazy`、`.trim` 和 `.number` 修饰符。
+
+该示例展示了：
+1. **默认模型** — `defineModel<number>()` 配合 `v-model="count"` 实现计数器
+2. **命名模型** — `defineModel('title')` + `defineModel('body')` 配合 `v-model:title` / `v-model:body`
+3. **原生输入 v-model** — 在 `<input>` 上直接使用 `v-model`
+
+:::warning 注意事项
+`v-model` 不支持 **`<select>`**、**`<input type="checkbox">`** 和 **`<input type="radio">`** — Lynx 没有这些元素的原生对应实现。请改用组件级 `v-model` 配合自定义组件。
+:::
+
+<Go
+  example="v-model"
+  defaultFile="src/App.vue"
+/>
+
+## 事件修饰符
+
+Vue 的[事件修饰符](https://vuejs.org/guide/essentials/event-handling.html#event-modifiers)（`.once`、`.stop`、`.self`）在 Lynx 上可用。`.prevent` 作为兼容性空操作被接受——详情请见下表。
+
+:::details 特性支持详情
+
+| 修饰符 | 状态 | 说明 |
+|--------|------|------|
+| `.once` | 可用 | 事件处理函数最多触发一次。Vue 编译器会生成 `onTapOnce` prop key；`withModifiers` 同样支持。 |
+| `.stop` | 可用 | 使用 Lynx 原生的 `catchEvent` 机制在元素层面阻止冒泡。在 DOM/测试环境中也会调用 `stopPropagation()`。 |
+| `.self` | 可用 | 通过 `uid`（Lynx 原生）或 `uniqueId`（Web 预览）比较事件来源，因为跨线程的事件对象始终是不同的引用。在 DOM/测试环境中回退到引用相等比较。 |
+| `.prevent` | 兼容性空操作 | 静默接受，使 Web 代码无需修改即可在 Lynx 上运行。Lynx 没有浏览器默认行为可取消（没有 `<a>` 导航、没有 `<form>` 提交），因此该修饰符没有可观察的效果。 |
+
+:::
+
+:::info 主线程脚本事件处理函数
+Vue 的修饰符系统不适用于 `:main-thread-bind*` 处理函数（如 `:main-thread-bindtap`）。这些处理函数使用 Lynx 原生的 v-bind 语法，完全绕过了 Vue 的 v-on 事件管道——编译器不会为它们生成 `onTapOnce` key 或 `withModifiers()` 包装。请使用原生等价方案：`:main-thread-catchtap` 用于阻止冒泡，在主线程脚本处理函数内部实现 `.once`/`.self` 逻辑。
+:::
+
+下面的示例展示了 `.once`、`.stop` 和 `.self`。`.prevent` 卡片说明了为何该修饰符不提供交互式演示：
+
+<Go
+  example="event-modifiers"
+  defaultFile="src/App.vue"
+/>
+
+## 插槽
+
+Vue [插槽](https://vuejs.org/guide/components/slots.html)是将模板内容传递给子组件的主要组合机制。Vue Lynx 支持默认插槽、具名插槽和作用域插槽。
+
+下面的示例展示了这三种模式：
+1. **默认插槽** — 将内容投射到 `<Card>` 组件中
+2. **具名插槽** — `#header` 和 `#footer`，带有后备内容
+3. **作用域插槽** — `<DataList>` 将每个项暴露给父组件进行自定义渲染
+
+<Go
+  example="slots"
+  defaultFile="src/App.vue"
+/>
+
+## Provide / Inject
+
+Vue 的 [`provide`](https://vuejs.org/guide/components/provide-inject.html) 和 `inject` API 允许祖先组件作为其所有后代组件的依赖注入器，无论组件层级有多深。这避免了通过中间组件层层传递 props。
+
+下面的示例在根组件中提供了一个响应式的 `theme` ref 和一个静态的 `appName` 字符串。一个孙子组件注入了这两个值——中间层不需要向下传递任何内容。
+
+<Go
+  example="provide-inject"
+  defaultFile="src/App.vue"
+/>
+
+## Suspense
+
+Vue 的 [`<Suspense>`](https://vuejs.org/guide/built-ins/suspense.html) 在等待异步组件解析时显示后备内容。在 Lynx 上，`<Suspense>` 支持异步 `setup()`（`<script setup>` 中的顶层 `await`）和用于延迟加载的 `defineAsyncComponent`。
+
+:::tip 关于代码分割
+`defineAsyncComponent(() => import('./X.vue'))` 会产出依赖 Lynx lazy-bundle 运行时（`lynx.requireModuleAsync` / `lynx.loadLazyBundle`）的 webpack 异步 chunk。这些 API 在 Lynx Web Preview 中不可用，因此文档示例改用静态导入组件 + 延迟 Promise——Suspense 的 fallback 路径与真正的懒加载相同。
+:::
+
+<Go
+  example="suspense"
+  defaultFile="src/App.vue"
+  defaultEntryName="main"
+/>
+
+## Transition
+
+Vue 的 [`<Transition>`](https://cn.vuejs.org/guide/built-ins/transition.html) 和 [`<TransitionGroup>`](https://cn.vuejs.org/guide/built-ins/transition-group.html) 组件在元素插入或移除时应用进入/离开动画。
+
+`<Transition>` **已完整支持** —— CSS transition、CSS animation、`appear`、`mode`、JS hooks，以及带或不带显式 `:duration` prop 的过渡均可使用。从 [#248](https://github.com/Huxpro/vue-lynx/issues/248)（v0.5）开始，Vue Lynx 也遵循 Vue 对 `v-show` 持久化过渡的行为：每次可见性变化都会运行进入/离开钩子，并且只会在离场动画结束后应用 `display: none`。drawer、sheet、popover 等模式在 Web 和原生 Lynx 上均可与官方 Vue 表现一致。
+
+不传 `:duration` 时，Vue Lynx 会等待真实的 `transitionend`/`animationend` 事件（与 Vue DOM 的主路径相同）。有界的回退清理（[#286](https://github.com/Huxpro/vue-lynx/issues/286)）会在过渡被打断、事件未到达时注销残留的处理器。
+
+:::info 剩余限制（仅 `<TransitionGroup>`）
+`<TransitionGroup>` 的移动（FLIP）动画尚不支持——后台线程无法使用 `getBoundingClientRect()`。列表项的进入/离开过渡仍然可用。
+:::
+
+在下面的示例中滚动到 **9. Registry cleanup**，可观察没有 `:duration` 的 `<Transition>` 在快速打断下的表现：hammer 时 event-registry 计数上升，停止后会回到 baseline。
+
+<Go
+  example="transition"
+  defaultFile="src/App.vue"
+  defaultEntryFile="dist/transition.lynx.bundle"
+/>
+
+## KeepAlive
+
+Vue 的 [`<KeepAlive>`](https://vuejs.org/guide/built-ins/keep-alive.html) 会缓存不活跃的组件实例，而不是销毁它们。当组件重新切换回来时，其状态会被保留。支持 `include`、`exclude` 和 `max` props。`onActivated` 和 `onDeactivated` 生命周期钩子会正常触发。
+
+<Go
+  example="keep-alive"
+  defaultFile="src/App.vue"
+/>
+
+## 选项式 API
+
+Vue 3 在组合式 API 之外还提供了选项式 API 以保持向后兼容。
+默认情况下，Vue Lynx 启用了选项式 API（插件中的 `optionsApi: true`），但你可以禁用它以减小包体积：
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  optionsApi: false, // 移除选项式 API 运行时（约 9 kB）
+})
+```
+
+下面的示例使用 `defineComponent` 配合 `data()`、`computed`、`watch`、`methods` 和 `mounted` 生命周期钩子：
+
+<Go
+  example="option-api"
+  defaultFile="src/App.vue"
+/>
+
+## v-once / v-memo
+
+[`v-once`](https://vuejs.org/api/built-in-directives.html#v-once) 与 [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) 在 Vue Lynx 中无需任何配置即可使用。在 Lynx 上缓存命中会跳过该子树的整批跨线程 op——内容永不变化时用 `v-once`，子树只应随一小段依赖更新时用 `v-memo`（常见于 `v-for` 列表项）。
+
+<Go
+  example="v-once-memo"
+  defaultFile="src/App.vue"
+/>
+
+对于渲染函数，Vue 的 `withMemo` 辅助函数（编译器为 [`v-memo`](https://vuejs.org/api/built-in-directives.html#v-memo) 生成的运行时 API）已从 `vue-lynx` 重新导出。
+
+## Teleport
+
+Vue 的 [`<Teleport>`](https://cn.vuejs.org/guide/built-ins/teleport.html) 可以将模板片段渲染到 UI 树中的另一处。Vue Lynx 通过后台线程的 `idRegistry` 查找支持 `to="#id"` 字符串选择器——典型用法是触发器在组件树深处，弹层却渲染到页面根节点。
+
+:::warning 注意事项
+暂不支持直接传入元素 ref，以及非 ID 选择器（例如 `to=".class"` 或 `to="body"`）。请给目标节点设置 `id`，并用 `to="#that-id"` 指向它。
+
+`<Teleport>` 挂载时目标元素必须已经存在——把带 `id` 的宿主放在 `<Teleport>` 之前（或放在拥有它的组件之外）。Vue 无法解析与 teleport 同一次渲染才创建出来的目标。
+:::
+
+下面的示例演示了传送到 `#overlay-root` 的弹层，以及带 `disabled` prop 的响应式内容：
+
+<Go
+  example="teleport"
+  defaultFile="src/App.vue"
+/>
+
+## `<page>` 顶层节点
+
+每个 Lynx 页面都有一个原生 [`<page>`](https://lynxjs.org/api/elements/built-in/page) 根节点。Vue Lynx 会自动创建它；只有需要直接给根节点绑定 class、样式、事件或 ref 时，才需要显式写出 `<page>`：
+
+```vue
+<template>
+  <page class="app" :style="pageStyle" @tap="onPageTap">
+    <view>...</view>
+  </page>
+</template>
+```
+
+显式 `<page>` 会被编译成透明内置组件，属性作用在已有的原生 page 上，不会再创建第二个。每个页面只能有一个，且必须是最外层元素。使用显式 `<page>` 时建议 Lynx Engine **3.8.1+**。
+
+## 不支持的特性
+
+部分 Vue 内置特性尚未适配双线程原生环境：
+
+| 特性 | 原因 | 替代方案 |
+|---------|--------|-------------|
+| `<TransitionGroup>` 移动（FLIP） | 后台线程无法使用 `getBoundingClientRect()` | 列表进入/离开过渡仍可用；布局变化可用 CSS 或主线程脚本实现 |
+| `withKeys` 按键修饰符 | 原生平台为 no-op —— Lynx 原生运行时在事件到达 JS 线程之前已将键盘输入转换为具名事件（如 `confirm`），iOS/Android 上的 `event.key` 始终为空。Web 预览在 [lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594) 后可正常使用。原生端支持有赖于上游运行时变更。 | 原生端在 `<input>` 上直接使用 `@confirm` |

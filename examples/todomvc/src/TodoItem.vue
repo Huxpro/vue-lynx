@@ -1,10 +1,6 @@
 <script setup>
-import { ref } from 'vue'
-
-const props = defineProps(['todo'])
-const emit = defineEmits(['toggle', 'delete', 'edit'])
-
-const editing = ref(false)
+const props = defineProps(['todo', 'editing', 'editText'])
+const emit = defineEmits(['toggle', 'delete', 'start-edit', 'update-edit', 'done-edit'])
 
 function onToggle() {
   emit('toggle', props.todo)
@@ -15,42 +11,53 @@ function onDelete() {
 }
 
 function startEdit() {
-  editing.value = true
+  emit('start-edit', props.todo)
 }
 
-function onEditConfirm(e) {
+function onEditInput(e) {
   const value = e?.detail?.value ?? ''
-  editing.value = false
-  emit('edit', props.todo, value)
+  emit('update-edit', value)
 }
 
-function cancelEdit() {
-  editing.value = false
+function onDoneEdit(e) {
+  if (e) {
+    const value = e?.detail?.value ?? ''
+    emit('update-edit', value)
+  }
+  emit('done-edit', props.todo)
 }
 </script>
 
 <template>
-  <!-- Normal view -->
   <view
-    v-if="!editing"
     class="todo-item"
-    :class="{ completed: todo.completed }"
+    :class="{ completed: todo.completed, editing }"
   >
-    <view class="todo-toggle" @tap="onToggle">
-      <text v-if="todo.completed" class="checkmark">✓</text>
+    <!-- Normal view -->
+    <view
+      v-if="!editing"
+      class="todo-view"
+    >
+      <view class="todo-toggle" @tap="onToggle">
+        <text v-if="todo.completed" class="todo-toggle-icon">✓</text>
+      </view>
+      <view class="todo-label-hitbox" @tap="startEdit">
+        <text class="todo-label">{{ todo.title }}</text>
+      </view>
+      <text class="destroy" @tap="onDelete">✕</text>
     </view>
-    <text class="todo-label" @longpress="startEdit">{{ todo.title }}</text>
-    <text class="destroy" @tap="onDelete">✕</text>
-  </view>
 
-  <!-- Edit view -->
-  <view v-else class="edit-container">
-    <input
-      class="edit-input"
-      type="text"
-      :value="todo.title"
-      @confirm="onEditConfirm"
-      @blur="cancelEdit"
-    />
+    <!-- Edit view -->
+    <view v-else class="edit-container">
+      <input
+        class="edit-input"
+        type="text"
+        :value="editText"
+        autofocus
+        @input="onEditInput"
+        @confirm="onDoneEdit"
+        @blur="onDoneEdit"
+      />
+    </view>
   </view>
 </template>

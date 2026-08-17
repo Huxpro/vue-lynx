@@ -1,0 +1,40 @@
+{
+  "name": "@vue-lynx-example/ai-chat",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI Chatbot example — a Vue Lynx port of the Nuxt AI Chat template (nuxt-ui-templates/chat)",
+  "license": "Apache-2.0",
+  "type": "module",
+  "files": [
+    "dist",
+    "src",
+    "server",
+    "lynx.config.ts",
+    "tsconfig.json"
+  ],
+  "scripts": {
+    "build": "rspeedy build",
+    "dev": "rspeedy dev",
+    "dev:server": "node server/index.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "vue-lynx": "workspace:*",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@lynx-js/qrcode-rsbuild-plugin": "^0.4.6",
+    "@lynx-js/rspeedy": "^0.13.5",
+    "@lynx-js/tailwind-preset": "^0.4.0",
+    "@rsbuild/plugin-vue": "^1.2.6",
+    "rsbuild-plugin-tailwindcss": "^0.2.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.9.3",
+    "vitest": "^3.0.0",
+    "vue": "^3.5.0"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

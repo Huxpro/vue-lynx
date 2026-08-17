@@ -10,9 +10,8 @@ const themeNames: ThemeName[] = ['dark', 'light', 'ocean']
 const currentTheme = ref<ThemeName>('dark')
 
 // dark is the :root default, so no class needed; light/ocean use .theme-* class
-const themeClass = computed(() =>
-  currentTheme.value === 'dark' ? '' : `theme-${currentTheme.value}`,
-)
+// Workaround: Always use explicit theme class to avoid empty string issue with __SetClasses
+const themeClass = computed(() => `theme-${currentTheme.value}`)
 
 function setTheme(name: ThemeName) {
   currentTheme.value = name

@@ -1,26 +1,78 @@
 {
   "go.preview": {
-    "en": "Preview"
+    "en": "Preview",
+    "zh": "预览"
   },
   "go.qrcode": {
-    "en": "QRCode"
+    "en": "QRCode",
+    "zh": "二维码"
   },
   "go.files": {
-    "en": "Files"
+    "en": "Files",
+    "zh": "文件"
   },
   "go.scan.message-1": {
-    "en": "Download "
+    "en": "Download ",
+    "zh": "下载 "
   },
   "go.scan.message-2": {
-    "en": "and scan the QR code to get started."
+    "en": "and scan the QR code to get started.",
+    "zh": "并扫描二维码以开始使用。"
   },
   "go.qrcode.copy-link": {
-    "en": "Copy Link"
+    "en": "Copy Link",
+    "zh": "复制链接"
   },
   "go.qrcode.copied": {
-    "en": "Copied"
+    "en": "Copied",
+    "zh": "已复制"
   },
   "go.qrcode.entry": {
-    "en": "Entry"
+    "en": "Entry",
+    "zh": "入口"
+  },
+  "go.deeplink.open.default": {
+    "en": "Open in Lynx Explorer",
+    "zh": "在 Lynx Explorer 中打开"
+  },
+  "go.deeplink.open.lynxtron": {
+    "en": "Open in Lynxtron Go",
+    "zh": "在 Lynxtron Go 中打开"
+  },
+  "go.deeplink.open.sparkling": {
+    "en": "Open in Sparkling",
+    "zh": "在 Sparkling 中打开"
+  },
+  "go.deeplink.hint-desktop": {
+    "en": "desktop only",
+    "zh": "仅限桌面端"
+  },
+  "go.deeplink.hint-mobile": {
+    "en": "mobile only",
+    "zh": "仅限移动端"
+  },
+  "go.deeplink.or": {
+    "en": "or",
+    "zh": "或"
+  },
+  "go.openin": {
+    "en": "Open",
+    "zh": "打开"
+  },
+  "go.openin.show-qrcode": {
+    "en": "Show QR Code",
+    "zh": "显示二维码"
+  },
+  "go.ultra": {
+    "en": "Open frameless",
+    "zh": "无边框打开"
+  },
+  "go.ultra.exit": {
+    "en": "Exit frameless",
+    "zh": "退出无边框"
+  },
+  "go.refresh": {
+    "en": "Refresh",
+    "zh": "刷新"
   }
 }

@@ -1,0 +1,72 @@
+/* Elk default theme, ported from elk-zone/elk app/styles/{vars,default-theme}.css */
+page {
+  --motion-fast: 120ms;
+  --motion-state: 180ms;
+  --motion-modal: 250ms;
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+
+  --theme-color-name: #cc7d24;
+  --c-primary: #cc7d24;
+  --c-primary-active: #b16605;
+  --c-primary-light: #cc7d2480;
+  --c-primary-fade: #c7781f1a;
+
+  --c-border: #eeeeee;
+  --c-border-dark: #dccfcf;
+  --c-danger: #ff3c1b;
+  --c-danger-active: #b50900;
+
+  --c-bg-base: #fafafa;
+  --c-bg-active: #f2f2f2;
+  --c-bg-card: rgba(0, 0, 0, 0.023);
+  --c-bg-code: rgba(0, 0, 0, 0.023);
+  --c-bg-dm: #f1e8e6;
+  --c-sheet-bg: rgba(250, 250, 250, 0.94);
+  --c-sheet-fill-bg: #fafafa;
+
+  --c-text-base: #232323;
+  --c-text-code: #63470c;
+  --c-text-secondary: #686868;
+  --c-text-secondary-light: #919191;
+
+  --c-bg-btn-disabled: #a1a1a1;
+  --c-text-btn-disabled: #ffffff;
+
+  --c-success: #67c23a;
+  --c-warning: #e6a23c;
+  --c-error: #f56c6c;
+
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+  background-color: var(--c-bg-base);
+  color: var(--c-text-base);
+}
+
+/* Elk .dark palette (vars.css) — applied via a class on the app root;
+   CSS variables cascade to children (enableCSSInlineVariables). */
+.app-dark {
+  --c-primary: #cc7d24;
+  --c-primary-active: #b66b0d;
+  --c-primary-light: #d1822980;
+  --c-primary-fade: #cc7d241a;
+
+  --c-border: #222222;
+  --c-border-dark: #545251;
+  --c-danger: #ff2810;
+  --c-danger-active: #e02f00;
+
+  --c-bg-base: #111111;
+  --c-bg-active: #191919;
+  --c-bg-card: rgba(255, 255, 255, 0.023);
+  --c-bg-code: rgba(255, 255, 255, 0.023);
+  --c-bg-dm: #0a2f35;
+  --c-sheet-bg: rgba(17, 17, 17, 0.94);
+  --c-sheet-fill-bg: #111111;
+
+  --c-text-base: #f3f3f3;
+  --c-text-code: #ecd88e;
+  --c-text-secondary: #888888;
+  --c-text-secondary-light: #686868;
+
+  --c-bg-btn-disabled: #2a2a2a;
+  --c-text-btn-disabled: #919191;
+}

@@ -1,11 +1,13 @@
 {
   "name": "create-vue-lynx",
-  "version": "0.1.0-pre-alpha.1",
+  "version": "0.1.3",
   "description": "Create a new Vue Lynx project",
   "license": "Apache-2.0",
   "type": "module",
-  "bin": {
-    "create-vue-lynx": "./dist/index.js"
+  "publishConfig": {
+    "bin": {
+      "create-vue-lynx": "./dist/index.js"
+    }
   },
   "files": [
     "dist",
@@ -14,7 +16,8 @@
     "template-vue-js"
   ],
   "scripts": {
-    "build": "tsc -p tsconfig.build.json"
+    "build": "tsc -p tsconfig.build.json",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "create-rstack": "^1.0.0"
@@ -27,5 +30,7 @@
     "vue-lynx": "workspace:*",
     "typescript": "^5.0.0"
   },
-  "engines": { "node": ">=18" }
+  "engines": {
+    "node": ">=20"
+  }
 }

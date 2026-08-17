@@ -1,0 +1,31 @@
+# TodoMVC
+
+[TodoMVC](https://github.com/tastejs/todomvc/tree/gh-pages/examples/vue) is the canonical benchmark for comparing JavaScript frameworks. We ported it as our first validation target to verify whether we can fully reuse the Vue 3 core and implement a dual-thread rendering pipeline on top of the Custom Renderer API to connect with Lynx's native engine.
+
+<Go example="todomvc" defaultFile="src/TodoApp.vue" />
+
+## Overview of Changes
+
+Most business logic transferred directly — Composition API (`ref`, `computed`, `watch`), component patterns, and template directives work identically. Here's what we changed:
+
+| Aspect | Original (Web) | Vue Lynx |
+|--------|----------------|----------|
+| **Template elements** | `<div>`, `<li>`, `<button>`, `<label>` | `<view>`, `<text>`, `<input>`, `<scroll-view>` |
+| **Events** | `@click`, `@keyup.enter` | `@tap`, `@confirm` |
+| **Checkbox** | `<input type="checkbox">` | `<view>` + `@tap` (no native checkbox in Lynx) |
+| **Vue Router** | 3 filter routes | `ref('all')` (not needed) |
+| **CSS** | `todomvc-app-css` package | Custom `todomvc.css` (no pseudo-elements in Lynx) |
+
+## How Much of Vue Do We Reuse?
+
+The table below reflects our initial prototype — the minimum custom code needed to get TodoMVC running on Lynx. The actual codebase has grown since then, but the reuse ratio remains similar: the vast majority of Vue's runtime is used as-is.
+
+| Layer | Source | Reuse |
+|-------|--------|-------|
+| **Reactivity** | `@vue/reactivity` | 100% official |
+| **Component system** | `@vue/runtime-core` | 100% official |
+| **Template compiler** | `@vue/compiler-dom` + `@rsbuild/plugin-vue` | 100% official |
+| **Dual-threaded renderer** | `vue-lynx/runtime`, `vue-lynx/main-thread` | Custom (~900 LOC) |
+| **Bundler Plugin** | `vue-lynx/plugin` | Custom (~360 LOC) |
+
+With just over **1,000 lines of code**, we were able to run TodoMVC. This validated that building a dual-thread rendering pipeline on top of the Vue 3 Custom Renderer API to connect with Lynx's native engine is a viable approach.

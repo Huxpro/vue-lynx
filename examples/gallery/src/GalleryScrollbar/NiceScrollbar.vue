@@ -6,8 +6,7 @@ declare const SystemInfo: { pixelHeight: number; pixelRatio: number };
 const scrollbarHeight = ref(0);
 const scrollbarTop = ref(0);
 
-function adjustScrollbar(scrollTop: number, scrollHeight: number) {
-  const listHeight = SystemInfo.pixelHeight / SystemInfo.pixelRatio - 48;
+function adjustScrollbar(scrollTop: number, scrollHeight: number, listHeight: number) {
   scrollbarHeight.value = listHeight * (listHeight / scrollHeight);
   scrollbarTop.value = listHeight * (scrollTop / scrollHeight);
 }

@@ -13,27 +13,52 @@ Vue 3 custom renderer for building [Lynx](https://lynxjs.org) apps.
 
 Visit **[vue.lynxjs.org](https://vue.lynxjs.org)** for full documentation, including:
 
-- [Introduction](https://vue.lynxjs.org/guide/introduction.html)
-- [Quick Start](https://vue.lynxjs.org/guide/quick-start.html)
-- [Gallery Tutorial](https://vue.lynxjs.org/tutorials/gallery.html)
-- [Swiper Tutorial](https://vue.lynxjs.org/tutorials/swiper.html)
+- [Introduction](https://vue.lynxjs.org/guide/introduction)
+- [Quick Start](https://vue.lynxjs.org/guide/quick-start)
 
 ## Examples
 
-See the [`examples/`](examples/) directory for complete working examples:
+See the [`examples/`](examples/) directory. All examples can be run with:
+
+```bash
+cd examples/<name>
+pnpm install
+pnpm dev
+```
+
+#### Tutorials
+
+- [`gallery`](examples/gallery) — Photo gallery ([tutorial](https://vue.lynxjs.org/guide/tutorial-gallery))
+- [`swiper`](examples/swiper) — Swiper component ([tutorial](https://vue.lynxjs.org/guide/tutorial-swiper))
+
+#### Vue Features
 
 - [`hello-world`](examples/hello-world) — Minimal starter
 - [`basic`](examples/basic) — Core features (events, refs, reactivity)
 - [`reactivity`](examples/reactivity) — `reactive()`, `toRefs()`, and composables
-- [`todomvc`](examples/todomvc) — TodoMVC with CSS Selectors
-- [`option-api`](examples/option-api) — Options API style
+- [`option-api`](examples/option-api) — Options API
+- [`v-model`](examples/v-model) — `v-model` binding
+- [`slots`](examples/slots) — Slots and scoped slots
+- [`provide-inject`](examples/provide-inject) — `provide()` / `inject()`
+- [`suspense`](examples/suspense) — Suspense and async components
+- [`transition`](examples/transition) — `<Transition>` and `<TransitionGroup>`
+- [`teleport`](examples/teleport) — `<Teleport to="#id">`
+- [`css-features`](examples/css-features) — CSS selectors and features
+- [`main-thread`](examples/main-thread) — Main thread script
+- [`networking`](examples/networking) — Network requests and data fetching
+
+#### Ecosystem
+
 - [`vue-router`](examples/vue-router) — Vue Router integration
 - [`pinia`](examples/pinia) — Pinia state management
-- [`suspense`](examples/suspense) — Suspense API
 - [`tailwindcss`](examples/tailwindcss) — Tailwind CSS styling
-- [`gallery`](examples/gallery) — Photo gallery
-- [`swiper`](examples/swiper) — Swiper component
+
+#### Benchmarks
+
+- [`todomvc`](examples/todomvc) — TodoMVC
 - [`7guis`](examples/7guis) — 7GUIs benchmark tasks
+- [`hackernews-tailwind`](examples/hackernews-tailwind) — HackerNews
+- [`ai-chat`](examples/ai-chat) — AI chatbot (port of the [Nuxt AI Chatbot template](https://github.com/nuxt-ui-templates/chat)): streaming, reasoning, tool-call cards, markdown, theming
 
 ## Contributing
 
@@ -54,14 +79,6 @@ pnpm build
 | `pnpm test:upstream` | Run upstream Vue compatibility tests |
 | `pnpm test:dev-smoke` | Run dev smoke tests |
 | `pnpm lint` | Lint with Biome |
-
-### Run examples locally
-
-```bash
-cd examples/basic
-pnpm install
-pnpm dev
-```
 
 ## License
 

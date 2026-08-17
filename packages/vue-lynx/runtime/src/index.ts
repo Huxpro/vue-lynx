@@ -1,0 +1,1478 @@
+// Copyright 2026 Xuan Huang (huxpro). All rights reserved.
+// Licensed under the Apache License Version 2.0 that can be found in the
+// LICENSE file in the root directory of this source tree.
+
+/**
+ * vue-lynx
+ *
+ * Vue 3 custom renderer for Lynx's Background Thread.
+ *
+ * Usage:
+ *   import { createApp, ref, h, defineComponent } from 'vue-lynx'
+ *
+ * This module re-exports Vue's reactivity / component APIs and provides a
+ * custom createApp() that mounts into a ShadowElement tree and flushes DOM
+ * operations to the Main Thread via callLepusMethod('vuePatchUpdate', ...).
+ */
+
+import {
+  nextTick as _vueNextTick,
+  createRenderer,
+  h as _vueH,
+  onActivated as _onActivated,
+  onBeforeMount as _onBeforeMount,
+  onBeforeUnmount as _onBeforeUnmount,
+  onBeforeUpdate as _onBeforeUpdate,
+  onDeactivated as _onDeactivated,
+  onMounted as _onMounted,
+  onUnmounted as _onUnmounted,
+  onUpdated as _onUpdated,
+  // Re-export types need explicit imports for isolatedDeclarations
+} from '@vue/runtime-core';
+import type {
+  App,
+  Component,
+  ComponentInternalInstance,
+  ComponentPublicInstance,
+  ComputedRef,
+  DeepReadonly,
+  DefineComponent,
+  Directive,
+  EmitsOptions,
+  ExtractPropTypes,
+  FunctionalComponent,
+  InjectionKey,
+  MaybeRef,
+  MaybeRefOrGetter,
+  ObjectDirective,
+  Plugin,
+  PropType,
+  Reactive,
+  Ref,
+  SetupContext,
+  ShallowRef,
+  SlotsType,
+  UnwrapNestedRefs,
+  UnwrapRef,
+  VNode,
+  VNodeChild,
+  VNodeRef,
+  WatchHandle,
+  WatchOptions,
+  WatchStopHandle,
+  WritableComputedRef,
+} from '@vue/runtime-core';
+
+import { registerMount, resetAppRegistry } from './app-registry.js';
+import { runOnMainThread } from './cross-thread.js';
+import { resetRegistry } from './event-registry.js';
+import { resetFlushState, scheduleFlush, waitForFlush } from './flush.js';
+import { resetFunctionCallState } from './function-call.js';
+import { isIfrMainThread } from './ifr-env.js';
+import {
+  MainThreadRef,
+  resetMainThreadRefState,
+  useMainThreadRef,
+} from './main-thread-ref.js';
+import { nodeOps, resetNodeOpsState } from './node-ops.js';
+import { OP, pushOp, takeOps } from './ops.js';
+import {
+  Page,
+  PAGE_COMPONENT_NAME,
+  pageRootContextKey,
+} from './Page.js';
+import {
+  resetRunOnBackgroundState,
+  runOnBackground,
+} from './run-on-background.js';
+import { ShadowElement, createPageRoot } from './shadow-element.js';
+import { transformToWorklet } from './transform-to-worklet.js';
+import { Transition } from './Transition.js';
+import { TransitionGroup } from './TransitionGroup.js';
+
+export type {
+  App,
+  Component,
+  ComponentInternalInstance,
+  ComponentPublicInstance,
+  ComputedRef,
+  DeepReadonly,
+  DefineComponent,
+  Directive,
+  EmitsOptions,
+  ExtractPropTypes,
+  FunctionalComponent,
+  InjectionKey,
+  MaybeRef,
+  MaybeRefOrGetter,
+  Plugin,
+  PropType,
+  Reactive,
+  Ref,
+  SetupContext,
+  ShallowRef,
+  SlotsType,
+  UnwrapNestedRefs,
+  UnwrapRef,
+  VNode,
+  VNodeChild,
+  VNodeRef,
+  WatchHandle,
+  WatchOptions,
+  WatchStopHandle,
+  WritableComputedRef,
+};
+
+const _renderer = createRenderer<ShadowElement, ShadowElement>(nodeOps);
+const _createApp = _renderer.createApp;
+
+/** @internal Raw renderer render function — only for upstream-tests bridge. */
+export const _render: (
+  vnode: import('@vue/runtime-core').VNode | null,
+  container: ShadowElement,
+) => void = _renderer.render;
+
+// ===========================================================================
+// Vue Lynx APIs
+// ===========================================================================
+
+/**
+ * A Vue Lynx application instance returned by {@link createApp}.
+ *
+ * @public
+ */
+export interface VueLynxApp {
+  /**
+   * Mount the root component onto the Lynx page root.
+   *
+   * Unlike Vue on the web, there is no container selector — Lynx has a single
+   * page root and all content is always mounted there.
+   */
+  mount(): void;
+  /** Unmount the application and clean up all components. */
+  unmount(): void;
+  /** Install a Vue plugin. */
+  use(plugin: unknown, ...options: unknown[]): VueLynxApp;
+  /** Provide a value that can be injected by descendant components. */
+  provide(key: unknown, value: unknown): VueLynxApp;
+  /** The application-level configuration object (same as Vue's `app.config`). */
+  config: App['config'];
+  [key: string]: unknown;
+}
+
+/**
+ * Create a Vue Lynx application instance.
+ *
+ * @param rootComponent - The root Vue component
+ * @param rootProps - Optional props to pass to the root component
+ * @returns A {@link VueLynxApp} instance
+ *
+ * @example
+ * ```ts
+ * import { createApp } from 'vue-lynx';
+ * import App from './App.vue';
+ *
+ * createApp(App).mount();
+ * ```
+ *
+ * @public
+ */
+export function createApp(
+  rootComponent: Component,
+  rootProps?: Record<string, unknown>,
+): VueLynxApp {
+  const internalApp = _createApp(rootComponent, rootProps);
+  internalApp.component(PAGE_COMPONENT_NAME, Page);
+
+  const app: VueLynxApp = {
+    get config() {
+      return internalApp.config;
+    },
+
+    use(plugin: unknown, ...options: unknown[]): VueLynxApp {
+      internalApp.use(plugin as Parameters<App['use']>[0], ...options);
+      return app;
+    },
+
+    provide(key: unknown, value: unknown): VueLynxApp {
+      internalApp.provide(
+        key,
+        value,
+      );
+      return app;
+    },
+
+    mount(): void {
+      const doMount = () => {
+        const root = createPageRoot();
+        internalApp.provide(pageRootContextKey, { root, owner: null });
+        internalApp.mount(root);
+      };
+      // IFR main-thread bundle: user code evaluates *before* Lynx calls
+      // renderPage, so the actual mount is deferred until the page root
+      // exists.  On the background thread (flag absent) mount immediately.
+      if (isIfrMainThread()) {
+        registerMount(doMount);
+      } else {
+        doMount();
+      }
+    },
+
+    unmount(): void {
+      internalApp.unmount();
+    },
+  };
+
+  return app;
+}
+
+/**
+ * Wait for the next DOM update flush **and** the main-thread ops acknowledgement.
+ *
+ * Unlike standard Vue's `nextTick` which only waits for the scheduler flush,
+ * Vue Lynx's version also waits for the main thread to apply the ops, so
+ * native Lynx elements are fully materialised when the callback fires.
+ *
+ * Caveat: some Lynx builds never invoke the `callLepusMethod` callback that
+ * carries the acknowledgement. Until the engine has delivered one real
+ * acknowledgement, each flush falls back to a short timer so `nextTick()`
+ * cannot hang forever — on such engines the materialisation guarantee is
+ * best-effort (a dev-mode warning is logged when the fallback fires). Once a
+ * real acknowledgement has been observed, the strict guarantee applies.
+ *
+ * @param fn - Optional callback to execute after flush
+ * @returns A promise that resolves when the main thread has applied all pending ops
+ *
+ * @see {@link https://vuejs.org/api/general.html#nexttick | Vue nextTick} — Vue Lynx extends the standard behavior.
+ *
+ * @public
+ */
+export function nextTick(fn?: () => void): Promise<void> {
+  if (fn) {
+    return _vueNextTick()
+      .then(() => waitForFlush())
+      .then(fn);
+  }
+  return _vueNextTick().then(() => waitForFlush());
+}
+
+export {
+  MainThreadRef,
+  useMainThreadRef,
+  runOnMainThread,
+  runOnBackground,
+  transformToWorklet,
+};
+export { useGlobalEvent } from './use-global-event.js';
+
+/** @internal Exposed for upstream-tests bridge render(). */
+export { createPageRoot } from './shadow-element.js';
+
+// ---------------------------------------------------------------------------
+// v-show directive (Vue Lynx implementation)
+// ---------------------------------------------------------------------------
+
+function setVShowDisplay(el: ShadowElement, value: unknown): void {
+  el._vShowHidden = !value;
+  const style = el._vShowHidden ? { ...el._style, display: 'none' } : el._style;
+  pushOp(OP.SET_STYLE, el.id, style);
+  scheduleFlush();
+}
+
+/**
+ * Vue Lynx implementation of the `v-show` directive.
+ *
+ * Toggles the element's visibility by setting `display: none` on the native
+ * Lynx element's style. Unlike the DOM version, this operates on
+ * {@link ShadowElement} and sends style ops to the main thread.
+ *
+ * @see {@link https://vuejs.org/api/built-in-directives.html#v-show | Vue v-show}
+ *
+ * @public
+ */
+export const vShow: ObjectDirective<ShadowElement, unknown> = {
+  beforeMount(el, { value }, { transition }) {
+    if (transition && value) {
+      transition.beforeEnter(el);
+    }
+    else {
+      setVShowDisplay(el, value);
+    }
+  },
+  mounted(el, { value }, { transition }) {
+    if (transition && value) {
+      transition.enter(el);
+    }
+  },
+  updated(el, { value, oldValue }, { transition }) {
+    if (!value === !oldValue)
+      return;
+
+    if (transition) {
+      if (value) {
+        transition.beforeEnter(el);
+        setVShowDisplay(el, true);
+        transition.enter(el);
+      }
+      else {
+        transition.leave(el, () => {
+          setVShowDisplay(el, false);
+        });
+      }
+    }
+    else {
+      setVShowDisplay(el, value);
+    }
+  },
+  beforeUnmount(el, { value }) {
+    setVShowDisplay(el, value);
+  },
+};
+
+// ===========================================================================
+// Vue Core Re-exports — Composition API
+// ===========================================================================
+//
+// These are standard Vue 3 APIs re-exported from vue-lynx for convenience.
+// See https://vuejs.org/api/ for full documentation.
+
+/**
+ * Takes a getter function and returns a readonly reactive ref object for the
+ * returned value from the getter.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-core.html#computed | Vue docs}
+ * @public
+ */
+export { computed } from '@vue/runtime-core';
+
+/**
+ * Creates a customized ref with explicit control over its dependency tracking
+ * and updates triggering.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-advanced.html#customref | Vue docs}
+ * @public
+ */
+export { customRef } from '@vue/runtime-core';
+
+/**
+ * Returns a reactive proxy of the object.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-core.html#reactive | Vue docs}
+ * @public
+ */
+export { reactive } from '@vue/runtime-core';
+
+/**
+ * Takes an object (reactive or plain) or a ref and returns a readonly proxy
+ * to the original.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-core.html#readonly | Vue docs}
+ * @public
+ */
+export { readonly } from '@vue/runtime-core';
+
+/**
+ * Takes an inner value and returns a reactive and mutable ref object.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-core.html#ref | Vue docs}
+ * @public
+ */
+export { ref } from '@vue/runtime-core';
+
+/**
+ * Shallow version of {@link reactive}. Only the root level properties are reactive.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-advanced.html#shallowreactive | Vue docs}
+ * @public
+ */
+export { shallowReactive } from '@vue/runtime-core';
+
+/**
+ * Shallow version of {@link ref}. Only `.value` access is reactive.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-advanced.html#shallowref | Vue docs}
+ * @public
+ */
+export { shallowRef } from '@vue/runtime-core';
+
+/**
+ * Shallow version of {@link readonly}.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-advanced.html#shallowreadonly | Vue docs}
+ * @public
+ */
+export { shallowReadonly } from '@vue/runtime-core';
+
+/**
+ * Returns the raw, original object of a Vue-created proxy.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-advanced.html#toraw | Vue docs}
+ * @public
+ */
+export { toRaw } from '@vue/runtime-core';
+
+/**
+ * Can be used to create a ref for a property on a reactive object.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-utilities.html#toref | Vue docs}
+ * @public
+ */
+export { toRef } from '@vue/runtime-core';
+
+/**
+ * Converts a reactive object to a plain object where each property is a ref.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-utilities.html#torefs | Vue docs}
+ * @public
+ */
+export { toRefs } from '@vue/runtime-core';
+
+/**
+ * Normalizes values / refs / getters to values.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-utilities.html#tovalue | Vue docs}
+ * @public
+ */
+export { toValue } from '@vue/runtime-core';
+
+/**
+ * Force trigger effects that depends on a shallow ref.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-advanced.html#triggerref | Vue docs}
+ * @public
+ */
+export { triggerRef } from '@vue/runtime-core';
+
+/**
+ * Returns the inner value if the argument is a ref, otherwise returns the argument itself.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-utilities.html#unref | Vue docs}
+ * @public
+ */
+export { unref } from '@vue/runtime-core';
+
+/**
+ * Checks if a value is a ref object.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-utilities.html#isref | Vue docs}
+ * @public
+ */
+export { isRef } from '@vue/runtime-core';
+
+/**
+ * Checks whether an object is a proxy created by {@link reactive} or {@link shallowReactive}.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-utilities.html#isreactive | Vue docs}
+ * @public
+ */
+export { isReactive } from '@vue/runtime-core';
+
+/**
+ * Checks whether an object is a proxy created by {@link readonly} or {@link shallowReadonly}.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-utilities.html#isreadonly | Vue docs}
+ * @public
+ */
+export { isReadonly } from '@vue/runtime-core';
+
+/**
+ * Checks if an object is a proxy created by reactive, readonly, shallowReactive, or shallowReadonly.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-utilities.html#isproxy | Vue docs}
+ * @public
+ */
+export { isProxy } from '@vue/runtime-core';
+
+/**
+ * Checks whether a value is a shallow reactive/ref.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-utilities.html#isshallow | Vue docs}
+ * @public
+ */
+export { isShallow } from '@vue/runtime-core';
+
+/**
+ * Marks an object so that it will never be converted to a proxy.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-advanced.html#markraw | Vue docs}
+ * @public
+ */
+export { markRaw } from '@vue/runtime-core';
+
+// ===========================================================================
+// Vue Core Re-exports — Lifecycle Hooks
+// ===========================================================================
+//
+// Lifecycle registration is a no-op during the IFR main-thread first-screen
+// render: user effects (data fetching, timers, subscriptions) must only run
+// on the background thread, mirroring ReactLynx where useEffect never fires
+// during the MTS render.  Everywhere else these behave exactly like Vue's.
+
+function ifrInert<T extends (...args: never[]) => unknown>(fn: T): T {
+  return ((...args: never[]) => {
+    if (isIfrMainThread()) return undefined;
+    return fn(...args);
+  }) as T;
+}
+
+/**
+ * Registers a callback to be called after the component is mounted.
+ *
+ * In Vue Lynx, the callback only runs on the background thread — during an
+ * IFR main-thread first-screen render, registration is a no-op.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onmounted | Vue docs}
+ * @public
+ */
+export const onMounted: typeof _onMounted = ifrInert(_onMounted);
+
+/**
+ * Registers a hook to be called right before the component is to be mounted.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onbeforemount | Vue docs}
+ * @public
+ */
+export const onBeforeMount: typeof _onBeforeMount = ifrInert(_onBeforeMount);
+
+/**
+ * Registers a callback to be called after the component is unmounted.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onunmounted | Vue docs}
+ * @public
+ */
+export const onUnmounted: typeof _onUnmounted = ifrInert(_onUnmounted);
+
+/**
+ * Registers a hook to be called right before the component is about to be unmounted.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onbeforeunmount | Vue docs}
+ * @public
+ */
+export const onBeforeUnmount: typeof _onBeforeUnmount = ifrInert(
+  _onBeforeUnmount,
+);
+
+/**
+ * Registers a callback to be called after the component has updated its DOM tree.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onupdated | Vue docs}
+ * @public
+ */
+export const onUpdated: typeof _onUpdated = ifrInert(_onUpdated);
+
+/**
+ * Registers a hook to be called right before the component is about to update.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onbeforeupdate | Vue docs}
+ * @public
+ */
+export const onBeforeUpdate: typeof _onBeforeUpdate = ifrInert(
+  _onBeforeUpdate,
+);
+
+/**
+ * Registers a callback to be called when an error propagating from a descendant
+ * component has been captured.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onerrorcaptured | Vue docs}
+ * @public
+ */
+export { onErrorCaptured } from '@vue/runtime-core';
+
+/**
+ * Registers a debug hook to be called when a reactive dependency has been tracked.
+ * Dev mode only.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onrendertracked | Vue docs}
+ * @public
+ */
+export { onRenderTracked } from '@vue/runtime-core';
+
+/**
+ * Registers a debug hook to be called when a reactive dependency triggers a re-render.
+ * Dev mode only.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onrendertriggered | Vue docs}
+ * @public
+ */
+export { onRenderTriggered } from '@vue/runtime-core';
+
+/**
+ * Registers a hook to be called when the component is inserted into the DOM
+ * as part of a tree cached by `<KeepAlive>`.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#onactivated | Vue docs}
+ * @public
+ */
+export const onActivated: typeof _onActivated = ifrInert(_onActivated);
+
+/**
+ * Registers a hook to be called when the component is removed from the DOM
+ * as part of a tree cached by `<KeepAlive>`.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-lifecycle.html#ondeactivated | Vue docs}
+ * @public
+ */
+export const onDeactivated: typeof _onDeactivated = ifrInert(_onDeactivated);
+
+// ===========================================================================
+// Vue Core Re-exports — Watchers
+// ===========================================================================
+
+/**
+ * Watches one or more reactive data sources and invokes a callback when the sources change.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-core.html#watch | Vue docs}
+ * @public
+ */
+export { watch } from '@vue/runtime-core';
+
+/**
+ * Runs a function immediately while reactively tracking its dependencies and
+ * re-runs it whenever the dependencies are changed.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-core.html#watcheffect | Vue docs}
+ * @public
+ */
+export { watchEffect } from '@vue/runtime-core';
+
+/**
+ * Alias of {@link watchEffect} with `flush: 'post'` option.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-core.html#watchposteffect | Vue docs}
+ * @public
+ */
+export { watchPostEffect } from '@vue/runtime-core';
+
+/**
+ * Alias of {@link watchEffect} with `flush: 'sync'` option.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-core.html#watchsynceffect | Vue docs}
+ * @public
+ */
+export { watchSyncEffect } from '@vue/runtime-core';
+
+/**
+ * Register a cleanup callback on the current active watcher.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-core.html#onwatchercleanup | Vue docs}
+ * @public
+ */
+export { onWatcherCleanup } from '@vue/runtime-core';
+
+// ===========================================================================
+// Vue Core Re-exports — Dependency Injection
+// ===========================================================================
+
+/**
+ * Injects a value provided by a parent component or the application.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-dependency-injection.html#inject | Vue docs}
+ * @public
+ */
+export { inject } from '@vue/runtime-core';
+
+/**
+ * Provides a value that can be injected by descendant components.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-dependency-injection.html#provide | Vue docs}
+ * @public
+ */
+export { provide } from '@vue/runtime-core';
+
+/**
+ * Returns true if `inject()` can be used without warning about being called in the wrong place.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-dependency-injection.html#hasinjectioncontext | Vue docs}
+ * @public
+ */
+export { hasInjectionContext } from '@vue/runtime-core';
+
+// ===========================================================================
+// Vue Core Re-exports — Effect Scope
+// ===========================================================================
+
+/**
+ * Creates an effect scope object which can capture the reactive effects created within it.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-advanced.html#effectscope | Vue docs}
+ * @public
+ */
+export { effectScope } from '@vue/runtime-core';
+
+/**
+ * Returns the current active effect scope if there is one.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-advanced.html#getcurrentscope | Vue docs}
+ * @public
+ */
+export { getCurrentScope } from '@vue/runtime-core';
+
+/**
+ * Registers a dispose callback on the current active effect scope.
+ *
+ * @see {@link https://vuejs.org/api/reactivity-advanced.html#onscopedispose | Vue docs}
+ * @public
+ */
+export { onScopeDispose } from '@vue/runtime-core';
+
+// ===========================================================================
+// Vue Core Re-exports — Component
+// ===========================================================================
+
+/**
+ * Define a Vue component with type inference support.
+ *
+ * @see {@link https://vuejs.org/api/general.html#definecomponent | Vue docs}
+ * @public
+ */
+export { defineComponent } from '@vue/runtime-core';
+
+/**
+ * Define an async component which is lazy loaded.
+ *
+ * @see {@link https://vuejs.org/api/general.html#defineasynccomponent | Vue docs}
+ * @public
+ */
+export { defineAsyncComponent } from '@vue/runtime-core';
+
+/**
+ * Create virtual DOM nodes (VNodes) programmatically.
+ *
+ * @example
+ * ```ts
+ * import { h, defineComponent } from 'vue-lynx';
+ *
+ * export default defineComponent({
+ *   setup() {
+ *     return () => h('view', { class: 'container' }, [
+ *       h('text', 'Hello Lynx!'),
+ *     ]);
+ *   },
+ * });
+ * ```
+ *
+ * @see {@link https://vuejs.org/api/render-function.html#h | Vue docs}
+ * @public
+ */
+function isVNodeLike(value: unknown): boolean {
+  return value != null
+    && typeof value === 'object'
+    && '__v_isVNode' in value;
+}
+
+function normalizePageSlots(children: unknown): unknown {
+  if (
+    children != null
+    && typeof children === 'object'
+    && !Array.isArray(children)
+    && !isVNodeLike(children)
+  ) {
+    return children;
+  }
+  if (typeof children === 'function') {
+    return { default: children };
+  }
+  return { default: () => children };
+}
+
+const _hWithPageRoot = (...args: unknown[]): VNode => {
+  const [type, propsOrChildren, children] = args;
+  const vueH = _vueH as (...values: unknown[]) => VNode;
+  if (type !== 'page') {
+    return vueH(...args);
+  }
+
+  if (args.length === 1) {
+    return vueH(Page);
+  }
+  if (args.length === 2) {
+    const secondArgIsChildren = Array.isArray(propsOrChildren)
+      || typeof propsOrChildren === 'function'
+      || typeof propsOrChildren === 'string'
+      || typeof propsOrChildren === 'number'
+      || isVNodeLike(propsOrChildren);
+    return secondArgIsChildren
+      ? vueH(Page, null, normalizePageSlots(propsOrChildren))
+      : vueH(Page, propsOrChildren);
+  }
+
+  return vueH(Page, propsOrChildren, normalizePageSlots(children));
+};
+
+export const h: typeof _vueH = _hWithPageRoot as typeof _vueH;
+
+/**
+ * Returns the internal instance of the current component. For advanced use cases and library authors.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-helpers.html#getcurrentinstance | Vue docs}
+ * @public
+ */
+export { getCurrentInstance } from '@vue/runtime-core';
+
+/**
+ * Generate a unique application-scoped ID.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-helpers.html#useid | Vue docs}
+ * @public
+ */
+export { useId } from '@vue/runtime-core';
+
+/**
+ * A helper to power two-way binding in a custom component.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-helpers.html#usemodel | Vue docs}
+ * @public
+ */
+export { useModel } from '@vue/runtime-core';
+
+/**
+ * Returns the slots object of the current component.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-helpers.html#useslots | Vue docs}
+ * @public
+ */
+export { useSlots } from '@vue/runtime-core';
+
+/**
+ * Returns the attrs object of the current component (fallthrough attributes).
+ *
+ * @see {@link https://vuejs.org/api/composition-api-helpers.html#useattrs | Vue docs}
+ * @public
+ */
+export { useAttrs } from '@vue/runtime-core';
+
+/**
+ * Returns a ref that matches a template ref or a child component ref.
+ *
+ * @see {@link https://vuejs.org/api/composition-api-helpers.html#usetemplateref | Vue docs}
+ * @public
+ */
+export { useTemplateRef } from '@vue/runtime-core';
+
+// ===========================================================================
+// Vue Core Re-exports — Script Setup Macros
+// ===========================================================================
+
+/**
+ * Compiler macro for declaring component props in `<script setup>`.
+ *
+ * @see {@link https://vuejs.org/api/sfc-script-setup.html#defineprops-defineemits | Vue docs}
+ * @public
+ */
+export { defineProps } from '@vue/runtime-core';
+
+/**
+ * Compiler macro for declaring component emits in `<script setup>`.
+ *
+ * @see {@link https://vuejs.org/api/sfc-script-setup.html#defineprops-defineemits | Vue docs}
+ * @public
+ */
+export { defineEmits } from '@vue/runtime-core';
+
+/**
+ * Compiler macro for declaring exposed properties in `<script setup>`.
+ *
+ * @see {@link https://vuejs.org/api/sfc-script-setup.html#defineexpose | Vue docs}
+ * @public
+ */
+export { defineExpose } from '@vue/runtime-core';
+
+/**
+ * Compiler macro for declaring component options in `<script setup>`.
+ *
+ * @see {@link https://vuejs.org/api/sfc-script-setup.html#defineoptions | Vue docs}
+ * @public
+ */
+export { defineOptions } from '@vue/runtime-core';
+
+/**
+ * Compiler macro for declaring a two-way binding prop in `<script setup>`.
+ *
+ * @see {@link https://vuejs.org/api/sfc-script-setup.html#definemodel | Vue docs}
+ * @public
+ */
+export { defineModel } from '@vue/runtime-core';
+
+/**
+ * Compiler macro for declaring typed slots in `<script setup>`.
+ *
+ * @see {@link https://vuejs.org/api/sfc-script-setup.html#defineslots | Vue docs}
+ * @public
+ */
+export { defineSlots } from '@vue/runtime-core';
+
+/**
+ * Compiler macro for providing default values for `defineProps`.
+ *
+ * @see {@link https://vuejs.org/api/sfc-script-setup.html#withdefaults | Vue docs}
+ * @public
+ */
+export { withDefaults } from '@vue/runtime-core';
+
+// ===========================================================================
+// Vue Core Re-exports — Built-in Components
+// ===========================================================================
+
+/**
+ * A special component for rendering multiple elements or components without a wrapper node.
+ *
+ * @see {@link https://vuejs.org/api/built-in-special-elements.html#fragment | Vue docs}
+ * @public
+ */
+export { Fragment } from '@vue/runtime-core';
+
+/**
+ * For displaying async content with fallback.
+ *
+ * @see {@link https://vuejs.org/guide/built-ins/suspense.html | Vue docs}
+ * @public
+ */
+export { Suspense } from '@vue/runtime-core';
+
+/**
+ * Caches dynamically toggled components, preserving their state when inactive.
+ *
+ * @see {@link https://vuejs.org/api/built-in-components.html#keepalive | Vue docs}
+ * @public
+ */
+export { KeepAlive } from '@vue/runtime-core';
+
+/**
+ * Vue's version string.
+ *
+ * @public
+ */
+export { version } from '@vue/runtime-core';
+
+/**
+ * Merge multiple props objects.
+ *
+ * @see {@link https://vuejs.org/api/render-function.html#mergeprops | Vue docs}
+ * @public
+ */
+export { mergeProps } from '@vue/runtime-core';
+
+/**
+ * Emitted by the template compiler for `v-once` subtrees. Disables block
+ * tracking during the initial render so the cached VNode is never added to a
+ * parent block's dynamic children array — ensuring the patcher skips it on
+ * every subsequent render and no ops reach the main thread.
+ *
+ * @public
+ */
+export { setBlockTracking } from '@vue/runtime-core';
+
+// ===========================================================================
+// @internal — CSS v-bind() support
+// ===========================================================================
+
+/** @hidden */
+export { useCssVars } from './use-css-vars.js';
+
+// ===========================================================================
+// @internal — Template compiler runtime helpers
+// ===========================================================================
+// These are used by Vue's SFC compiler output and should not be called directly.
+
+/** @hidden */ export { openBlock } from '@vue/runtime-core';
+/** @hidden */ export { createBlock } from '@vue/runtime-core';
+/** @hidden */ export { createElementBlock } from '@vue/runtime-core';
+/** @hidden */ export { createVNode } from '@vue/runtime-core';
+/** @hidden */ export { createElementVNode } from '@vue/runtime-core';
+/** @hidden */ export { createTextVNode } from '@vue/runtime-core';
+/** @hidden */ export { createCommentVNode } from '@vue/runtime-core';
+/** @hidden */ export { cloneVNode } from '@vue/runtime-core';
+/** @hidden */ export { isVNode } from '@vue/runtime-core';
+/** @hidden */ export { toDisplayString } from '@vue/runtime-core';
+/** @hidden */ export { normalizeClass } from '@vue/runtime-core';
+/** @hidden */ export { normalizeStyle } from '@vue/runtime-core';
+/** @hidden */ export { normalizeProps } from '@vue/runtime-core';
+/** @hidden */ export { camelize } from '@vue/runtime-core';
+/** @hidden */ export { capitalize } from '@vue/runtime-core';
+/** @hidden */ export { renderList } from '@vue/runtime-core';
+/** @hidden */ export { withDirectives } from '@vue/runtime-core';
+/** @hidden */ export { resolveComponent } from '@vue/runtime-core';
+/** @hidden */ export { resolveDynamicComponent } from '@vue/runtime-core';
+/** @hidden */ export { resolveDirective } from '@vue/runtime-core';
+/** @hidden */ export { withCtx } from '@vue/runtime-core';
+/** @hidden */ export { renderSlot } from '@vue/runtime-core';
+/** @hidden */ export { createSlots } from '@vue/runtime-core';
+/** @hidden */ export { pushScopeId } from '@vue/runtime-core';
+/** @hidden */ export { popScopeId } from '@vue/runtime-core';
+/** @hidden */ export { withScopeId } from '@vue/runtime-core';
+/** @hidden */ export { toHandlerKey } from '@vue/runtime-core';
+/** @hidden */ export { toHandlers } from '@vue/runtime-core';
+/** @hidden */ export { withMemo } from '@vue/runtime-core';
+/** @hidden */ export { isMemoSame } from '@vue/runtime-core';
+/** @hidden */ export { guardReactiveProps } from '@vue/runtime-core';
+// @ts-expect-error mergeModels is exported at runtime but missing from Vue's .d.ts
+/** @hidden */ export { mergeModels } from '@vue/runtime-core';
+// @ts-expect-error withAsyncContext is exported at runtime but missing from Vue's .d.ts
+/** @hidden */ export { withAsyncContext } from '@vue/runtime-core';
+/** @hidden */ export { Text } from '@vue/runtime-core';
+/** @hidden */ export { Comment } from '@vue/runtime-core';
+
+// ===========================================================================
+// @internal — Deprecated / unsupported APIs
+// ===========================================================================
+
+/**
+ * @deprecated Lynx has no server-side rendering. This hook will never be called.
+ * Use onMounted() for data fetching in Lynx.
+ * @internal
+ */
+export function onServerPrefetch(_fn: () => unknown): void {
+  if (__DEV__) {
+    console.warn(
+      '[vue-lynx] onServerPrefetch is not supported — Lynx has no SSR.',
+    );
+  }
+}
+
+/**
+ * @deprecated Lynx has no SSR context. Returns undefined.
+ * @internal
+ */
+export function useSSRContext(): undefined {
+  if (__DEV__) {
+    console.warn(
+      '[vue-lynx] useSSRContext is not available — Lynx has no SSR.',
+    );
+  }
+  return undefined;
+}
+
+/**
+ * @deprecated Vue Lynx does not implement `insertStaticContent`.
+ * Static VNodes will throw at mount time. Use `h()` / `createVNode()` instead.
+ * @internal
+ */
+export function createStaticVNode(
+  _content: string,
+  _numberOfNodes: number,
+): never {
+  throw new Error(
+    '[vue-lynx] createStaticVNode is not supported — the Lynx renderer does not implement insertStaticContent.',
+  );
+}
+
+/**
+ * @deprecated Vue Lynx does not implement `insertStaticContent`.
+ * Static VNodes cannot be rendered. Use `Text` or `Comment` instead.
+ * @internal
+ */
+export const Static: symbol = Symbol.for('v-stc');
+
+
+export { Teleport } from '@vue/runtime-core';
+
+// ===========================================================================
+// Intentionally NOT re-exported — @vue/runtime-core internal APIs
+// ===========================================================================
+// These are implementation details not part of Vue's public API:
+//
+// Reactivity internals:  effect, ReactiveEffect, stop, proxyRefs,
+//                        TrackOpTypes, TriggerOpTypes
+// Error internals:       callWithErrorHandling, callWithAsyncErrorHandling,
+//                        handleError, ErrorCodes, ErrorTypeStrings
+// Dev/debug internals:   warn, devtools, setDevtoolsHook, initCustomFormatter,
+//                        registerRuntimeCompiler, DeprecationTypes, compatUtils
+// Rendering internals:   isRuntimeOnly, transformVNodeArgs, assertNumber
+// Transition internals:  BaseTransition, BaseTransitionPropsValidators,
+//                        resolveTransitionHooks, setTransitionHooks,
+//                        getTransitionRawChildren, useTransitionState
+//   (BaseTransition is consumed internally by our Transition/TransitionGroup)
+// SSR internals:         ssrContextKey, ssrUtils, createHydrationRenderer
+// Hydration (SSR):       hydrateOnIdle, hydrateOnVisible,
+//                        hydrateOnMediaQuery, hydrateOnInteraction
+// Compat:                resolveFilter
+
+// ===========================================================================
+// @internal — Directive stubs (v-model, event modifiers)
+// ===========================================================================
+
+// ---------------------------------------------------------------------------
+// v-model directive (Vue Lynx implementation for <input> / <textarea>)
+// ---------------------------------------------------------------------------
+
+interface InputEventData {
+  detail?: { value?: string; isComposing?: boolean };
+}
+
+function looseToNumber(val: string): number | string {
+  const n = Number.parseFloat(val);
+  return isNaN(n) ? val : n;
+}
+
+function getModelAssigner(vnode: VNode): (value: unknown) => void {
+  const fn = vnode.props?.['onUpdate:modelValue'];
+  if (Array.isArray(fn)) return (value: unknown) => { for (const f of fn) f(value); };
+  return fn ?? ((_: unknown) => undefined);
+}
+
+/**
+ * Build a vModel event handler that extracts value from Lynx event data
+ * and calls the model assigner with modifier processing.
+ */
+function makeVModelHandler(
+  el: ShadowElement,
+  modifiers: Partial<Record<string, boolean>> | undefined,
+  vnode: VNode,
+): (data: unknown) => void {
+  const assign = getModelAssigner(vnode);
+  return (data: unknown) => {
+    const evt = data as InputEventData;
+    let value: string = evt?.detail?.value ?? '';
+    if (evt?.detail?.isComposing) return;
+    if (modifiers?.trim) value = value.trim();
+    el._vModelValue = value;
+    assign(modifiers?.number ? looseToNumber(value) : value);
+  };
+}
+
+/**
+ * Invoke a user-provided event handler (single function or array of functions).
+ */
+function invokeUserHandler(handler: unknown, data: unknown): void {
+  if (Array.isArray(handler)) {
+    for (const fn of handler) {
+      if (typeof fn === 'function') fn(data);
+    }
+  } else if (typeof handler === 'function') {
+    handler(data);
+  }
+}
+
+/**
+ * Inject the vModel handler into vnode.props so that patchProp registers a
+ * single unified PAPI listener. If the user also has @input (or @confirm for
+ * .lazy), the handlers are merged. This avoids the PAPI single-listener-per-
+ * event constraint where __AddEvent overwrites earlier listeners.
+ *
+ * The injected handler uses an indirection through el._vModelHandler so that
+ * beforeUpdate can refresh the closure without needing patchProp to re-register
+ * the PAPI listener.
+ */
+function injectVModelEvent(el: ShadowElement, vnode: VNode): void {
+  const eventProp = el._vModelEventProp!;
+  const userHandler = vnode.props?.[eventProp];
+  if (!vnode.props) vnode.props = {};
+
+  if (userHandler) {
+    vnode.props[eventProp] = (data: unknown) => {
+      el._vModelHandler?.(data);
+      invokeUserHandler(userHandler, data);
+    };
+  } else {
+    vnode.props[eventProp] = (data: unknown) => {
+      el._vModelHandler?.(data);
+    };
+  }
+}
+
+/**
+ * Imperatively push a new value into the native <input>/<textarea>.
+ *
+ * `<input>`/`<textarea>` treat the `value` prop as the INITIAL value only. On
+ * native (iOS/Android) a post-mount `__SetAttribute(el, 'value', …)` — which is
+ * what OP.SET_PROP resolves to — is ignored once the control is live, so a
+ * programmatic model change (e.g. a reset/clear button) never reaches the
+ * field. The platform's `setValue` UI method is the supported way to update the
+ * text imperatively (see @lynx-js/types Input/TextArea `setValue`, iOS/Android/
+ * Harmony/Web). Web reflects the `value` attribute live, so SET_PROP already
+ * covers it there and this is a harmless redundant call.
+ *
+ * Wrapped defensively: selector-query / UI-method APIs are unavailable in some
+ * environments (in-memory test adapters), and the SET_PROP path is the fallback.
+ */
+function setNativeInputValue(el: ShadowElement, value: string): void {
+  try {
+    el.invoke({ method: 'setValue', params: { value } }).exec();
+  } catch {
+    // no-op — OP.SET_PROP already carried the value where it can be applied.
+  }
+}
+
+export const vModelText: ObjectDirective<ShadowElement> = {
+  created(el, { modifiers }, vnode) {
+    const isLazy = modifiers?.lazy;
+    const eventName = isLazy ? 'confirm' : 'input';
+    el._vModelEventProp = `on${eventName.charAt(0).toUpperCase()}${eventName.slice(1)}`;
+    el._vModelHandler = makeVModelHandler(el, modifiers, vnode);
+
+    // Inject into vnode.props — patchProp (which runs after created) will
+    // register the handler through the normal event pipeline.
+    injectVModelEvent(el, vnode);
+  },
+
+  mounted(el, { value }) {
+    const val = value == null ? '' : String(value);
+    el._vModelValue = val;
+    pushOp(OP.SET_PROP, el.id, 'value', val);
+    scheduleFlush();
+  },
+
+  beforeUpdate(el, { value, modifiers }, vnode) {
+    // Refresh handler closure (the indirection through el._vModelHandler means
+    // the registered PAPI listener will pick up the new closure automatically).
+    el._vModelHandler = makeVModelHandler(el, modifiers, vnode);
+
+    // Re-inject into the new vnode's props.  Each render creates a fresh vnode,
+    // so we must inject again to prevent patchProp from seeing the event as
+    // "removed" and calling REMOVE_EVENT.
+    injectVModelEvent(el, vnode);
+
+    // Push value to MT only if changed. This branch is the programmatic path
+    // (model changed from code): user keystrokes already set el._vModelValue in
+    // the event handler, so they no-op here and never clobber the caret.
+    const strVal = value == null ? '' : String(value);
+    if (strVal !== el._vModelValue) {
+      el._vModelValue = strVal;
+      // SET_PROP drives web (live attribute reflection) and the initial value;
+      // setValue() drives native, where the post-mount value attribute is inert.
+      pushOp(OP.SET_PROP, el.id, 'value', strVal);
+      setNativeInputValue(el, strVal);
+      scheduleFlush();
+    }
+  },
+
+  beforeUnmount(el) {
+    // Event cleanup is handled by patchProp's unmount path.
+    el._vModelHandler = undefined;
+    el._vModelEventProp = undefined;
+    el._vModelValue = undefined;
+  },
+};
+
+const vModelUnsupported: ObjectDirective = {
+  beforeMount(): void {
+    if (__DEV__) {
+      console.warn(
+        '[vue-lynx] v-model on checkbox/radio/select is not supported. '
+        + 'Lynx only supports <input> and <textarea>.',
+      );
+    }
+  },
+  beforeUpdate(): void {/* no-op */},
+};
+
+export const vModelCheckbox: ObjectDirective = vModelUnsupported;
+export const vModelSelect: ObjectDirective = vModelUnsupported;
+export const vModelRadio: ObjectDirective = vModelUnsupported;
+
+// ---------------------------------------------------------------------------
+// withModifiers — runtime event modifier support for Lynx
+// ---------------------------------------------------------------------------
+
+/**
+ * Modifiers that are side-effects on the event object (don't filter the event).
+ */
+const lynxModifierSideEffects: Record<
+  string,
+  (e: Record<string, unknown>) => void
+> = {
+  stop: (e) => (e.stopPropagation as (() => void) | undefined)?.(),
+  // `.prevent` is intentionally absent: Lynx has no browser default actions to
+  // cancel. It is accepted as a compatibility no-op so web code can be shared
+  // without modification, but calling preventDefault() would be misleading.
+};
+
+/**
+ * Modifiers that act as guards: if the guard returns true the handler is
+ * skipped entirely.
+ */
+const lynxModifierGuards: Record<
+  string,
+  (e: Record<string, unknown>) => boolean
+> = {
+  // Only invoke the handler if the event originated directly on this element.
+  //
+  // We can't use simple reference equality (e.target !== e.currentTarget) here
+  // because cross-thread event objects are always distinct plain objects —
+  // even when they represent the same element.  Instead we compare by numeric
+  // element identifier:
+  //   - Lynx native:      target.uid        (set by the native runtime)
+  //   - Lynx web preview: target.uniqueId   (set by createCrossThreadEvent in
+  //                       @lynx-js/web-mainthread-apis from the 'l-uid' attribute)
+  // DOM events (used by the testing-library) do use real element references,
+  // so we fall back to reference equality when neither identifier is present.
+  self: (e) => {
+    const t = e.target as { uid?: number; uniqueId?: number } | null | undefined;
+    const ct = e.currentTarget as { uid?: number; uniqueId?: number } | null | undefined;
+    if (t != null && typeof t.uid === 'number' && ct != null && typeof ct.uid === 'number') {
+      return t.uid !== ct.uid;
+    }
+    if (t != null && typeof t.uniqueId === 'number' && ct != null && typeof ct.uniqueId === 'number') {
+      return t.uniqueId !== ct.uniqueId;
+    }
+    return e.target !== e.currentTarget;
+  },
+};
+
+/**
+ * Wraps an event handler with Lynx event modifiers.
+ *
+ * Supported modifiers:
+ * - `.once`    — handler is invoked at most once; subsequent events are ignored
+ * - `.stop`    — registers the event as `catchEvent` (native Lynx stop-propagation)
+ *               and also calls `event.stopPropagation()` for DOM environments
+ * - `.prevent` — accepted for code portability; no-op on Lynx (no browser default actions exist)
+ * - `.self`    — skips the handler unless the event target is the listener element
+ *
+ * The wrapped function is cached on `fn._withMods` keyed by the modifier
+ * string so that stable function references survive re-renders.
+ *
+ * `.stop` sets `_lynxCatch = true` on the wrapper so that `patchProp` can
+ * register the event as `catchEvent` — the native Lynx mechanism for stopping
+ * event bubbling. Calling `stopPropagation()` at the JS level alone is not
+ * sufficient because native Lynx bubbling is decided before JS handlers run.
+ */
+export function withModifiers(
+  fn: (...args: unknown[]) => unknown,
+  modifiers: string[],
+): (...args: unknown[]) => unknown {
+  if (!fn) return fn;
+
+  // Per-function cache keyed by modifier combination so stable fn references
+  // reuse the same wrapper (and the same `.once` `called` flag) across renders.
+  const fnAny = fn as { _withMods?: Record<string, (...args: unknown[]) => unknown> };
+  const cache = fnAny._withMods ?? (fnAny._withMods = {});
+  const cacheKey = modifiers.join('.');
+  if (cache[cacheKey]) return cache[cacheKey]!;
+
+  const hasOnce = modifiers.includes('once');
+  let called = false;
+
+  const wrapped = (event: unknown, ...args: unknown[]): unknown => {
+    if (hasOnce && called) return;
+
+    const e = event as Record<string, unknown>;
+    for (const mod of modifiers) {
+      if (mod === 'once') continue;
+      const guard = lynxModifierGuards[mod];
+      if (guard?.(e)) return; // guard returned true → skip handler
+      lynxModifierSideEffects[mod]?.(e);
+    }
+
+    if (hasOnce) called = true;
+    return fn(event, ...args);
+  };
+
+  // Signal to patchProp to use catchEvent instead of bindEvent so native Lynx
+  // stops bubbling at this element — the only reliable stop mechanism in Lynx.
+  if (modifiers.includes('stop')) {
+    (wrapped as { _lynxCatch?: boolean })._lynxCatch = true;
+  }
+
+  cache[cacheKey] = wrapped;
+  return wrapped;
+}
+
+/**
+ * No-op on native Lynx. The native runtime converts keyboard input to named
+ * custom events (e.g. `confirm`) before they reach the JS thread —
+ * `event.key` is never populated on iOS/Android regardless of whether the
+ * keyboard is virtual or hardware. Use `@confirm` directly on `<input>` for
+ * native targets.
+ *
+ * Works on web preview (lynx-stack#2594). Native support depends on an
+ * upstream runtime change to forward `UIKeyboardEvent`/`KeyEvent` into the
+ * Lynx JS event pipeline — not yet tracked upstream.
+ *
+ * @internal
+ */
+export function withKeys(
+  fn: (...args: unknown[]) => unknown,
+  _keys: string[],
+): (...args: unknown[]) => unknown {
+  return fn;
+}
+
+// ===========================================================================
+// Built-in components — Page, Transition
+// ===========================================================================
+
+// `Page` is the transparent wrapper behind explicit `<page>` roots — see
+// ./Page.ts for the full contract (single owner, attrs forwarded to the
+// native root). In templates, use lowercase `<page>` (rewritten by the
+// compiler) or import `Page` explicitly; only `VueLynxPage` is registered
+// globally.
+export { Page, Transition, TransitionGroup };
+
+// ===========================================================================
+// @internal — IFR (Instant First-Frame Rendering) support
+// ===========================================================================
+
+/**
+ * Register a compile-time-lowered element template.
+ *
+ * Called from compiler-generated code (a hoisted statement in the compiled
+ * render module) — never directly by applications.
+ *
+ * @hidden
+ */
+export { registerElementTemplate } from './element-template.js';
+
+/**
+ * True while executing inside the IFR main-thread first-screen render.
+ *
+ * Apps whose first screen cannot render on the main thread (e.g. fully
+ * network-driven) can gate their `app.mount()` on `!isIfrMainThread()` to
+ * opt that screen out of IFR while keeping module evaluation — and with it
+ * worklet/template registration — intact. Always `false` on the background
+ * thread and in non-IFR builds.
+ *
+ * @public
+ */
+export { isIfrMainThread } from './ifr-env.js';
+
+/**
+ * Gate for LEPUS-transformed worklet registrations.
+ *
+ * The SWC worklet transform (target: LEPUS) emits
+ * `import { loadWorkletRuntime } from "vue-lynx"` followed by
+ * `loadWorkletRuntime(...) && registerWorkletInternal(...)` calls.  In IFR
+ * builds the full LEPUS output is kept on the main thread, so this import
+ * must resolve.  The worklet-runtime is bundled directly into main-thread.js
+ * (it defines `registerWorkletInternal` on globalThis), so "loading" reduces
+ * to checking that we are on a thread where it exists.
+ *
+ * @hidden
+ */
+export function loadWorkletRuntime(_entry?: unknown): boolean {
+  return typeof (globalThis as Record<string, unknown>)[
+    'registerWorkletInternal'
+  ] === 'function';
+}
+
+// ===========================================================================
+// @internal — Testing utilities
+// ===========================================================================
+
+/** @hidden */
+export { ShadowElement };
+/** @hidden */
+export { nodeOps };
+/** @hidden */
+export { takeOps };
+
+/**
+ * Reset all module-level state between tests.
+ * Must be called before each test to ensure isolation.
+ * @internal
+ */
+export function resetForTesting(): void {
+  resetRegistry();
+  resetNodeOpsState();
+  resetFlushState();
+  resetMainThreadRefState();
+  resetFunctionCallState();
+  resetRunOnBackgroundState();
+  resetAppRegistry();
+  // NOTE: element-template registrations are intentionally NOT reset —
+  // they are bundle-lifetime (hoisted per render module, id-keyed,
+  // idempotent), like the main-thread template registry.
+  takeOps(); // drain any leftover ops
+  ShadowElement.nextId = 2;
+}

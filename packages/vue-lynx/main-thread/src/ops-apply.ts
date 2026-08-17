@@ -1,0 +1,330 @@
+// Copyright 2026 Xuan Huang (huxpro). All rights reserved.
+// Licensed under the Apache License Version 2.0 that can be found in the
+// LICENSE file in the root directory of this source tree.
+
+/**
+ * Main Thread ops executor.
+ *
+ * Receives the flat-array ops buffer sent by the Background Thread via
+ * callLepusMethod('vuePatchUpdate', { data: JSON.stringify(ops) }) and applies
+ * each operation using Lynx PAPI.
+ */
+
+import { OP } from 'vue-lynx/internal/ops';
+
+import {
+  elements,
+  pageUniqueId,
+  setPageUniqueId,
+} from './element-registry.js';
+import { getTemplate } from './element-templates.js';
+import {
+  createListElement,
+  flushListUpdates,
+  insertListItem,
+  isListParent,
+  isPlatformInfoAttr,
+  removeListItem,
+  resetListState,
+  setPlatformInfoProp,
+} from './list-apply.js';
+import {
+  applyInitMtRef,
+  applySetMtRef,
+  applySetWorkletEvent,
+  resetWorkletState,
+} from './worklet-apply.js';
+
+/**
+ * Use typed PAPI creators for known element types.
+ * Native Lynx may set up type-specific internals (e.g. overflow clipping
+ * for View, hardware-accelerated decoding for Image) via the typed functions
+ * that the generic __CreateElement does not.
+ *
+ * @param parentComponentUniqueId - The PAPI unique ID of the page root.
+ *   `__SetCSSId` sets `css_style_sheet_manager_` directly on each element,
+ *   so CSS rendering works without a ComponentElement ancestor.
+ */
+function createTypedElement(
+  type: string,
+  parentComponentUniqueId: number,
+): LynxElement {
+  switch (type) {
+    case 'view':
+      return __CreateView(parentComponentUniqueId);
+    case 'text':
+      return __CreateText(parentComponentUniqueId);
+    case 'image':
+      return __CreateImage(parentComponentUniqueId);
+    case 'scroll-view':
+      return __CreateScrollView(parentComponentUniqueId);
+    case 'div':
+      // KeepAlive's internal storage container — map to view (Lynx equivalent).
+      return __CreateView(parentComponentUniqueId);
+    default:
+      return __CreateElement(type, parentComponentUniqueId);
+  }
+}
+
+/**
+ * Apply a flat ops batch through PAPI.
+ *
+ * @param flush - Present the result with `__FlushElementTree` afterwards.
+ *   The IFR render passes `false` for batches applied synchronously inside
+ *   `renderPage`, which presents the whole frame with a single flush at the
+ *   end instead of one per batch.
+ */
+export function applyOps(ops: unknown[], flush = true): void {
+  const len = ops.length;
+  if (len === 0) return;
+
+  // Detect duplicate batch from double BG bundle evaluation.
+  // Each __init_card_bundle__ invocation gets a fresh webpack module cache, so
+  // ShadowElement.nextId resets to 2, producing the same element IDs.
+  // If the first CREATE/INSTANTIATE op targets an ID that already exists in
+  // our elements Map, this is a duplicate batch — skip it entirely.
+  if (
+    len >= 3
+    && (ops[0] === OP.CREATE || ops[0] === OP.INSTANTIATE_TEMPLATE)
+  ) {
+    const firstId = ops[1] as number;
+    if (elements.has(firstId)) {
+      return;
+    }
+  }
+
+  let i = 0;
+
+  while (i < len) {
+    const code = ops[i++] as number;
+
+    switch (code) {
+      case OP.CREATE: {
+        const id = ops[i++] as number;
+        const type = ops[i++] as string;
+        let el: LynxElement;
+        if (type === '__comment') {
+          // Vue uses comment nodes as Fragment / v-if anchors.
+          // Create a zero-size text node as an invisible placeholder.
+          el = __CreateRawText('');
+        } else if (type === 'list') {
+          el = createListElement(id);
+        } else {
+          // Use typed PAPI creators for known element types.
+          // Native Lynx sets up type-specific internals (e.g. overflow
+          // clipping for __CreateView) that __CreateElement may skip.
+          el = createTypedElement(type, pageUniqueId);
+          // Associate element with CSS scope 0 (common/global CSS)
+          // so the CSS selector engine can match class-based rules.
+          __SetCSSId([el], 0);
+        }
+        elements.set(id, el);
+        // Set selector attribute for BG-thread NodesRef queries.
+        // Comment nodes (__CreateRawText) can't have attributes.
+        if (type !== '__comment') {
+          __SetAttribute(el, `vue-ref-${id}`, 1);
+        }
+        break;
+      }
+
+      case OP.CREATE_TEXT: {
+        const id = ops[i++] as number;
+        const el = __CreateText(pageUniqueId);
+        __SetCSSId([el], 0);
+        elements.set(id, el);
+        // Set selector attribute for BG-thread NodesRef queries
+        __SetAttribute(el, `vue-ref-${id}`, 1);
+        break;
+      }
+
+      case OP.INSERT: {
+        const parentId = ops[i++] as number;
+        const childId = ops[i++] as number;
+        const anchorId = ops[i++] as number;
+        const parent = elements.get(parentId);
+        const child = elements.get(childId);
+        if (parent && child) {
+          if (isListParent(parentId)) {
+            insertListItem(parentId, child, childId, anchorId);
+          } else if (anchorId === -1) {
+            __AppendElement(parent, child);
+          } else {
+            const anchor = elements.get(anchorId);
+            if (anchor) __InsertElementBefore(parent, child, anchor);
+          }
+        }
+        break;
+      }
+
+      case OP.REMOVE: {
+        const parentId = ops[i++] as number;
+        const childId = ops[i++] as number;
+        const parent = elements.get(parentId);
+        const child = elements.get(childId);
+        if (parent && child) {
+          if (isListParent(parentId)) {
+            // Keep listItems / update-list-info in sync — otherwise Reset
+            // re-inserts the same item-keys and native list errors 2202.
+            removeListItem(parentId, childId);
+          }
+          __RemoveElement(parent, child);
+        }
+        break;
+      }
+
+      case OP.SET_PROP: {
+        const id = ops[i++] as number;
+        const key = ops[i++] as string;
+        const value = ops[i++];
+        if (isPlatformInfoAttr(key)) {
+          setPlatformInfoProp(id, key, value);
+        } else {
+          const el = elements.get(id);
+          if (el) __SetAttribute(el, key, value);
+        }
+        break;
+      }
+
+      case OP.SET_TEXT: {
+        const id = ops[i++] as number;
+        const text = ops[i++] as string;
+        const el = elements.get(id);
+        if (el) __SetAttribute(el, 'text', text);
+        break;
+      }
+
+      case OP.SET_EVENT: {
+        const id = ops[i++] as number;
+        const eventType = ops[i++] as string;
+        const eventName = ops[i++] as string;
+        const sign = ops[i++];
+        const el = elements.get(id);
+        if (el) __AddEvent(el, eventType, eventName, sign as string);
+        break;
+      }
+
+      case OP.REMOVE_EVENT: {
+        const id = ops[i++] as number;
+        const eventType = ops[i++] as string;
+        const eventName = ops[i++] as string;
+        const el = elements.get(id);
+        // __AddEvent with undefined handler removes the existing listener
+        // biome-ignore lint/suspicious/noExplicitAny: __AddEvent(el,type,name,undefined) is the documented way to remove a listener in PAPI
+        if (el) __AddEvent(el, eventType, eventName, undefined as any);
+        break;
+      }
+
+      case OP.SET_STYLE: {
+        const id = ops[i++] as number;
+        const value = ops[i++] as string | object;
+        const el = elements.get(id);
+        if (el) __SetInlineStyles(el, value);
+        break;
+      }
+
+      case OP.SET_CLASS: {
+        const id = ops[i++] as number;
+        const cls = ops[i++] as string;
+        const el = elements.get(id);
+        if (el) {
+          __SetClasses(el, cls);
+        }
+        break;
+      }
+
+      case OP.SET_ID: {
+        const id = ops[i++] as number;
+        const idStr = ops[i++] as string | null | undefined;
+        const el = elements.get(id);
+        if (el) __SetID(el, idStr ?? undefined);
+        break;
+      }
+
+      case OP.SET_WORKLET_EVENT: {
+        const id = ops[i++] as number;
+        const eventType = ops[i++] as string;
+        const eventName = ops[i++] as string;
+        const ctx = ops[i++] as Record<string, unknown>;
+        applySetWorkletEvent(id, eventType, eventName, ctx);
+        break;
+      }
+
+      case OP.SET_MT_REF: {
+        const id = ops[i++] as number;
+        const refImpl = ops[i++];
+        applySetMtRef(id, refImpl);
+        break;
+      }
+
+      case OP.INIT_MT_REF: {
+        const wvid = ops[i++] as number;
+        const initValue = ops[i++];
+        applyInitMtRef(wvid, initValue);
+        break;
+      }
+
+      case OP.SET_SCOPE_ID: {
+        const id = ops[i++] as number;
+        const cssId = ops[i++] as number;
+        const el = elements.get(id);
+        if (el) {
+          // Set the CSS scope ID for Lynx's CSS engine
+          __SetCSSId([el], cssId);
+        }
+        break;
+      }
+
+      case OP.INSTANTIATE_TEMPLATE: {
+        const rootId = ops[i++] as number;
+        const tplId = ops[i++] as string;
+        const holeCount = ops[i++] as number;
+        const create = getTemplate(tplId);
+        let handles: LynxElement[];
+        if (create) {
+          // The create() function builds the whole lowered subtree with
+          // straight-line PAPI calls and returns [root, hole0, hole1, …].
+          handles = create(pageUniqueId);
+        } else {
+          // Unregistered template (mismatched bundles / extraction failure).
+          // Render an empty view placeholder so the rest of the tree
+          // survives; hole ids alias the placeholder so SET ops don't crash.
+          console.error(
+            `[vue-lynx] Unknown element template "${tplId}" on the main thread — rendering a placeholder.`,
+          );
+          const el = createTypedElement('view', pageUniqueId);
+          __SetCSSId([el], 0);
+          handles = [el];
+        }
+        const root = handles[0]!;
+        elements.set(rootId, root);
+        // NodesRef selector parity for the root (it is a vnode.el on the
+        // BG thread); interior nodes are anonymous by design.
+        __SetAttribute(root, `vue-ref-${rootId}`, 1);
+        for (let k = 1; k <= holeCount; k++) {
+          elements.set(rootId + k, handles[k] ?? root);
+        }
+        break;
+      }
+
+      default:
+        // Unknown op – skip (future-compat)
+        break;
+    }
+  }
+
+  flushListUpdates();
+
+  // Flush all pending PAPI changes to the native layer in one shot.
+  if (flush) __FlushElementTree();
+}
+
+/** Expose elements map so entry-main.ts can seed the page-root entry. */
+export { elements };
+
+/** Reset module state – for testing only. */
+export function resetMainThreadState(): void {
+  elements.clear();
+  setPageUniqueId(1);
+  resetListState();
+  resetWorkletState();
+}

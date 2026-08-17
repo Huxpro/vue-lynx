@@ -1,0 +1,169 @@
+---
+title: '我如何在两周内用 AI 做出 Vue Lynx'
+date: 2026-03-26
+sidebar: false
+authors: ['huxpro']
+badge_text: '我如何在两周内用 AI 做出 Vue Lynx →'
+description: 'Vue Lynx 从一个周末的架构实验，到初具生产级形态的双线程 Vue 框架，只用了两周。这篇文章讲讲它的架构、测试 Harness、Agent E2E 验证闭环，以及账单。'
+---
+
+<BlogHeader />
+
+Vue 开发者想要原生能力，已经想了很多年。[「Vue + Lynx = Vue Native」](https://x.com/danielkelly_io/status/1899746975588737407)这条推文收获了 1.7k 个赞。我们仓库里的 [Vue 集成 Issue](https://github.com/lynx-family/lynx/issues/193) 也拿到了 1,600 个 upvote，是至今呼声最高的功能需求。需求很明确，问题一直是人手。
+
+[Lynx](https://lynxjs.org/) 开源时，[Evan You](https://x.com/youyuxi/status/1898663514581168173) 和 [Rich Harris](https://x.com/Huxpro/status/1927276405328429259) 都为它打过 call。但要做出真正能用于生产的框架集成，过去一直需要投入大量工程资源。后来，[Vercel 重写 Web Streams](https://vercel.com/blog/we-ralph-wiggumed-webstreams-to-make-them-10x-faster)、[Cloudflare 做出 ViNext](https://blog.cloudflare.com/vinext/) 这类项目陆续出现。它们证明了一件事：一个工程师加上 AI，也能交付过去需要一个团队才能完成的工作。对我来说，投入产出比变了。
+
+Vue 其实早就准备好了一个关键基础：成熟的 Custom Renderer API。于是我拿了一个周末试了试。一次约 $1,400、持续 37 小时的 Hackathon。最初只是做架构探索：「Vue 的 Custom Renderer 到底能不能和双线程拆包一起工作？如果能，该怎么做？」周日凌晨三点，我还在和 Claude 一起调试「点击后数字没有增加」。到了周一早上，[TodoMVC 已经跑起来了](https://x.com/Huxpro/status/2028672358912086524)。我没忍住发了一条若有所指的推文，结果立刻在 X 上火了。
+
+## Vue Lynx 登场
+
+接下来的两周，我把晚上和周末都投了进去。160 多个 commit，大约 180 个 session，Vue Lynx 才真正有了形状。
+
+```text
+▎ 第一周   ████████████░░░░░░░░  Runtime + Toolchain
+▎ 第二周   ░░░░░░░░████████████  Docs + Examples + i18n
+```
+
+其实第一周结束时就可以发布。但熟悉我的人应该知道，我一直有个原则：
+
+> 真正做通了，就让 Demo 自己说话。
+
+打开 [vue.lynxjs.org](https://vue.lynxjs.org/)，你能看到 20 多个同时运行在原生端和 Web 端的示例。不离开浏览器就可以直接体验。
+
+Vue Lynx 支持完整的 Composition API、`<Transition>`、`<Suspense>`，也接入了 Vue Router、Pinia、Tailwind CSS 和 TanStack Query。我们还移植了 Lynx 官方教程里的 Waterfall Gallery 和 Swiper，用原生组件和主线程脚本实现零延迟手势，再用一个 HackerNews Clone 把这些能力串到一起。
+
+### 现在就试试
+
+```bash
+npm create vue-lynx@latest
+```
+
+当然，它是[开源的](https://github.com/huxpro/vue-lynx)。如果这个项目让你觉得有点意思，欢迎点一个 Star。也请把一些爱分给 [Lynx Engine](https://github.com/lynx-family/lynx) 和 [Lynx Frontend Stack](https://github.com/lynx-family/lynx-stack)，Vue Lynx 正是站在它们的肩膀上。
+
+我很希望 Vue 和 Lynx 社区能一起把它继续做下去。Issue、PR、反馈，全部欢迎。
+
+## 「Harness」工程
+
+> 继「AI」「vibe」「agentic」之后，当然得用上现在最火的词：harness。
+
+本项目开发过程中，没有人类因为写代码而受到伤害。
+
+### 为 AI 搭好架构
+
+社区此前有过两次尝试。第二次来自 Vue Vine 的维护者 [@Shenqingchuan](https://x.com/Shenqingchuan)，已经走得相当远，[甚至跑通了主线程脚本的 Demo](https://x.com/Shenqingchuan/status/1996862232593129815)。不过，两次尝试都和 Web 一样，把 Vue 放在主线程运行。这在 Lynx 上可以工作，却没有真正用上 Lynx 标志性的[双线程架构](https://lynxjs.org/blog/lynx-unlock-native-for-more#use-the-main-thread-responsibly-for-interactivity)：繁重的框架重渲染放到后台，原生 UI 线程保持非阻塞，只在确有需要时通过主线程脚本介入。
+
+这是我第一天验证的核心架构决策。Vue Lynx 中，整个 Vue Runtime 都运行在后台线程。一个轻量的 `ShadowElement` 链表树在内存里镜像原生元素树。所有 DOM 变更会被序列化到一个扁平的 ops buffer 中，每个 tick 一次性发送到主线程：
+
+```text
+┌──────────────────────────────────────────────────────┐
+│                        后台线程                       │
+│    Vue 3 Runtime · 响应式 · 生命周期 · 用户代码      │
+└──────────────┬──────────────────────▲────────────────┘
+          ops  │                      │  events
+               ▼                      │
+┌──────────────────────────────────────┴───────────────┐
+│                        主线程                         │
+│      原生元素 · 布局 · 渲染 · 主线程脚本事件处理      │
+└──────────────────────────────────────────────────────┘
+```
+
+为了让 Agent 始终遵守这套双线程架构，不要滑回它最熟悉的单线程 Web 模型，我把所有[关键计划直接放进了源码仓库](https://github.com/Huxpro/vue-lynx/tree/main/plans)。设计讨论、决策记录、实现后的经验，全都成为跨 session 的上下文。每个新 session 都能接着前一个继续工作，也能继承约束条件和这些约束背后的原因。
+
+### 接入 Vue 上游测试
+
+AI 驱动开发中，最值得投入的是反馈机制。为了确保行为符合官方 Vue，理想方案当然是直接复用 Vue 的上游测试套件。但 Vue 的测试假设了一套单线程 DOM。要怎么用它测试一个双线程 Renderer？
+
+好在 Lynx 已经提供了[双线程测试环境](https://lynxjs.org/next/api/lynx-testing-environment/index.html#lynx-jstesting-environment)。于是我们把测试套件重新接线，让它完整跑过这条双线程链路：后台线程的 `ShadowElement` → ops buffer → `syncFlush()` → 主线程的 `applyOps` → PAPI → jsdom。接下来，让 Agent 一直 grind，直到剩下的失败项都确实无法修复。这基本就是一个 [Ralph Loop](https://ghuntley.com/loop/)。
+
+最终结果是：949 个上游测试中通过 852 个。每一个失败项都记录在 [skiplist](https://github.com/Huxpro/vue-lynx/blob/main/packages/upstream-tests/skiplist.json) 里，并写明了跳过原因。事实证明，它们都无关紧要。完整结果可以查看[测试报告和跳过项分析](https://github.com/Huxpro/vue-lynx/blob/main/packages/upstream-tests/README.md)。
+
+我们也为 Lynx 特有的能力补了自己的测试，例如 `<list>` 元素、`bindtap` 事件和主线程脚本 API。整条测试链路验证完成后，我又往前走了一步，把 Vue 官方文档里的 [7GUIs Benchmark](https://vue.lynxjs.org/guide/7guis) 移植过来做压力测试。
+
+```text
+                后台线程   ┃  主线程
+                           ┃
+Vue → ShadowElement → Ops  ┃  PAPI → Lynx Engine → UI
+                           ┃
+├─ vue runtime-core ─┤     ┃
+├─── vue runtime-dom ──────╂──┤
+        ├── E2E Pipeline ──╂─────────────┤
+                           ┃         ├── Agentic ───┤
+```
+
+### Agent E2E 验证闭环
+
+但传统的机械化测试发现不了真实 UI 中的 Bug。布局偏了几个像素，真机上的交互失效，这类问题过去需要人来判断。要验证 `<Transition>`、`<Suspense>` 这样的高级 Vue 特性，你必须亲眼看到它运行，再实际操作一次。
+
+只要 Harness 搭得对，示例就不只是 Demo，也可以成为 Agent 自动评估的 workload。我接入了两个执行环境：一个是通过 [Lynx DevTool MCP](https://lynxjs.org/next/ai/lynx-devtool-mcp.html)、CLI 和 Skill 控制的 iOS Simulator；另一个是通过 [Lynx for Web](https://lynxjs.org/next/guide/start/integrate-with-existing-apps?platform=web) 运行、由 Agent 控制的浏览器。闭环很简单：让同一个示例分别在两个环境中运行，观察并验证结果，出现回归就继续修。整个过程不需要人介入。
+
+```text
+┌──── 修复 ◀─────────────────────────────────┐
+│                                            │
+▼                                            │
+示例 ─────┬──▶ iOS Simulator ───┬──▶ 评估
+          │    (DevTool MCP)     │
+          │                      │
+          └──▶ Lynx for Web ─────┘
+               (agent-browser)
+```
+
+我先从 Vue 核心特性开始，因为它们的正确行为有明确标准。Agent 阅读官方文档，编写示例，再检查运行结果是否符合文档。随后，范围扩大到生态集成：Vue Router、Pinia、TanStack Query 和 Tailwind CSS。
+
+到了期末考试，我换了一种做法。后来才知道，它有一个名字：*差分评估（differential evaluation）*。我让 Agent 移植现有应用，再拿移植结果和原版逐项比较。第一个项目以经典的 Vue HackerNews 实现为 ground truth，在浏览器里并排运行 Web 原版和基于 Lynx for Web 的 Vue Lynx 版本。第二个项目以现有的 ReactLynx Demo 为参照，把它移植到 Vue Lynx，再通过 Lynx DevTool MCP 在 iOS Simulator 上验证两边是否一致。Harness 不需要凭空理解什么叫「正确」，它只需要确认两个输出一致。
+
+| Ground Truth | Candidate | 运行环境 |
+| --- | --- | --- |
+| Vue HackerNews Web 版 | Vue Lynx 移植版 | Lynx Web（浏览器） |
+| ReactLynx Demo | Vue Lynx 移植版 | Lynx Native（Simulator） |
+
+```text
+                    ┌─────────────────────────────┐
+       ┌────────────▶  ground truth ──▶       A   │
+       │            │                         │   │
+输入 ──┤            │                        比较 ──▶ 差异
+       │            │                         │   │      │
+       └────────────▶  Lynx (candidate) ──▶    B   │      ▼
+                    └─────────────────────────────┘    修复闭环
+```
+
+### 账单
+
+```text
+┌──────────────────────────────────────────┐
+│ 按 Opus API 价格计算                     │
+├──────────────────────────────┬───────────┤
+│ Input (3.8M tokens)          │ $      57 │
+│ Output (6.8M tokens)         │ $     510 │
+│ Cache Write (117.9M tokens)  │ $   2,211 │
+│ Cache Read (2.5B tokens)     │ $   3,769 │
+├──────────────────────────────┼───────────┤
+│ 总计                         │ $   6,547 │
+└──────────────────────────────┴───────────┘
+```
+
+这组数字很说明问题。Output token，也就是 Claude 真正*写出*的代码和文字，只占总成本的 8%。另外 92% 都花在理解上：反复阅读代码库、吸收工具输出、在 31,700 次 API 调用中重新处理对话历史。为了写出 680 万 token，它读了 25 亿 token，读写比是 370:1。这才是「agentic」落到 API 账单上时的真实样子。
+
+按 API 价格计算的 $6,500 值不值？幸好 Claude 通过[开源项目计划](https://x.com/Huxpro/status/2031973188440052119)送了我每月 $200 的 Claude Max。
+
+## 接下来呢？
+
+这个项目始于一个人的晚上和周末。我很希望能和 Vue 核心团队一起探索 Vue 在原生端的未来。就我个人而言，也代表 Lynx 团队，我们会持续投入，支持它成长。
+
+Vue Lynx 目前仍处于 Pre-Alpha。架构已经站稳，但 Vue 的 API 面很大，还有不少角落未经验证。
+
+- `KeepAlive`、`Teleport` 这类特性可能需要针对 Runtime 做适配。
+- 原生输入元素上的 `<style scoped>` 和 `v-model` 可以实现，但目前还没有完成。
+- 主线程脚本 API 现在复用了 ReactLynx 基于 Directive 的设计。更符合 Vue 习惯的形式，例如 `<script main-thread setup>`，值得继续探索。
+- 将 Vue DevTools 集成进 Lynx DevTool。
+
+Vue 核心之外，还有一个庞大的 Vue 生态，等待我们把它带到原生端。
+
+愿景很简单：Vue 开发者应该能像今天发布 Web 应用一样，自然地发布原生应用。我们还没走到那里，但地基已经打好，路径也已经清楚。
+
+如果你读到了这里，[现在就试试](https://vue.lynxjs.org/)。做点东西，告诉我们还缺什么。
+
+顺带一提：[Lynx 最初就是用 Vue 2 做出来的](https://x.com/Huxpro/status/2032279225479176229)。
+
+---
+
+本文最初于 2026 年 3 月 26 日发布在 [X Articles](https://x.com/Huxpro/status/2036993665965416601)。

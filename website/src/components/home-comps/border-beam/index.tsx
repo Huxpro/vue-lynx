@@ -6,11 +6,13 @@ interface BorderBeamProps {
   color?: string;
   size?: number;
   duration?: number;
+  className?: string;
 }
 
 const BorderBeam: React.FC<BorderBeamProps> = ({
   size = 2,
   duration = 3,
+  className = '',
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -108,7 +110,10 @@ const BorderBeam: React.FC<BorderBeamProps> = ({
   }, [size, duration]);
 
   return (
-    <div ref={containerRef} className={styles['border-beam-frame']}>
+    <div
+      ref={containerRef}
+      className={`${styles['border-beam-frame']}${className ? ` ${className}` : ''}`}
+    >
       <canvas ref={canvasRef} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: 'none' }} />
     </div>
   );

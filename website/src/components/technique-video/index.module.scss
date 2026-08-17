@@ -1,0 +1,48 @@
+.figure {
+  width: min(100%, 390px);
+  margin: 28px auto 36px;
+}
+
+.frame {
+  overflow: hidden;
+  border: 1px solid rgba(127, 127, 127, 0.22);
+  border-radius: 18px;
+  background: rgba(127, 127, 127, 0.06);
+  box-shadow:
+    0 18px 46px rgba(10, 18, 28, 0.12),
+    0 2px 10px rgba(10, 18, 28, 0.08);
+}
+
+.video {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: #fff;
+}
+
+.caption {
+  margin: 12px auto 0;
+  color: var(--rp-c-text-2, #646a73);
+  font-size: 13px;
+  line-height: 1.55;
+  text-align: center;
+  text-wrap: balance;
+}
+
+:global(html.dark) .frame {
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow:
+    0 18px 46px rgba(0, 0, 0, 0.3),
+    0 2px 10px rgba(0, 0, 0, 0.22);
+}
+
+@media (max-width: 640px) {
+  .figure {
+    width: 100%;
+    margin: 24px auto 32px;
+  }
+
+  .frame {
+    border-radius: 14px;
+  }
+}

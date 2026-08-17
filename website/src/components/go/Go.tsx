@@ -8,10 +8,16 @@ const config = {
   ...rspressAdapter,
 };
 
+// What the QR code encodes. `?fullscreen=true` tells LynxExplorer to open the
+// bundle edge-to-edge instead of inside its navigation chrome — every example
+// here is a full-screen app, so that is the right default. Pages that need
+// more (elk passes bar/bg colours) override it with their own `schema`.
+const QRCODE_SCHEMA = '{{{url}}}?fullscreen=true';
+
 export function Go(props: GoProps) {
   return (
     <GoConfigProvider config={config}>
-      <GoBase {...props} />
+      <GoBase schema={QRCODE_SCHEMA} {...props} />
     </GoConfigProvider>
   );
 }

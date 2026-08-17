@@ -20,21 +20,21 @@ const packages = [
   {
     label: 'vue-lynx',
     dirName: 'vue-lynx',
-    entryPoints: [path.join(repoRoot, 'runtime/src/index.ts')],
+    entryPoints: [path.join(repoRoot, 'packages/vue-lynx/runtime/src/index.ts')],
     homepageFileName: 'index',
     showHomepageInSidebar: false,
   },
   {
     label: 'vue-lynx/plugin',
     dirName: 'plugin',
-    entryPoints: [path.join(repoRoot, 'plugin/src/index.ts')],
+    entryPoints: [path.join(repoRoot, 'packages/vue-lynx/plugin/src/index.ts')],
     homepageFileName: 'index',
     showHomepageInSidebar: false,
   },
   {
     label: 'vue-lynx/testing-library',
     dirName: 'testing-library',
-    entryPoints: [path.join(repoRoot, 'testing-library/src/index.ts')],
+    entryPoints: [path.join(repoRoot, 'packages/testing-library/src/index.ts')],
     homepageFileName: 'index',
     showHomepageInSidebar: false,
   },
@@ -69,6 +69,7 @@ const HIDDEN_APIS = new Set([
 // Vue Lynx specific APIs — shown first in the vue-lynx sidebar
 const VUE_LYNX_APIS = new Set([
   'Function.createApp',
+  'Variable.Page',
   'Interface.VueLynxApp',
   'Function.nextTick',
   'Class.MainThreadRef',
@@ -206,14 +207,14 @@ ${lynxApis.map(fmtRow).join('\n')}
 
 | Component | Status | Notes |
 | --------- | ------ | ----- |
-| \`<Transition>\` | Experimental | CSS class-based enter/leave animations. Requires explicit \`:duration\` prop — \`getComputedStyle()\` is unavailable from the background thread. |
-| \`<TransitionGroup>\` | Experimental | Per-child enter/leave animations. Move (FLIP) animations not supported — \`getBoundingClientRect()\` is unavailable from the background thread. |
+| \`<Transition>\` | Supported | Fully supported: CSS transitions/animations, \`appear\`, \`mode\`, JS hooks, with or without \`:duration\` ([#286](https://github.com/Huxpro/vue-lynx/issues/286)). |
+| \`<TransitionGroup>\` | Supported | Per-child enter/leave animations. Move (FLIP) animations not supported — \`getBoundingClientRect()\` is unavailable from the background thread. |
 | \`<Suspense>\` | Supported | Re-exported from Vue. Works with \`defineAsyncComponent()\`. |
-| \`<KeepAlive>\` | Not Supported | Requires element recycling not available in Lynx renderer. |
-| \`<Teleport>\` | Not Supported | Requires \`querySelector\` renderer option not implemented. |
+| \`<KeepAlive>\` | Supported | Caches inactive component instances. Supports \`include\`, \`exclude\`, and \`max\` props. |
+| \`<Teleport>\` | Supported | Supports \`to="#id"\` string selectors only. Direct element refs and non-ID selectors are not yet supported. |
 
-:::warning
-\`<Transition>\` and \`<TransitionGroup>\` are **experimental**. Always pass an explicit \`:duration\` prop — \`getComputedStyle()\` is unavailable from the background thread. Move (FLIP) animations in \`<TransitionGroup>\` are not supported.
+:::info
+\`<Transition>\` is fully supported (with or without \`:duration\`). The only remaining gap is Move (FLIP) animations in \`<TransitionGroup>\` — \`getBoundingClientRect()\` is unavailable from the background thread.
 :::
 
 <Go example="transition" defaultFile="src/App.vue" defaultEntryFile="dist/transition.lynx.bundle" />
@@ -328,3 +329,28 @@ await fs.writeFile(
   path.join(websiteRoot, 'api-sidebar.json'),
   `${JSON.stringify(sidebarGroups, null, 2)}\n`,
 );
+
+// Mirror API docs to zh locale. vue-lynx and testing-library keep hand-written
+// zh index.mdx; other packages copy the generated English index so relative
+// links like [pkg](index.mdx) in member pages resolve under /zh/guide/api/.
+const zhApiOutputDir = path.join(websiteRoot, 'docs/zh/guide/api');
+const zhTranslatedIndexDirs = new Set(['vue-lynx', 'testing-library']);
+await fs.mkdir(zhApiOutputDir, { recursive: true });
+
+for (const pkg of packages) {
+  const srcDir = path.join(apiOutputDir, pkg.dirName);
+  const destDir = path.join(zhApiOutputDir, pkg.dirName);
+  await fs.mkdir(destDir, { recursive: true });
+
+  const files = await fs.readdir(srcDir, { withFileTypes: true });
+  for (const file of files) {
+    if (!file.isFile()) continue;
+    if (file.name === 'index.mdx' && zhTranslatedIndexDirs.has(pkg.dirName)) {
+      continue;
+    }
+    await fs.copyFile(
+      path.join(srcDir, file.name),
+      path.join(destDir, file.name),
+    );
+  }
+}

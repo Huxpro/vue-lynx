@@ -17,6 +17,8 @@ export default defineConfig({
     }),
     pluginVueLynx({
       optionsApi: false,
+      enableCSSInlineVariables: true,
+      enableCSSInheritance: true,
     }),
   ],
 })

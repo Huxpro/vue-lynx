@@ -1,0 +1,16 @@
+{
+  "name": "vue-lynx-ifr-bench-rl-probe",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "rspeedy build"
+  },
+  "dependencies": {
+    "@lynx-js/react": "^0.116.5"
+  },
+  "devDependencies": {
+    "@lynx-js/react-rsbuild-plugin": "^0.10.14",
+    "@lynx-js/rspeedy": "^0.13.5",
+    "typescript": "~5.9.3"
+  }
+}

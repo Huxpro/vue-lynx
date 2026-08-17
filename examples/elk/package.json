@@ -1,0 +1,38 @@
+{
+  "name": "@vue-lynx-example/elk",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Elk (Mastodon client) ported to Vue-Lynx — native Mastodon client example",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist",
+    "src",
+    "lynx.config.ts",
+    "tsconfig.json"
+  ],
+  "scripts": {
+    "build": "rspeedy build",
+    "dev": "rspeedy dev",
+    "test:native-compat": "node --test scripts/native-compat.test.mjs"
+  },
+  "dependencies": {
+    "masto": "^7.2.0",
+    "pinia": "^3.0.2",
+    "ultrahtml": "^1.5.3",
+    "vue-lynx": "workspace:*",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@lynx-js/qrcode-rsbuild-plugin": "^0.4.6",
+    "@lynx-js/rspeedy": "^0.13.5",
+    "@lynx-js/tailwind-preset": "^0.4.0",
+    "@rsbuild/plugin-vue": "^1.2.6",
+    "rsbuild-plugin-tailwindcss": "^0.2.3",
+    "tailwindcss": "^3.4.17",
+    "typescript": "~5.9.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

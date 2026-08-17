@@ -5,9 +5,14 @@
  * Design tokens defined via CSS class selectors for theme switching.
  * Dark theme is the default (:root). Switch themes by applying
  * .theme-light or .theme-ocean class on the root element.
+ *
+ * Note: .theme-dark is added as an explicit class (same as :root) to work
+ * around an issue where __SetClasses doesn't properly handle empty strings.
+ * See: https://github.com/lynx-family/lynx/issues/5685
  */
 
-:root {
+:root,
+.theme-dark {
   --color-background: rgba(9, 9, 11, 1);
   --color-card: rgba(24, 24, 27, 1);
   --color-card-foreground: rgba(250, 250, 250, 1);
