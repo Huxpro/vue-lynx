@@ -12,6 +12,8 @@ const helperUrl = new URL('shared/native-bench.ts', benchmarkRoot);
 const sharedDataUrl = new URL('shared/data.ts', benchmarkRoot);
 const vdomAppUrl = new URL('apps/ui-vdom/src/App.vue', benchmarkRoot);
 const vaporAppUrl = new URL('apps/ui-vapor/src/App.vue', benchmarkRoot);
+const vdomIndexUrl = new URL('apps/ui-vdom/src/index.ts', benchmarkRoot);
+const vaporIndexUrl = new URL('apps/ui-vapor/src/index.ts', benchmarkRoot);
 const reactAppUrl = new URL('apps/ui-react/src/App.tsx', benchmarkRoot);
 const reactDataUrl = new URL('apps/ui-react/src/data.ts', benchmarkRoot);
 
@@ -64,7 +66,9 @@ function loadTsModule(moduleUrl, imports = {}) {
 const {
   NATIVE_BENCH_PROTOCOL,
   NATIVE_BENCH_WORKLOADS,
+  NATIVE_STARTUP_PROTOCOL,
   createNativeBench,
+  createNativeStartupMarker,
 } = loadTsModule(helperUrl);
 
 function createWebGlobals() {
@@ -164,6 +168,58 @@ function expectedPayload(name, startMs, endMs) {
 test('exports the exact Native protocol and workload labels', () => {
   assert.equal(NATIVE_BENCH_PROTOCOL, expectedProtocol);
   assert.deepEqual(Array.from(NATIVE_BENCH_WORKLOADS), expectedWorkloads);
+});
+
+test('Web startup marker has zero timing and scheduling side effects', () => {
+  const web = createWebGlobals();
+  const markMounted = createNativeStartupMarker(web.frameScheduler, web.globals);
+  markMounted();
+
+  assert.equal(web.dateNowCalls(), 0);
+  assert.equal(web.frameTasks.length, 0);
+  assert.deepEqual(web.logs, []);
+  assert.equal(web.globals.__LYNX_BENCH_STARTUP__, undefined);
+});
+
+test('Native startup marker records mount completion and two real frames once', () => {
+  const native = createNativeGlobals();
+  const markMounted = createNativeStartupMarker(native.frameScheduler, native.globals);
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(native.globals.__LYNX_BENCH_STARTUP__)),
+    {
+    protocol: NATIVE_STARTUP_PROTOCOL,
+    moduleStartMs: 100,
+    mountEndMs: null,
+    firstFrameMs: null,
+    secondFrameMs: null,
+    },
+  );
+
+  native.setNow(120);
+  markMounted();
+  markMounted();
+  assert.equal(native.frameTasks.length, 1);
+  native.setNow(135);
+  native.frameTasks.shift()?.();
+  assert.equal(native.frameTasks.length, 1);
+  native.setNow(150);
+  native.frameTasks.shift()?.();
+
+  const expected = {
+    protocol: NATIVE_STARTUP_PROTOCOL,
+    moduleStartMs: 100,
+    mountEndMs: 120,
+    firstFrameMs: 135,
+    secondFrameMs: 150,
+  };
+  assert.deepEqual(
+    JSON.parse(JSON.stringify(native.globals.__LYNX_BENCH_STARTUP__)),
+    expected,
+  );
+  assert.deepEqual(native.logs, [[
+    '__NATIVE_BENCH_STARTUP__',
+    JSON.stringify(expected),
+  ]]);
 });
 
 test('Web actions and storms use MessageChannel with zero timing side effects', () => {
@@ -439,6 +495,17 @@ test('ui-vapor is exactly generated from ui-vdom by the marker contract', () => 
       vue.replace(marker, '<script setup vapor lang="ts">')
     }`,
   );
+});
+
+test('Vue entrypoints bracket mount with the Native startup marker', () => {
+  for (const url of [vdomIndexUrl, vaporIndexUrl]) {
+    const source = fs.readFileSync(url, 'utf8');
+    assert.match(source, /createNativeStartupMarker\(lynx\)/);
+    const marker = source.indexOf('createNativeStartupMarker(lynx)');
+    const mount = source.indexOf('createApp(App).mount()');
+    const completion = source.indexOf('markNativeMountComplete();');
+    assert.ok(marker < mount && mount < completion);
+  }
 });
 
 test('test harness is plain JavaScript and resolves paths under benchmark', () => {

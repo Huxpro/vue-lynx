@@ -11,6 +11,7 @@ export const NATIVE_BENCH_WORKLOADS = [
 ] as const
 
 export const NATIVE_BENCH_PROTOCOL = 'vue-lynx-native-bench-v1'
+export const NATIVE_STARTUP_PROTOCOL = 'vue-lynx-native-startup-v1'
 
 export type NativeBenchWorkload = typeof NATIVE_BENCH_WORKLOADS[number]
 
@@ -36,6 +37,45 @@ interface NativeBenchGlobals {
   MessageChannel?: new () => MessageChannelLike
   Date: Pick<DateConstructor, 'now'>
   console: Pick<Console, 'log'>
+  __LYNX_BENCH_STARTUP__?: NativeStartupPayload
+}
+
+interface NativeStartupPayload {
+  protocol: typeof NATIVE_STARTUP_PROTOCOL
+  moduleStartMs: number
+  mountEndMs: number | null
+  firstFrameMs: number | null
+  secondFrameMs: number | null
+}
+
+export function createNativeStartupMarker(
+  frameScheduler: NativeFrameScheduler,
+  globals = globalThis as unknown as NativeBenchGlobals,
+): Task {
+  if (typeof globals.MessageChannel === 'function') return noop
+
+  const startup: NativeStartupPayload = {
+    protocol: NATIVE_STARTUP_PROTOCOL,
+    moduleStartMs: globals.Date.now(),
+    mountEndMs: null,
+    firstFrameMs: null,
+    secondFrameMs: null,
+  }
+  globals.__LYNX_BENCH_STARTUP__ = startup
+
+  let finished = false
+  return () => {
+    if (finished) return
+    finished = true
+    startup.mountEndMs = globals.Date.now()
+    frameScheduler.requestAnimationFrame(() => {
+      startup.firstFrameMs = globals.Date.now()
+      frameScheduler.requestAnimationFrame(() => {
+        startup.secondFrameMs = globals.Date.now()
+        globals.console.log('__NATIVE_BENCH_STARTUP__', JSON.stringify(startup))
+      })
+    })
+  }
 }
 
 export function createNativeBench(
