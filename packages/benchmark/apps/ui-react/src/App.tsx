@@ -1,46 +1,28 @@
-// Black-box cross-framework benchmark UI — ReactLynx variant.
+// Cross-framework benchmark UI — ReactLynx variant. Native-only timing is
+// capability-gated so Lynx for Web keeps its black-box measurement behavior.
 // Mirrors apps/ui-vdom/src/App.vue operation-for-operation, implemented as
 // the idiomatic keyed react-hooks version from js-framework-benchmark:
 // immutable state updates + memoized row component.
 import { memo, useCallback, useEffect, useRef, useState } from '@lynx-js/react';
 
+import { createNativeBench } from '../../../shared/native-bench';
 import { buildData, buildDataSeeded } from './data';
 import type { RowData } from './data';
 
 import './App.css';
 
 const INITIAL_ROWS_SEED = 42;
+const {
+  runStorm: runNativeBenchStorm,
+  startMeasure: startNativeMeasure,
+} = createNativeBench(lynx);
 
 // -- storms: N sequential state→render→DOM ticks from one click --------------
-// Each tick runs in its own macrotask (MessageChannel avoids the nested
-// setTimeout 4ms clamp) so every mutation goes through a full render cycle
-// instead of batching. Mirrors apps/ui-vdom/src/App.vue.
+// Each tick runs in its own task so every mutation goes through a full render
+// cycle instead of batching. Lynx for Web keeps MessageChannel; Native uses
+// its timer task queue. Mirrors apps/ui-vdom/src/App.vue.
 const STORM_UPDATE_TICKS = 50;
 const STORM_SELECT_TICKS = 30;
-
-const _stormChannel = new MessageChannel();
-let _stormPending: (() => void) | null = null;
-_stormChannel.port1.onmessage = () => {
-  const cb = _stormPending;
-  _stormPending = null;
-  if (cb) cb();
-};
-function nextMacrotask(cb: () => void) {
-  _stormPending = cb;
-  _stormChannel.port2.postMessage(0);
-}
-
-// Module-scope storm driver — mirrors AppNaive.tsx (the tick counter must not
-// be a mutated binding captured inside the component; see note there).
-function runStorm(ticks: number, step: (t: number) => void) {
-  let t = 0;
-  const tick = () => {
-    t += 1;
-    step(t);
-    if (t < ticks) nextMacrotask(tick);
-  };
-  nextMacrotask(tick);
-}
 
 interface RowProps {
   row: RowData;
@@ -70,33 +52,48 @@ export function App() {
   const [selected, setSelected] = useState<number | undefined>(undefined);
 
   const run = useCallback(() => {
+    const finish = startNativeMeasure('create');
     setRows(buildData());
     setSelected(undefined);
+    finish();
   }, []);
   const runLots = useCallback(() => {
+    const finish = startNativeMeasure('create');
     setRows(buildData(10000));
     setSelected(undefined);
+    finish();
   }, []);
   const run3k = useCallback(() => {
+    const finish = startNativeMeasure('create');
     setRows(buildData(3000));
     setSelected(undefined);
+    finish();
   }, []);
   const run5k = useCallback(() => {
+    const finish = startNativeMeasure('create');
     setRows(buildData(5000));
     setSelected(undefined);
+    finish();
   }, []);
   const run20k = useCallback(() => {
+    const finish = startNativeMeasure('create');
     setRows(buildData(20000));
     setSelected(undefined);
+    finish();
   }, []);
   const run30k = useCallback(() => {
+    const finish = startNativeMeasure('create');
     setRows(buildData(30000));
     setSelected(undefined);
+    finish();
   }, []);
   const add = useCallback(() => {
+    const finish = startNativeMeasure('append1k');
     setRows((prev) => prev.concat(buildData(1000)));
+    finish();
   }, []);
   const update = useCallback(() => {
+    const finish = startNativeMeasure('update10th');
     setRows((prev) => {
       const next = prev.slice();
       for (let i = 0; i < next.length; i += 10) {
@@ -104,17 +101,23 @@ export function App() {
       }
       return next;
     });
+    finish();
   }, []);
   const select = useCallback((id: number) => {
+    const finish = startNativeMeasure('select');
     setSelected(id);
+    finish();
   }, []);
   const remove = useCallback((id: number) => {
+    const finish = startNativeMeasure('remove');
     setRows((prev) => {
       const idx = prev.findIndex((d) => d.id === id);
       return prev.slice(0, idx).concat(prev.slice(idx + 1));
     });
+    finish();
   }, []);
   const swapRows = useCallback(() => {
+    const finish = startNativeMeasure('swap');
     setRows((prev) => {
       if (prev.length <= 998) return prev;
       const next = prev.slice();
@@ -123,10 +126,13 @@ export function App() {
       next[998] = d1;
       return next;
     });
+    finish();
   }, []);
   const clear = useCallback(() => {
+    const finish = startNativeMeasure('clear');
     setRows([]);
     setSelected(undefined);
+    finish();
   }, []);
 
   const idsRef = useRef<number[]>([]);
@@ -135,7 +141,7 @@ export function App() {
   }, [rows]);
 
   const stormUpdate = useCallback(() => {
-    runStorm(STORM_UPDATE_TICKS, (t) =>
+    runNativeBenchStorm('updateStorm', STORM_UPDATE_TICKS, (t) =>
       setRows((prev) =>
         prev.map((r, i) => (i % 10 === 0 ? { id: r.id, label: `bench ${t}` } : r)),
       ),
@@ -143,7 +149,7 @@ export function App() {
   }, []);
 
   const stormSelect = useCallback(() => {
-    runStorm(STORM_SELECT_TICKS, (t) => {
+    runNativeBenchStorm('selectStorm', STORM_SELECT_TICKS, (t) => {
       const ids = idsRef.current;
       setSelected(t < STORM_SELECT_TICKS ? ids[(t * 97) % ids.length] : ids[0]);
     });
