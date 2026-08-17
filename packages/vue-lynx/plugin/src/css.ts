@@ -32,6 +32,7 @@ export interface ApplyCSSOptions {
 }
 
 const _dirname = path.dirname(fileURLToPath(import.meta.url));
+const VUE_SCOPED_CSS_SPLIT_LOADER = 'vue-scoped-css-split-loader';
 
 export function applyCSS(
   api: RsbuildPluginAPI,
@@ -118,6 +119,20 @@ export function applyCSS(
               )
               .end();
           }
+
+          // Vue has already lowered :global() by this point. Split the raw
+          // CSS immediately before css-loader resolves @imports so its common
+          // sibling request flows through the existing extraction pipeline.
+          rule
+            .use(VUE_SCOPED_CSS_SPLIT_LOADER)
+            .after(CHAIN_ID.USE.CSS)
+            .loader(
+              path.resolve(
+                _dirname,
+                './loaders/vue-scoped-css-split-loader',
+              ),
+            )
+            .end();
         });
 
       // Also strip lightningcss from inline CSS rules (Rsbuild ≥1.3.0).

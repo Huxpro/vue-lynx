@@ -12,6 +12,8 @@ export default defineConfig({
     entry: {
       index: './src/index.ts',
       'loaders/ignore-css-loader': './src/loaders/ignore-css-loader.ts',
+      'loaders/vue-scoped-css-split-loader':
+        './src/loaders/vue-scoped-css-split-loader.ts',
       'loaders/worklet-loader': './src/loaders/worklet-loader.ts',
       'loaders/worklet-loader-mt': './src/loaders/worklet-loader-mt.ts',
       'loaders/vue-sfc-script-extractor':
