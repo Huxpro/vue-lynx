@@ -13,6 +13,7 @@ import { register, unregister, updateHandler } from './event-registry.js';
 import { scheduleFlush } from './flush.js';
 import { isIfrMainThread } from './ifr-env.js';
 import { OP, pushOp } from './ops.js';
+import { observeTimingFlagProp } from './performance.js';
 import { registerWorkletCtx } from './run-on-background.js';
 import { scopeIdToCssId } from './scope-bridge.js';
 import { ShadowElement } from './shadow-element.js';
@@ -545,6 +546,10 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       if (el._id) idRegistry.set(el._id, el);
       pushOp(OP.SET_ID, el.id, nextValue);
     } else {
+      // An application Timing Flag makes the pipeline this batch rides in
+      // reportable — the engine reads the attribute off the element, the
+      // framework only has to ask for timestamps.
+      observeTimingFlagProp(key, nextValue);
       pushOp(OP.SET_PROP, el.id, key, nextValue);
     }
 

@@ -8,6 +8,13 @@ import { IFR_APPLY_OPS_GLOBAL } from 'vue-lynx/internal/ops';
 
 import { isIfrMainThread } from './ifr-env.js';
 import { takeOps } from './ops.js';
+import {
+  beginUpdatePipeline,
+  dropPipeline,
+  markTiming,
+  notePipelineBatchDispatched,
+  takePipeline,
+} from './performance.js';
 
 /**
  * Schedule a flush of the ops buffer via Vue's post-flush hook.
@@ -107,6 +114,11 @@ export function waitForFlush(): Promise<void> {
 export function scheduleFlush(): void {
   if (scheduled) return;
   scheduled = true;
+  // First mutation of this tick — the framework rendering window that the
+  // pipeline attributes starts here. Vue's scheduler exposes no "a render is
+  // about to run" hook, so this is the earliest point both the virtual-DOM
+  // renderer and Vapor reach on every update.
+  beginUpdatePipeline();
   queuePostFlushCb(doFlush);
 }
 
@@ -123,7 +135,17 @@ export function resetFlushState(): void {
 function doFlush(): void {
   scheduled = false;
   const ops = takeOps();
-  if (ops.length === 0) return;
+  if (ops.length === 0) {
+    // The tick produced no element changes after all. A pipeline opened for it
+    // has nothing to submit — drop it rather than let it ride an unrelated
+    // later update.
+    dropPipeline();
+    return;
+  }
+
+  // All renders for this tick are done (queuePostFlushCb runs after the
+  // scheduler drains), so the framework rendering window closes here.
+  markTiming('diffVdomEnd');
 
   // IFR main-thread render: the Vue app is running *on* the main thread, so
   // ops are applied locally and synchronously — no cross-thread call, no ack
@@ -135,6 +157,10 @@ function doFlush(): void {
     ] as ((ops: unknown[]) => void) | undefined;
     if (applyLocal) {
       applyLocal(ops);
+      // renderPage submits this render, carrying the engine's load pipeline.
+      // There is no framework pipeline on this path (beginUpdatePipeline bails
+      // out in the IFR main-thread realm), so nothing is left to release.
+      notePipelineBatchDispatched();
       return;
     }
   }
@@ -169,10 +195,19 @@ function doFlush(): void {
     }
   });
 
+  // Serialising the batch is framework rendering work the pipeline should
+  // account for, and it is the last thing that happens to the ops on this
+  // thread — so the pipeline travels with the payload it describes.
+  markTiming('packChangesStart');
+  const data = JSON.stringify(ops);
+  markTiming('packChangesEnd');
+  const pipelineOptions = takePipeline();
+  notePipelineBatchDispatched();
+
   const app = lynx?.getNativeApp?.();
   app?.callLepusMethod?.(
     'vuePatchUpdate',
-    { data: JSON.stringify(ops) },
+    { data, pipelineOptions },
     () => {
       // Main thread has finished applying the ops — resolve the promise and
       // latch that this engine delivers callbacks.

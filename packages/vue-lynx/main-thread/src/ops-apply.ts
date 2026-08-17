@@ -28,6 +28,7 @@ import {
   resetListState,
   setPlatformInfoProp,
 } from './list-apply.js';
+import { dropPipelines, flushElementTree, markTiming } from './performance.js';
 import {
   applyInitMtRef,
   applySetMtRef,
@@ -73,10 +74,13 @@ function createTypedElement(
  *   The IFR render passes `false` for batches applied synchronously inside
  *   `renderPage`, which presents the whole frame with a single flush at the
  *   end instead of one per batch.
+ * @returns Whether this call submitted the batch to the engine. A batch that
+ *   was empty or already applied submits nothing, and must therefore not
+ *   consume a pipeline that is waiting for real content.
  */
-export function applyOps(ops: unknown[], flush = true): void {
+export function applyOps(ops: unknown[], flush = true): boolean {
   const len = ops.length;
-  if (len === 0) return;
+  if (len === 0) return false;
 
   // Detect duplicate batch from double BG bundle evaluation.
   // Each __init_card_bundle__ invocation gets a fresh webpack module cache, so
@@ -89,10 +93,11 @@ export function applyOps(ops: unknown[], flush = true): void {
   ) {
     const firstId = ops[1] as number;
     if (elements.has(firstId)) {
-      return;
+      return false;
     }
   }
 
+  markTiming('patchChangesStart');
   let i = 0;
 
   while (i < len) {
@@ -313,9 +318,12 @@ export function applyOps(ops: unknown[], flush = true): void {
   }
 
   flushListUpdates();
+  markTiming('patchChangesEnd');
 
-  // Flush all pending PAPI changes to the native layer in one shot.
-  if (flush) __FlushElementTree();
+  // Flush all pending PAPI changes to the native layer in one shot, carrying
+  // the pipeline these changes belong to.
+  if (flush) flushElementTree();
+  return flush;
 }
 
 /** Expose elements map so entry-main.ts can seed the page-root entry. */
@@ -327,4 +335,7 @@ export function resetMainThreadState(): void {
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();
+  // A pipeline retained for the page being replaced can never be committed —
+  // the content it was waiting for belongs to a tree that no longer exists.
+  dropPipelines();
 }
