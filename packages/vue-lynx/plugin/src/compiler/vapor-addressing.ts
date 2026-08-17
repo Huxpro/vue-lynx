@@ -24,6 +24,7 @@ import type {
   IRDynamicInfo,
   OperationNode,
   RootIRNode,
+  TransformPreset,
 } from '@vue/compiler-vapor';
 import {
   DynamicFlag,
@@ -82,12 +83,7 @@ export interface AnalyzeVaporAddressingOptions {
   autoPixelUnit?: boolean;
 }
 
-function getBaseTransformPreset(): [
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  any[],
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  Record<string, any>,
-] {
+function getBaseTransformPreset(): TransformPreset {
   return [[
     transformVOnce,
     transformVIf,
@@ -108,17 +104,6 @@ function getBaseTransformPreset(): [
     show: transformVShow,
     model: transformVModel,
   }];
-}
-
-/**
- * Out-of-template insertion point appended into its parent (v-if / v-for /
- * component at the END of a parent's children — no `<!>` anchor emitted).
- */
-function isInsertPlaceholder(d: IRDynamicInfo): boolean {
-  return (
-    (d.flags & DynamicFlag.NON_TEMPLATE) !== 0
-    && (d.flags & DynamicFlag.INSERT) !== 0
-  );
 }
 
 /**

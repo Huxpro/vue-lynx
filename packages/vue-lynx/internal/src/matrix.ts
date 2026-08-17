@@ -192,7 +192,7 @@ function cap(s: string): string {
 
 function addressingOf(
   render: RenderModel,
-  staging: TemplateStaging,
+  _staging: TemplateStaging,
   naming: TemplateNaming,
 ): TemplateAddressing {
   if (render === 'vdom') return 'random-access';

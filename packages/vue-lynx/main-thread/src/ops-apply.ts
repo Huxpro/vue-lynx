@@ -835,7 +835,9 @@ export function applyOps(ops: unknown[], flush = true): void {
           instantiateVaporCodeTemplate(
             ventry,
             baseUid,
-            ventry.namedParents.length || Number.MAX_SAFE_INTEGER,
+            ventry.namedParents.length > 0
+              ? ventry.namedParents.length
+              : Number.MAX_SAFE_INTEGER,
           );
         } else {
           console.error(
