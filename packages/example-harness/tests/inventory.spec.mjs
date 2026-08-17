@@ -9,7 +9,7 @@ import {
 const root = new URL("../../..", import.meta.url);
 
 describe("example inventory", () => {
-  test("accounts for all 31 example directories and 50 configured entries", async () => {
+  test("accounts for all 33 example directories and 59 configured entries", async () => {
     const inventory = await discoverInventory(root);
     const counts = Object.fromEntries(
       inventory.directories.map(({ directory, entries }) => [
@@ -18,14 +18,16 @@ describe("example inventory", () => {
       ])
     );
 
-    expect(inventory.directories).toHaveLength(31);
-    expect(inventory.entries).toHaveLength(50);
+    expect(inventory.directories).toHaveLength(33);
+    expect(inventory.entries).toHaveLength(59);
     expect(counts).toMatchObject({
       "7guis": 7,
       basic: 2,
       gallery: 7,
       "main-thread": 5,
+      scrolling: 8,
       swiper: 3,
+      "touch-fx": 1,
     });
   });
 

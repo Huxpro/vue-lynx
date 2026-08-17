@@ -559,6 +559,150 @@
       }
     },
     {
+      "id": "scrolling/ListBasic",
+      "entry": "./src/ListBasic/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "not-yet-vapor-verified",
+        "evidence": [
+          "examples/scrolling/src/ListBasic/index.ts"
+        ]
+      },
+      "scenario": "scrolling/ListBasic",
+      "verification": {
+        "sourceHash": "b7c069c094a261a4019793e2f457e6e5b6c5c252668d32147d3a966174c2f08d",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "scrolling/ListFilter",
+      "entry": "./src/ListFilter/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "not-yet-vapor-verified",
+        "evidence": [
+          "examples/scrolling/src/ListFilter/index.ts"
+        ]
+      },
+      "scenario": "scrolling/ListFilter",
+      "verification": {
+        "sourceHash": "417154d262cbdd64a87fbde54278aa30f099026283ed530e93c0f154972e3eb3",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "scrolling/ListInfinite",
+      "entry": "./src/ListInfinite/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "not-yet-vapor-verified",
+        "evidence": [
+          "examples/scrolling/src/ListInfinite/index.ts"
+        ]
+      },
+      "scenario": "scrolling/ListInfinite",
+      "verification": {
+        "sourceHash": "8826e77038ae8b3cc3e8930bc9a8208317c3ef541749112327fb29b55756f2d8",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "scrolling/ListPrepend",
+      "entry": "./src/ListPrepend/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "not-yet-vapor-verified",
+        "evidence": [
+          "examples/scrolling/src/ListPrepend/index.ts"
+        ]
+      },
+      "scenario": "scrolling/ListPrepend",
+      "verification": {
+        "sourceHash": "07fbae8f298aa864854afd3f2c32b18d9e247cc467417ba83adb025fbc51a078",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "scrolling/ListRemove",
+      "entry": "./src/ListRemove/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "not-yet-vapor-verified",
+        "evidence": [
+          "examples/scrolling/src/ListRemove/index.ts"
+        ]
+      },
+      "scenario": "scrolling/ListRemove",
+      "verification": {
+        "sourceHash": "456064e1206f60f33e304a205c490548bb0be2b250c8c8e1699cfbae29d4bf81",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "scrolling/ListReorder",
+      "entry": "./src/ListReorder/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "not-yet-vapor-verified",
+        "evidence": [
+          "examples/scrolling/src/ListReorder/index.ts"
+        ]
+      },
+      "scenario": "scrolling/ListReorder",
+      "verification": {
+        "sourceHash": "c78c861c206cd2c2132d62327fcb3ec1f430c251d914d134e21e1e322c8a8bc0",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "scrolling/ListWaterfall",
+      "entry": "./src/ListWaterfall/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "not-yet-vapor-verified",
+        "evidence": [
+          "examples/scrolling/src/ListWaterfall/index.ts"
+        ]
+      },
+      "scenario": "scrolling/ListWaterfall",
+      "verification": {
+        "sourceHash": "2154a38983275ba3a62434292aafd9c97ed52a796b25345c833c2cdd90f88dba",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "scrolling/ScrollViewBasic",
+      "entry": "./src/ScrollViewBasic/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "not-yet-vapor-verified",
+        "evidence": [
+          "examples/scrolling/src/ScrollViewBasic/index.ts"
+        ]
+      },
+      "scenario": "scrolling/ScrollViewBasic",
+      "verification": {
+        "sourceHash": "e00f5dfb25171638d5980d17e23c9a10a24e18d045d61f86d0b50a29bcc54d02",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
       "id": "slots/main",
       "entry": "./src/index.ts",
       "vapor": {
@@ -667,6 +811,24 @@
       "scenario": "teleport/main",
       "verification": {
         "sourceHash": "7cd7ceca67c301b2f6a92fd48f34236a723064846179fe019075fc5735dcaf82",
+        "vdomWeb": "passed",
+        "vaporWeb": "unsupported",
+        "parity": "not-applicable"
+      }
+    },
+    {
+      "id": "touch-fx/main",
+      "entry": "./src/index.ts",
+      "vapor": {
+        "disposition": "unsupported",
+        "reasonCode": "not-yet-vapor-verified",
+        "evidence": [
+          "examples/touch-fx/src/App.vue"
+        ]
+      },
+      "scenario": "touch-fx/main",
+      "verification": {
+        "sourceHash": "c5f6662feefe57b6a057e25a88048b248486ec7486399c58657f9235d424bc0d",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -804,10 +966,10 @@
   ],
   "results": {
     "environment": "lynx-for-web/chromium",
-    "entries": 50,
+    "entries": 59,
     "supported": 37,
-    "unsupported": 13,
-    "vdomPassed": 50,
+    "unsupported": 22,
+    "vdomPassed": 59,
     "vaporPassed": 37
   }
 }
