@@ -606,8 +606,9 @@ export function applyEntry(
     }
 
     // ------------------------------------------------------------------
-    // VueScopedCSSIdPlugin – inject ?cssId=<N> into vue scoped style
-    // module queries so css-extract-webpack-plugin wraps CSS in @cssId.
+    // VueScopedCSSIdPlugin – inject ?cssId=<N> into Vue scoped-style module
+    // queries. The CSS split loader keeps scoped rules on this request and
+    // routes compiled :global() rules through a common=true sibling request.
     // ------------------------------------------------------------------
     if (isLynx || isWeb) {
       chain
