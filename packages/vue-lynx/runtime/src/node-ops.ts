@@ -14,7 +14,11 @@ import { scheduleFlush } from './flush.js';
 import { isIfrMainThread } from './ifr-env.js';
 import { OP, pushOp } from './ops.js';
 import { registerWorkletCtx } from './run-on-background.js';
-import { scopeIdToCssId } from './scope-bridge.js';
+import {
+  isSlottedScopeId,
+  scopeIdToClass,
+  scopeIdToCssId,
+} from './scope-bridge.js';
 import { ShadowElement } from './shadow-element.js';
 import type { Worklet } from './worklet-types.js';
 
@@ -163,9 +167,13 @@ function resolveMainThreadAnchor(
 // ---------------------------------------------------------------------------
 
 export function resolveClass(el: ShadowElement): string {
-  if (el._transitionClasses.size === 0) return el._baseClass;
+  if (
+    el._scopeClasses.size === 0
+    && el._transitionClasses.size === 0
+  ) return el._baseClass;
   const parts: string[] = [];
   if (el._baseClass) parts.push(el._baseClass);
+  for (const cls of el._scopeClasses) parts.push(cls);
   for (const cls of el._transitionClasses) parts.push(cls);
   return parts.join(' ');
 }
@@ -566,10 +574,19 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
   // working, and the usual workaround was an extra wrapper element (#317).
   // Vue always emits the owning component's scope first, so keeping the first
   // association leaves every element in the fragment of the component that
-  // authored it.
+  // authored it. Every scope is additionally retained as a class so rules
+  // containing :deep() and :slotted(), promoted to common CSS at build time,
+  // can compose all scopes exactly like Vue's data-v attributes do in DOM.
   setScopeId(el: ShadowElement, id: string): void {
-    if (el._cssId !== undefined) return;
-    applyScopeId(el, id);
+    if (!isSlottedScopeId(id) && el._cssId === undefined) {
+      applyScopeId(el, id);
+    }
+
+    const scopeClass = scopeIdToClass(id);
+    if (!scopeClass || el._scopeClasses.has(scopeClass)) return;
+    el._scopeClasses.add(scopeClass);
+    pushOp(OP.SET_CLASS, el.id, resolveClass(el));
+    scheduleFlush();
   },
 
   parentNode(node: ShadowElement): ShadowElement | null {

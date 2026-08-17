@@ -21,7 +21,11 @@ import {
   registerElementTemplate,
 } from 'vue-lynx';
 import { OP } from '../../../vue-lynx/internal/src/ops.js';
-import { applyScopeId, nodeOps } from '../../../vue-lynx/runtime/src/node-ops.js';
+import {
+  applyScopeId,
+  nodeOps,
+  resolveClass,
+} from '../../../vue-lynx/runtime/src/node-ops.js';
 import { takeOps } from '../../../vue-lynx/runtime/src/ops.js';
 import { ShadowElement } from '../../../vue-lynx/runtime/src/shadow-element.js';
 import { scopeIdToCssId } from '../../../vue-lynx/runtime/src/scope-bridge.js';
@@ -77,6 +81,43 @@ describe('SET_SCOPE_ID (nodeOps)', () => {
       OP.SET_SCOPE_ID,
       10,
       scopeIdToCssId('data-v-aaa00001'),
+      OP.SET_CLASS,
+      10,
+      'v-aaa00001',
+      OP.SET_CLASS,
+      10,
+      'v-aaa00001 v-bbb00002',
+    ]);
+  });
+
+  it('composes deep and slotted scope classes without losing the cssId fast path', () => {
+    const el = new ShadowElement('view', 13);
+
+    nodeOps.patchProp!(el, 'class', null, 'item');
+    takeOps();
+
+    // Vue emits the ordinary scope for elements authored by the component.
+    // It is both the native cssId fast path for ordinary rules and the class
+    // targeted by Vue-compiled deep selectors such as
+    // `.parent[data-v-8f634878] .child`.
+    nodeOps.setScopeId!(el, 'data-v-8f634878');
+    // Slot content receives the separate `-s` scope. It participates only in
+    // common CSS through `.v-8f634878-s`; it must not replace cssId.
+    nodeOps.setScopeId!(el, 'data-v-8f634878-s');
+
+    expect(resolveClass(el)).toBe(
+      'item v-8f634878 v-8f634878-s',
+    );
+    expect(takeOps()).toEqual([
+      OP.SET_SCOPE_ID,
+      13,
+      scopeIdToCssId('data-v-8f634878'),
+      OP.SET_CLASS,
+      13,
+      'item v-8f634878',
+      OP.SET_CLASS,
+      13,
+      'item v-8f634878 v-8f634878-s',
     ]);
   });
 
@@ -92,6 +133,7 @@ describe('SET_SCOPE_ID (nodeOps)', () => {
     const ops = takeOps();
     expect(ops).toEqual([
       OP.SET_SCOPE_ID, 11, scopeIdToCssId('data-v-aaa00001'),
+      OP.SET_CLASS, 11, 'v-aaa00001',
       OP.SET_SCOPE_ID, 11, scopeIdToCssId('data-v-bbb00002'),
       OP.SET_SCOPE_ID, 11, 0,
     ]);
