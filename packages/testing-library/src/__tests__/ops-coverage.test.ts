@@ -400,6 +400,30 @@ describe('native list element · mutations', () => {
       }),
     );
   });
+
+  it('does not emit list updates for unrelated descendant patches', async () => {
+    const label = ref('before');
+    const Comp = defineComponent({
+      setup() {
+        return () =>
+          h('list', null, [
+            h('list-item', { key: 'A', 'item-key': 'A' }, [
+              h('text', null, label.value),
+            ]),
+          ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    const listEl = container.querySelector('list')!;
+    const before = allListInfos(listEl).length;
+
+    label.value = 'after';
+    await nextTick();
+    await nextTick();
+
+    expect(allListInfos(listEl)).toHaveLength(before);
+  });
 });
 
 // ---------------------------------------------------------------------------
