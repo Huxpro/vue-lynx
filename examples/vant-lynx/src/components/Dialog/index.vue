@@ -65,6 +65,7 @@ watch(
       emit('close');
     }
   },
+  { immediate: true },
 );
 
 function onConfirm() {

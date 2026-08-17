@@ -111,6 +111,7 @@ watch(
       emit('close');
     }
   },
+  { immediate: true },
 );
 
 function onOpened() {

@@ -121,6 +121,7 @@ watch(
       hasRendered.value = true;
     }
   },
+  { immediate: true },
 );
 
 function onClosed() {

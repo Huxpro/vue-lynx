@@ -115,6 +115,7 @@ watch(
       }
     }
   },
+  { immediate: true },
 );
 
 function onOpened() {

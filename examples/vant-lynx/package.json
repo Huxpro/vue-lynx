@@ -13,7 +13,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "vue-lynx": "link:../..",
+    "vue-lynx": "workspace:*",
     "vue-router": "^4.5.0"
   },
   "devDependencies": {
@@ -27,7 +27,8 @@
     "jsdom": "^25.0.0",
     "less": "^4.2.0",
     "typescript": "^5.0.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "vue-lynx-testing-library": "workspace:*"
   },
   "engines": { "node": ">=18" }
 }
