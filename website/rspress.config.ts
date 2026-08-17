@@ -148,6 +148,7 @@ export default defineConfig({
         { text: 'Tailwind CSS', link: '/guide/tailwindcss' },
         { text: 'VueLynx Testing Library', link: '/guide/testing-library' },
         { text: 'TypeScript', link: '/guide/typescript' },
+        { text: 'Vant', link: '/guide/vant' },
         {
           dividerType: 'solid',
         },

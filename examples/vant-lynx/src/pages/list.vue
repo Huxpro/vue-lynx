@@ -1,0 +1,123 @@
+<script setup lang="ts">
+import { ref } from 'vue-lynx';
+import DemoPage from '../components/DemoPage/index.vue';
+import List from '../components/List/index.vue';
+
+const loading = ref(false);
+const finished = ref(false);
+const items = ref<number[]>([]);
+
+function onLoad() {
+  setTimeout(() => {
+    const currentLen = items.value.length;
+    for (let i = 0; i < 10; i++) {
+      items.value.push(currentLen + i + 1);
+    }
+    loading.value = false;
+
+    if (items.value.length >= 40) {
+      finished.value = true;
+    }
+  }, 1000);
+}
+
+// Error demo
+const errorLoading = ref(false);
+const errorFinished = ref(false);
+const errorItems = ref<number[]>([1, 2, 3, 4, 5]);
+const showError = ref(true);
+
+function onErrorLoad() {
+  setTimeout(() => {
+    errorLoading.value = false;
+    showError.value = true;
+  }, 1000);
+}
+
+// Finished demo
+const finItems = ref<number[]>([1, 2, 3, 4, 5]);
+</script>
+
+<template>
+  <DemoPage title="List">
+    <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
+      <!-- Basic Usage -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>
+      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden', backgroundColor: '#fff', maxHeight: 300 }">
+        <List
+          v-model:loading="loading"
+          :finished="finished"
+          finished-text="No more data"
+          @load="onLoad"
+        >
+          <view
+            v-for="item in items"
+            :key="item"
+            :style="{
+              padding: 12,
+              paddingLeft: 16,
+              paddingRight: 16,
+              borderBottomWidth: 0.5,
+              borderBottomStyle: 'solid',
+              borderBottomColor: '#ebedf0',
+            }"
+          >
+            <text :style="{ fontSize: 14, color: '#323233' }">Item {{ item }}</text>
+          </view>
+        </List>
+      </view>
+
+      <!-- Error Info -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Error Info</text>
+      <view :style="{ marginBottom: 16, borderRadius: 8, overflow: 'hidden', backgroundColor: '#fff', maxHeight: 250 }">
+        <List
+          v-model:loading="errorLoading"
+          :finished="errorFinished"
+          :error="showError"
+          error-text="Request failed. Click to reload"
+          @load="onErrorLoad"
+        >
+          <view
+            v-for="item in errorItems"
+            :key="item"
+            :style="{
+              padding: 12,
+              paddingLeft: 16,
+              paddingRight: 16,
+              borderBottomWidth: 0.5,
+              borderBottomStyle: 'solid',
+              borderBottomColor: '#ebedf0',
+            }"
+          >
+            <text :style="{ fontSize: 14, color: '#323233' }">Item {{ item }}</text>
+          </view>
+        </List>
+      </view>
+
+      <!-- Finished Text -->
+      <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Finished Text</text>
+      <view :style="{ borderRadius: 8, overflow: 'hidden', backgroundColor: '#fff', maxHeight: 250 }">
+        <List
+          :loading="false"
+          :finished="true"
+          finished-text="-- End --"
+        >
+          <view
+            v-for="item in finItems"
+            :key="item"
+            :style="{
+              padding: 12,
+              paddingLeft: 16,
+              paddingRight: 16,
+              borderBottomWidth: 0.5,
+              borderBottomStyle: 'solid',
+              borderBottomColor: '#ebedf0',
+            }"
+          >
+            <text :style="{ fontSize: 14, color: '#323233' }">Item {{ item }}</text>
+          </view>
+        </List>
+      </view>
+    </view>
+  </DemoPage>
+</template>
