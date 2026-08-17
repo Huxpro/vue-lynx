@@ -48,6 +48,10 @@ export class ShadowElement {
   // _transitionClasses: classes added/removed by <Transition> hooks.
   // The effective class sent to MT = _baseClass + _transitionClasses joined.
   _baseClass = '';
+  // Vue scope ids are also emitted as classes for selectors that native
+  // cssId cannot represent (`:deep()` and `:slotted()`). They are kept
+  // separately so dynamic :class updates cannot erase them.
+  _scopeClasses: Set<string> = new Set();
   _transitionClasses: Set<string> = new Set();
   // Generation counter bumped each time whenTransitionEnds() starts waiting
   // on this element. Lets a stale/superseded finish() (fired by the fallback

@@ -9,3 +9,13 @@
  * and the scoped-CSS build plugin must derive identical ids.
  */
 export { scopeIdToCssId } from 'vue-lynx/internal/ops';
+
+/** Scope class shared by Vue-compiled deep/slotted CSS and runtime elements. */
+export function scopeIdToClass(scopeId: string): string | null {
+  return scopeId.startsWith('data-v-') ? scopeId.slice('data-'.length) : null;
+}
+
+/** Slotted scope ids participate in common CSS only, never native cssId. */
+export function isSlottedScopeId(scopeId: string): boolean {
+  return scopeIdToClass(scopeId)?.endsWith('-s') === true;
+}
