@@ -21,11 +21,15 @@ import {
   resetMainThreadState,
 } from '../../../vue-lynx/main-thread/src/ops-apply.js';
 
+const G = globalThis as Record<string, unknown>;
+
 afterEach(() => {
   resetTemplateState();
   resetMainThreadState();
   takeOps();
   ShadowElement.nextUid = 2;
+  delete G['__VUE_LYNX_IFR_PAINT__'];
+  delete G['__VUE_LYNX_IFR_MT__'];
 });
 
 /** Collect block uids on a sparse/dense BG clone (skip aliased-only #text). */
@@ -123,6 +127,35 @@ describe('sparse A2 cloneTemplatePrototype', () => {
 
     const cloneIdx = ops.indexOf(OP.CLONE_TREE);
     expect(ops[cloneIdx + 2]).toBe(base);
+  });
+
+  it('does not mutate frozen addressing and preserves cached clone uids', () => {
+    const proto = buildInertProto();
+    ShadowElement.nextUid = 2;
+    takeOps();
+
+    const addressed = Object.freeze([2, 0]) as unknown as number[];
+    const holes = Object.freeze([2]) as unknown as number[];
+    setPendingVaporAddressing({
+      holes,
+      addressed,
+      slotCount: 4,
+      tags: ['text', 'view'],
+    });
+
+    const first = proto.cloneNode(true) as ShadowElement;
+    setPendingVaporAddressing(undefined);
+    const second = proto.cloneNode(true) as ShadowElement;
+    const ops = takeOps();
+
+    expect(addressed).toEqual([2, 0]);
+    expect(holes).toEqual([2]);
+    expect(ops[ops.indexOf(OP.REGISTER_TREE) + 3]).toEqual([0, 2]);
+    expect(ops.filter((value) => value === OP.REGISTER_TREE)).toHaveLength(1);
+    expect(first.firstChild!.uid).toBe(first.uid + 1);
+    expect(second.firstChild!.uid).toBe(second.uid + 1);
+    expect(first.firstChild!.next).toBeNull();
+    expect(second.firstChild!.next).toBeNull();
   });
 
   it('falls back to dense naming without addressing metadata', () => {
@@ -380,5 +413,39 @@ describe('BG↔MT named-uid parity (review ③)', () => {
       (n) => (n as Element).getAttribute?.('class'),
     );
     expect(classes).toEqual(['hole', 'dynamic', 'static']);
+  });
+});
+
+describe('MT sparse lookup cache lifetime', () => {
+  const structure = [
+    'view',
+    { c: 'card' },
+    [
+      ['text', { c: 'static', t: 'hi' }, []],
+      ['text', { c: 'hole', t: ' ' }, []],
+      ['image', { a: [['src', 'x.png']] }, []],
+    ],
+  ];
+
+  it('snapshots addressed input for data and delayed code-paint clones', () => {
+    const addressed = [0, 2];
+    applyOps([OP.REGISTER_TREE, 71, structure, addressed]);
+    addressed[1] = 1;
+
+    const dataBase = 10100;
+    applyOps([OP.CLONE_TREE, 71, dataBase]);
+
+    G['__VUE_LYNX_IFR_PAINT__'] = 'code-paint';
+    G['__VUE_LYNX_IFR_MT__'] = true;
+    const paintBase = 10200;
+    applyOps([OP.CLONE_TREE, 71, paintBase]);
+
+    expect(addressed).toEqual([0, 1]);
+    expect((elements.get(dataBase + 1) as Element).getAttribute('class')).toBe(
+      'hole',
+    );
+    expect((elements.get(paintBase + 1) as Element).getAttribute('class')).toBe(
+      'hole',
+    );
   });
 });
