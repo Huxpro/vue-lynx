@@ -1,4 +1,4 @@
-import { defineConfig } from '@lynx-js/rspeedy';
+import { defineConfig, type Rspack } from '@lynx-js/rspeedy';
 import { pluginVueLynx } from 'vue-lynx/plugin';
 
 // Unified matrix cells (explicit flags — never rely on enableIFR→ET default):
@@ -21,6 +21,9 @@ const modeLabel =
     : cell === 'et'
     ? 'vdom-et'
     : 'vdom-ifr-et';
+const artifactMarker =
+  `vue-lynx-bench-artifact-v1|mode=${modeLabel}|rows=${autoRows}`
+  + `|ifr=${Number(enableIFR)}|et=${Number(enableElementTemplates)}`;
 const distRoot =
   cell === 'off'
     ? 'dist'
@@ -38,6 +41,23 @@ export default defineConfig({
   output: {
     distPath: {
       root: distRoot,
+    },
+  },
+  tools: {
+    rspack(_config, { appendPlugins }) {
+      appendPlugins({
+        apply(compiler: Rspack.Compiler) {
+          new compiler.webpack.BannerPlugin({
+            banner: artifactMarker,
+            entryOnly: true,
+            raw: false,
+            stage:
+              compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_HASH
+              - 1,
+            test: /background\.[^/]+\.js$/,
+          }).apply(compiler);
+        },
+      });
     },
   },
   source: {

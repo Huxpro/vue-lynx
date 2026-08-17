@@ -1,4 +1,4 @@
-import { defineConfig } from '@lynx-js/rspeedy';
+import { defineConfig, type Rspack } from '@lynx-js/rspeedy';
 import { pluginVueLynx } from 'vue-lynx/plugin';
 
 /**
@@ -45,6 +45,9 @@ const ifrPaint = cell === 'ifr-engine-et'
   ? 'code-paint' as const
   : undefined;
 const modeLabel = cell === 'off' ? 'vapor' : `vapor-${cell}`;
+const artifactMarker =
+  `vue-lynx-bench-artifact-v1|mode=${modeLabel}|rows=${autoRows}`
+  + `|ifr=${Number(enableIFR)}|et=0`;
 const distRoot = cell === 'off' ? 'dist' : `dist-${cell}`;
 
 export default defineConfig({
@@ -55,6 +58,23 @@ export default defineConfig({
   output: {
     distPath: {
       root: distRoot,
+    },
+  },
+  tools: {
+    rspack(_config, { appendPlugins }) {
+      appendPlugins({
+        apply(compiler: Rspack.Compiler) {
+          new compiler.webpack.BannerPlugin({
+            banner: artifactMarker,
+            entryOnly: true,
+            raw: false,
+            stage:
+              compiler.webpack.Compilation.PROCESS_ASSETS_STAGE_OPTIMIZE_HASH
+              - 1,
+            test: /background\.[^/]+\.js$/,
+          }).apply(compiler);
+        },
+      });
     },
   },
   source: {
