@@ -1,7 +1,7 @@
 # Plan: Vapor IFR × Element Templates
 
-**Date:** 2026-07-20  
-**Design:** `docs/superpowers/specs/2026-07-20-vapor-ifr-element-templates-design.md`  
+**Date:** 2026-07-20
+**Design:** `docs/superpowers/specs/2026-07-20-vapor-ifr-element-templates-design.md`
 **Status:** Milestones 1–2 done; Milestone 3 mostly done
 
 ## Milestone 1

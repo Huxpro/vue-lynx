@@ -32,7 +32,7 @@ describe('IFR paint registry / CLONE adopt', () => {
     const structure = ['view', { c: 'row' }, [['text', { t: 'a' }, []]]];
 
     applyOps([
-      OP.REGISTER_TREE, tplId, structure,
+      OP.REGISTER_TREE, tplId, structure, 0,
       OP.CLONE_TREE, tplId, base,
     ]);
     const firstRoot = elements.get(base);
@@ -95,7 +95,7 @@ describe('IFR paint registry / CLONE adopt', () => {
 
     beginIfrSelectorAttributeDeferral();
     applyOps([
-      OP.REGISTER_TREE, tplId, structure,
+      OP.REGISTER_TREE, tplId, structure, 0,
       OP.CLONE_TREE, tplId, base,
     ], false);
 
@@ -120,5 +120,44 @@ describe('IFR paint registry / CLONE adopt', () => {
     applyOps([OP.CLONE_TREE, tplId, base], false);
     expect(elements.get(base)).toBe(root);
     expect(elements.get(base + 1)).toBe(title);
+  });
+
+  it('preserves compact A2 uids when adopting an IFR paint', () => {
+    // Preorder slots: root(0), static branch(1), anonymous static text(2),
+    // dynamic hole(3). A2 names [0, 1, 3] as compact base+[0, 1, 2].
+    const structure = [
+      'view',
+      0,
+      [
+        ['view', { c: 'static' }, [['text', { t: 'fixed' }, []]]],
+        ['text', { c: 'hole', t: ' ' }, []],
+      ],
+    ];
+    const tplId = nextId++;
+    const base = nextId;
+    nextId += 4;
+
+    beginIfrSelectorAttributeDeferral();
+    applyOps([
+      OP.REGISTER_TREE, tplId, structure, [0, 1, 3],
+      OP.CLONE_TREE, tplId, base,
+    ], false);
+
+    const root = elements.get(base) as Element;
+    const staticBranch = elements.get(base + 1) as Element;
+    const hole = elements.get(base + 2) as Element;
+    expect(root.childNodes).toHaveLength(2);
+    expect(staticBranch.textContent).toBe('fixed');
+    expect(hole.getAttribute('class')).toBe('hole');
+    expect(elements.has(base + 3)).toBe(false);
+
+    commitIfrSelectorAttributes();
+
+    // Adoption must not densify by preorder and create a second uid for
+    // slot 3; the durable A2 path owns exactly the compact addressed block.
+    expect(elements.get(base + 2)).toBe(hole);
+    expect(elements.has(base + 3)).toBe(false);
+    applyOps([OP.SET_TEXT, base + 2, 'updated'], false);
+    expect(hole.textContent).toBe('updated');
   });
 });

@@ -41,6 +41,13 @@ export default defineConfig({
         ),
       },
       {
+        find: 'vue-lynx/internal/vapor-ifr-et',
+        replacement: path.resolve(
+          __dirname,
+          '../vue-lynx/internal/src/vapor-ifr-et.ts',
+        ),
+      },
+      {
         find: /^vue-lynx$/,
         replacement: path.resolve(
           __dirname,

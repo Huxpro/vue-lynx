@@ -652,6 +652,10 @@ export function pluginVueLynx(
             'vue-lynx/internal/html-to-template-node',
             path.resolve(_vueLynxRoot, 'internal/dist/html-to-template-node.js'),
           );
+          chain.resolve.alias.set(
+            'vue-lynx/internal/vapor-ifr-et',
+            path.resolve(_vueLynxRoot, 'internal/dist/vapor-ifr-et.js'),
+          );
         });
 
         // NOTE: vue-loader runs on ALL layers (no issuerLayer constraint).

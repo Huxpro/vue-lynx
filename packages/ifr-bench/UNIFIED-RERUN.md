@@ -1,8 +1,8 @@
 # Unified lineage IFR re-run (post #230 step 3 + #246 harness fixes)
 
-**Date**: 2026-07-20 (vapor `{off,ifr,ifr-et}` re-measure)  
-**Commit**: `cursor/vapor-ifr-element-templates-4121`  
-**Host**: cloud agent, headless Chromium, Lynx for Web  
+**Date**: 2026-07-20 (vapor `{off,ifr,ifr-et}` re-measure)
+**Commit**: `cursor/vapor-ifr-element-templates-4121`
+**Host**: cloud agent, headless Chromium, Lynx for Web
 **Why**: after Vapor IFR×ET milestones 1–3 (sparse CLONE, nav facades,
 paint-registry densify), re-measure the same-source sfc-probe with a real
 `content-vapor-ifr-et` cell.
