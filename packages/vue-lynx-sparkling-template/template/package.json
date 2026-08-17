@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "vue": "^3.5.0",
-    "vue-lynx": "^1.0.0",
+    "vue-lynx": "^0.5.1",
     "sparkling-navigation": "^2.0.1"
   },
   "devDependencies": {
