@@ -1050,6 +1050,8 @@ interface TemplateCache {
   count: number;
   /** Sparse A2 naming list; undefined → dense A1. */
   addressed?: number[];
+  /** Template-lifetime sparse slot lookup; never mutated after creation. */
+  slotToSparse?: ReadonlyMap<number, number>;
   holes?: number[];
   /**
    * Bundle delivery (`+b!`, #338): the verified structure fingerprint. Set
@@ -1248,7 +1250,7 @@ function skipProtoSlots(
  * BG half of the **recovered Data-Template** (legacy "sparse A2") — four-axis
  * coordinate Data / Sparse / recovered / Split (see vue-lynx/internal/matrix).
  *
- * Nav facade: allocate ShadowElements only for slots in `needed`
+ * Nav facade: allocate ShadowElements only for slots in `slotToSparse`
  * (the compiler-recovered addressed closure = holes ∪ root ∪ ancestors ∪
  * prefix siblings). Static subtrees off the vapor `child`/`next` path are
  * skipped — natives still come from CLONE_TREE. Uids are contiguous over
@@ -1259,15 +1261,9 @@ function buildShadowCloneSparse(
   proto: ShadowElement,
   base: number,
   counter: { value: number },
-  needed: Set<number>,
-  slotToSparse: Map<number, number>,
+  slotToSparse: ReadonlyMap<number, number>,
 ): ShadowElement | null {
   const slot = counter.value;
-  if (!needed.has(slot)) {
-    skipProtoSlots(proto, counter);
-    return null;
-  }
-
   const sparseIdx = slotToSparse.get(slot);
   if (sparseIdx === undefined) {
     skipProtoSlots(proto, counter);
@@ -1310,7 +1306,6 @@ function buildShadowCloneSparse(
         child,
         base,
         counter,
-        needed,
         slotToSparse,
       );
       if (childClone) clone._link(childClone, null);
@@ -1344,11 +1339,17 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
           + '(slotCount / tag fingerprint) — falling back to dense CLONE_TREE.',
       );
     }
+    const addressed = sparse
+      ? [...meta.addressed].sort((a, b) => a - b)
+      : undefined;
     cache = {
       id: nextTemplateId++,
       structure,
       count: counter.value,
-      addressed: sparse ? [...meta.addressed].sort((a, b) => a - b) : undefined,
+      addressed,
+      slotToSparse: addressed
+        ? new Map(addressed.map((slot, index) => [slot, index] as const))
+        : undefined,
       holes: sparse ? [...meta.holes].sort((a, b) => a - b) : undefined,
     };
 
@@ -1416,15 +1417,12 @@ function cloneTemplatePrototype(proto: ShadowElement): ShadowElement {
     // Sparse A2: reserve one uid per addressed slot only.
     const addressed = cache.addressed;
     ShadowElement.nextUid += addressed.length;
-    const needed = new Set(addressed);
-    const slotToSparse = new Map(addressed.map((s, i) => [s, i]));
     const counter = { value: 0 };
     const root = buildShadowCloneSparse(
       proto,
       base,
       counter,
-      needed,
-      slotToSparse,
+      cache.slotToSparse!,
     );
     if (!root) {
       throw new Error(

@@ -97,8 +97,10 @@ function createTypedElement(
 
 interface RegisteredTree {
   structure: TemplateNode;
-  /** Sparse A2 naming list; undefined → dense A1. */
+  /** Sparse A2 naming snapshot; undefined → dense A1. */
   addressed?: number[];
+  /** Template-lifetime sparse slot lookup; never mutated after registration. */
+  slotToSparse?: ReadonlyMap<number, number>;
 }
 
 const templates = new Map<number, RegisteredTree>();
@@ -257,7 +259,7 @@ function instantiateTemplateSparse(
   node: TemplateNode,
   base: number,
   counter: { value: number },
-  slotToSparse: Map<number, number>,
+  slotToSparse: ReadonlyMap<number, number>,
   parentUid: number | null,
 ): { el: LynxElement; uid: number | null } | null {
   const slot = counter.value++;
@@ -507,20 +509,33 @@ function instantiateRegisteredTree(
   entry: RegisteredTree,
   baseUid: number,
 ): void {
-  if (entry.addressed && entry.addressed.length > 0) {
-    const slotToSparse = new Map(
-      entry.addressed.map((s, i) => [s, i] as const),
-    );
+  if (entry.slotToSparse) {
     instantiateTemplateSparse(
       entry.structure,
       baseUid,
       { value: 0 },
-      slotToSparse,
+      entry.slotToSparse,
       null,
     );
   } else {
     instantiateTemplateDense(entry.structure, baseUid, { value: 0 });
   }
+}
+
+function registeredTree(
+  structure: TemplateNode,
+  addressed: number[] | undefined,
+): RegisteredTree {
+  const addressedSnapshot = addressed ? [...addressed] : undefined;
+  return {
+    structure,
+    addressed: addressedSnapshot,
+    slotToSparse: addressedSnapshot && addressedSnapshot.length > 0
+      ? new Map(
+        addressedSnapshot.map((slot, index) => [slot, index] as const),
+      )
+      : undefined,
+  };
 }
 
 export function applyOps(ops: unknown[], flush = true): void {
@@ -684,7 +699,7 @@ export function applyOps(ops: unknown[], flush = true): void {
           const addressed = Array.isArray(addressedOr0)
             ? addressedOr0
             : undefined;
-          templates.set(tplId, { structure, addressed });
+          templates.set(tplId, registeredTree(structure, addressed));
           // Bundle-delivered structures feed the active staging strategy the
           // same way wire-delivered ones do (engine prototype / compiled
           // ephemeral plan).
@@ -704,7 +719,7 @@ export function applyOps(ops: unknown[], flush = true): void {
         const addressed = Array.isArray(addressedOr0)
           ? addressedOr0
           : undefined;
-        templates.set(tplId, { structure, addressed });
+        templates.set(tplId, registeredTree(structure, addressed));
         // Build any per-template resource for the active staging strategy
         // (engine host-resident prototype, compiled ephemeral plan). The
         // Data-Template default needs none. Fail-safe: engine register is a
