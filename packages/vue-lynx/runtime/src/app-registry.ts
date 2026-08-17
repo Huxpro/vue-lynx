@@ -13,6 +13,7 @@
 import { IFR_MOUNT_APPS_GLOBAL } from 'vue-lynx/internal/ops'
 
 import { completeIfrInitialRender } from './flush.js'
+import { beginPipeline } from './performance.js'
 
 type MountFn = () => void
 
@@ -21,6 +22,7 @@ let renderPageCalled = false
 
 export function registerMount(fn: MountFn): void {
   if (renderPageCalled) {
+    beginPipeline('setup')
     fn()
   } else {
     pendingMounts.push(fn)
@@ -31,6 +33,7 @@ export function registerMount(fn: MountFn): void {
 
 export function triggerRenderPage(): void {
   renderPageCalled = true
+  beginPipeline('setup')
   for (const fn of pendingMounts) {
     fn()
   }

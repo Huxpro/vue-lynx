@@ -8,6 +8,12 @@ import { IFR_APPLY_OPS_GLOBAL } from 'vue-lynx/internal/ops';
 
 import { isIfrEnabled, isIfrMainThread } from './ifr-env.js';
 import { takeOps } from './ops.js';
+import {
+  beginPipeline,
+  markTiming,
+  resetPipelineContext,
+  takePipelineOptions,
+} from './performance.js';
 
 /**
  * Schedule a flush of the ops buffer via Vue's post-flush hook.
@@ -146,6 +152,7 @@ export function waitForFlush(): Promise<void> {
 export function scheduleFlush(): void {
   if (scheduled) return;
   scheduled = true;
+  beginPipeline('update');
   queuePostFlushCb(doFlush);
 }
 
@@ -159,6 +166,7 @@ export function resetFlushState(): void {
   initialRenderCompletionRequested = false;
   engineAckObserved = false;
   warnedAckFallback = false;
+  resetPipelineContext();
 }
 
 function doFlush(): void {
@@ -166,8 +174,12 @@ function doFlush(): void {
   const ops = takeOps();
   if (ops.length === 0) {
     deliverInitialRenderCompletion();
+    resetPipelineContext();
     return;
   }
+
+  // All render effects and component patches have completed — mark the end.
+  markTiming('vueRenderEnd');
 
   // Optional observability hook (benchmarks, debugging): called with every
   // flushed batch before it is posted to the Main Thread.
@@ -175,6 +187,7 @@ function doFlush(): void {
     __VUE_LYNX_FLUSH_HOOK__?: (ops: unknown[], serialized: string) => void;
   }).__VUE_LYNX_FLUSH_HOOK__;
   let data: string | undefined;
+  markTiming('packChangesStart');
   if (hook) {
     try {
       data = JSON.stringify(ops);
@@ -241,13 +254,21 @@ function doFlush(): void {
   // The local IFR path avoids serialization unless an observability hook
   // requested it. Background IPC still needs the wire payload.
   if (data === undefined) data = JSON.stringify(ops);
+  markTiming('packChangesEnd');
+
+  // Take pipeline options — always present when a pipeline is active.
+  const plOpts = takePipelineOptions();
 
   // `lynx` is a bare AMD-injected identifier — in non-Lynx environments
   // (vitest node env) referencing it directly would throw ReferenceError.
   const app = typeof lynx === 'undefined' ? undefined : lynx?.getNativeApp?.();
+
+  const payload: { data: string; pipelineOptions?: Record<string, unknown> } = { data };
+  if (plOpts) payload.pipelineOptions = plOpts;
+
   app?.callLepusMethod?.(
     'vuePatchUpdate',
-    { data },
+    payload,
     () => {
       // Main thread has finished applying the ops — resolve the promise and
       // latch that this engine delivers callbacks. State cleanup and the IFR
@@ -256,4 +277,7 @@ function doFlush(): void {
       ack.resolve();
     },
   );
+
+  // Pipeline context belongs to this batch; clear it regardless of delivery.
+  resetPipelineContext();
 }

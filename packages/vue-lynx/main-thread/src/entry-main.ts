@@ -31,6 +31,7 @@ import {
   completeIfrHydration,
   interceptPatchUpdate,
   runIfrRender,
+  takeIfrSetupPipelineOptions,
 } from './ifr.js';
 import { applyOps, resetMainThreadState } from './ops-apply.js';
 import { runOnBackground } from './run-on-background-mt.js';
@@ -108,7 +109,12 @@ g['renderPage'] = function(_data: unknown): void {
   // code on the MT layer is stripped to worklet registrations, so no app
   // ever registers).
   runIfrRender();
-  __FlushElementTree(page);
+  const ifrOpts = takeIfrSetupPipelineOptions();
+  if (ifrOpts) {
+    __FlushElementTree(page, { pipelineOptions: ifrOpts });
+  } else {
+    __FlushElementTree(page);
+  }
 };
 
 // Lynx may call updatePage / updateGlobalProps after data changes.
@@ -121,13 +127,24 @@ g['updateGlobalProps'] = function(_data: unknown): void {
   // no-op
 };
 
-// Called by the BG Thread via callLepusMethod('vuePatchUpdate', { data }).
-g['vuePatchUpdate'] = function({ data }: { data: string }): void {
+// Called by the BG Thread via callLepusMethod('vuePatchUpdate', { data, pipelineOptions? }).
+g['vuePatchUpdate'] = function({ data, pipelineOptions }: { data: string; pipelineOptions?: Record<string, unknown> }): void {
   // IFR hydration: the background thread's initial batches replay the
   // main-thread first-screen render — skip/patch them instead of applying.
   if (interceptPatchUpdate(data)) return;
+  const pipelineID = pipelineOptions?.['pipelineID'] as string | undefined;
+  if (pipelineID && typeof __MarkTiming !== 'undefined') {
+    __MarkTiming(pipelineID, 'parseChangesStart');
+  }
   const ops = JSON.parse(data) as unknown[];
-  applyOps(ops);
+  if (pipelineID && typeof __MarkTiming !== 'undefined') {
+    __MarkTiming(pipelineID, 'parseChangesEnd');
+    __MarkTiming(pipelineID, 'applyChangesStart');
+  }
+  applyOps(ops, true, pipelineOptions);
+  if (pipelineID && typeof __MarkTiming !== 'undefined') {
+    __MarkTiming(pipelineID, 'applyChangesEnd');
+  }
 };
 
 // Sent by the IFR Background entry after its complete initial op stream has

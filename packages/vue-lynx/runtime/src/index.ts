@@ -66,6 +66,7 @@ import { registerMount, resetAppRegistry } from './app-registry.js';
 import { runOnMainThread } from './cross-thread.js';
 import { resetRegistry } from './event-registry.js';
 import { resetFlushState, scheduleFlush } from './flush.js';
+import { beginPipeline } from './performance.js';
 import { resetFunctionCallState } from './function-call.js';
 import {
   ifrInert,
@@ -237,6 +238,7 @@ export function createApp(
         });
         return;
       }
+      beginPipeline('setup');
       const root = createPageRoot();
       internalApp.provide(pageRootContextKey, { root, owner: null });
       internalApp.mount(root);

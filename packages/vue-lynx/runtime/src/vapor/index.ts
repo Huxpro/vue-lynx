@@ -51,6 +51,7 @@ import { registerMount } from '../app-registry.js';
 import { looseToNumber, withKeys, withModifiers } from '../event-modifiers.js';
 import type { InputEventData } from '../event-modifiers.js';
 import { isIfrMainThread } from '../ifr-env.js';
+import { beginPipeline } from '../performance.js';
 import {
   createPageRoot,
   setPendingVaporAddressing,
@@ -415,6 +416,7 @@ export function createVaporApp(
         });
         return;
       }
+      beginPipeline('setup');
       const root = createPageRoot();
       internalApp.mount(root);
     },
