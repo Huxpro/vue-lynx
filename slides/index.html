@@ -24,7 +24,7 @@
     </button>
   </div>
   <div class="chrome chrome--bottom">
-    <span data-counter>01 / 143</span>
+    <span data-counter>01 / 144</span>
   </div>
   <div class="chrome chrome--bottom-right">
     <a href="https://vue.lynxjs.org" target="_blank" rel="noreferrer">vue.lynxjs.org</a>
@@ -2936,6 +2936,54 @@ app.<span class="code-fn">use</span>(router)</pre>
     <aside class="notes">
       <p><strong>The core result — then the honest scorecard.</strong> Vue&rsquo;s official benchmark, ported to Lynx, same app in both modes. Background-thread cost = reactivity + render + ops serialization — Vapor&rsquo;s structural win shows up unfiltered here (5.8–9.8×). End-to-end multipliers are smaller (2.1–6.3×) because both modes emit near-identical ops.</p>
       <p>Don&rsquo;t oversell: creation is parity; the cost is a +26% bundle (Vapor runtime + DOM-compat shim). First screen is within noise. Green = win, pink = cost. Numbers: headless Chromium, Lynx for Web, medians with 95% CIs.</p>
+    </aside>
+  </section>
+
+  <!-- V·8c — Select-storm scaling: Vapor stays flat vs the field (unified bench #266) -->
+  <section class="slide stage" data-bg="clean">
+    <span class="eyebrow">One more thing · select storm × scale</span>
+    <div style="width:min(100%,1000px);margin:0 auto">
+      <svg viewBox="0 0 1000 460" style="width:100%;height:auto" aria-label="Select-storm latency vs rows">
+        <!-- axes -->
+        <line x1="90" y1="400" x2="945" y2="400" stroke="rgba(244,245,247,0.18)" stroke-width="1.5"/>
+        <line x1="90" y1="40" x2="90" y2="400" stroke="rgba(244,245,247,0.18)" stroke-width="1.5"/>
+        <!-- y gridlines + labels (ms); y-axis 0–10.5s, source: unified bench @346eccf (2026-07-28) -->
+        <line x1="90" y1="331" x2="945" y2="331" stroke="rgba(244,245,247,0.07)"/>
+        <line x1="90" y1="263" x2="945" y2="263" stroke="rgba(244,245,247,0.07)"/>
+        <line x1="90" y1="194" x2="945" y2="194" stroke="rgba(244,245,247,0.07)"/>
+        <line x1="90" y1="126" x2="945" y2="126" stroke="rgba(244,245,247,0.07)"/>
+        <line x1="90" y1="57" x2="945" y2="57" stroke="rgba(244,245,247,0.07)"/>
+        <text x="80" y="404" text-anchor="end" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">0</text>
+        <text x="80" y="335" text-anchor="end" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">2s</text>
+        <text x="80" y="267" text-anchor="end" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">4s</text>
+        <text x="80" y="198" text-anchor="end" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">6s</text>
+        <text x="80" y="130" text-anchor="end" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">8s</text>
+        <text x="80" y="61" text-anchor="end" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">10s</text>
+        <!-- x labels (rows) -->
+        <text x="118" y="428" text-anchor="middle" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">1k</text>
+        <text x="373" y="428" text-anchor="middle" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">10k</text>
+        <text x="940" y="428" text-anchor="middle" fill="rgba(244,245,247,0.5)" font-family="Geist Mono, monospace" font-size="15">30k</text>
+        <!-- ReactLynx: 225.5 / 2632.4 / 10259.5 ms -->
+        <polyline points="118,392 373,310 940,48" fill="none" stroke="#E8B44A" stroke-width="3" stroke-linejoin="round"/>
+        <circle cx="118" cy="392" r="5" fill="#E8B44A"/><circle cx="373" cy="310" r="5" fill="#E8B44A"/><circle cx="940" cy="48" r="6" fill="#E8B44A"/>
+        <text x="928" y="43" text-anchor="end" fill="#E8B44A" font-family="Geist, sans-serif" font-size="18" font-weight="600">ReactLynx · 10.26s</text>
+        <!-- VDOM: 70.9 / 984.1 / 3569.8 ms -->
+        <polyline points="118,398 373,366 940,278" fill="none" stroke="#4FB8F0" stroke-width="3" stroke-linejoin="round"/>
+        <circle cx="118" cy="398" r="5" fill="#4FB8F0"/><circle cx="373" cy="366" r="5" fill="#4FB8F0"/><circle cx="940" cy="278" r="6" fill="#4FB8F0"/>
+        <text x="928" y="269" text-anchor="end" fill="#4FB8F0" font-family="Geist, sans-serif" font-size="18" font-weight="600">Vue VDOM · 3.57s</text>
+        <!-- Vapor: 20.5 / 118.6 / 275.2 ms (flat) -->
+        <polyline points="118,399 373,396 940,391" fill="none" stroke="#5dd5a8" stroke-width="3.5" stroke-linejoin="round"/>
+        <circle cx="118" cy="399" r="5" fill="#5dd5a8"/><circle cx="373" cy="396" r="5" fill="#5dd5a8"/><circle cx="940" cy="391" r="6" fill="#5dd5a8"/>
+        <text x="928" y="381" text-anchor="end" fill="#5dd5a8" font-family="Geist, sans-serif" font-size="18" font-weight="700">Vue Vapor · 275 ms</text>
+      </svg>
+    </div>
+    <p class="lead" data-mm-fade>
+      Same select storm, black-box wall-clock as rows grow: VDOM and ReactLynx
+      climb linearly; Vapor stays near the floor — <b class="brand-text">275 ms
+      at 30k</b> vs VDOM's 3.57 s. The gap widens with scale.
+    </p>
+    <aside class="notes">
+      <p><strong>The scaling picture (unified bench, PR #266 · re-run @346eccf, 2026-07-28).</strong> The 5.8–9.8× you just saw is the background-thread micro number; this is the user-visible wall-clock as the list grows. selectStorm across 1k → 10k → 30k, every tick re-selects one row. VDOM re-runs render + diffs the whole list each pass, so its curve rises with N; ReactLynx pays that plus its own overhead. Vapor's reactive effects touch only the changed node, so the curve is almost flat — the gap vs VDOM widens 3.5× @1k → 8.3× @10k → 13× @30k. Absolute ms are host-bound (this host is slower than the first run); the ratios are the portable claim.</p>
     </aside>
   </section>
 
