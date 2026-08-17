@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, ref, useCallback } from 'vue-lynx'
+import { onMounted, ref } from 'vue-lynx'
 
 import * as router from 'sparkling-navigation'
 
 import './App.css'
+// biome-ignore lint/correctness/noUnusedImports: used by the Vue template
 import sparklingLogo from '../../assets/sparkling_icon.png'
 
 const lastResult = ref<string | null>(null)
@@ -12,6 +13,7 @@ onMounted(() => {
   console.info('Hello, Vue Lynx + Sparkling')
 })
 
+// biome-ignore lint/correctness/noUnusedVariables: used by the Vue template
 function openSecondPage() {
   router.navigate(
     {

@@ -10,6 +10,7 @@ onMounted(() => {
   console.info('lynx.__globalProps', lynx.__globalProps)
 })
 
+// biome-ignore lint/correctness/noUnusedVariables: used by the Vue template
 function onClose() {
   close()
 }
