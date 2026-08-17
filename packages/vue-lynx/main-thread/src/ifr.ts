@@ -51,9 +51,20 @@ const ARITY = OP_ARITY as Readonly<Record<number, number | undefined>>;
 
 export type IfrPhase = 'inactive' | 'enabled' | 'rendered' | 'hydrated';
 
+interface OpsCursor {
+  segmentIndex: number;
+  segmentOffset: number;
+  position: number;
+}
+
 let phase: IfrPhase = 'inactive';
-let recordedOps: unknown[] = [];
-let recordedCursor = 0;
+let recordedOps: unknown[][] = [];
+let recordedLength = 0;
+let recordedCursor: OpsCursor = {
+  segmentIndex: 0,
+  segmentOffset: 0,
+  position: 0,
+};
 let backgroundHistory: unknown[][] = [];
 let warnedPostHydrationOps = false;
 let renderSealed = false;
@@ -75,6 +86,55 @@ const VALUE_OP: Readonly<Record<number, 'patch' | 'always'>> = {
   [OP.SET_MT_REF]: 'always',
   [OP.INIT_MT_REF]: 'always',
 };
+
+function resetRecordedOps(): void {
+  recordedOps = [];
+  recordedLength = 0;
+  recordedCursor = {
+    segmentIndex: 0,
+    segmentOffset: 0,
+    position: 0,
+  };
+}
+
+function appendRecordedOps(ops: unknown[]): void {
+  recordedOps.push(ops);
+  recordedLength += ops.length;
+}
+
+function readRecorded(cursor: OpsCursor, lookahead = 0): unknown {
+  let segmentIndex = cursor.segmentIndex;
+  let segmentOffset = cursor.segmentOffset + lookahead;
+  while (segmentIndex < recordedOps.length) {
+    const segment = recordedOps[segmentIndex]!;
+    if (segmentOffset < segment.length) return segment[segmentOffset];
+    segmentOffset -= segment.length;
+    segmentIndex++;
+  }
+  return undefined;
+}
+
+function advanceRecorded(cursor: OpsCursor, count: number): void {
+  cursor.position += count;
+  cursor.segmentOffset += count;
+  while (cursor.segmentIndex < recordedOps.length) {
+    const segment = recordedOps[cursor.segmentIndex]!;
+    if (cursor.segmentOffset < segment.length) return;
+    cursor.segmentOffset -= segment.length;
+    cursor.segmentIndex++;
+  }
+}
+
+function appendRange(
+  target: unknown[],
+  source: unknown[],
+  start: number,
+  end: number,
+): void {
+  for (let read = start; read < end; read++) {
+    target.push(source[read]);
+  }
+}
 
 function sameValue(a: unknown, b: unknown): boolean {
   if (a === b) return true;
@@ -134,8 +194,7 @@ export function enableIFR(): void {
     g['clearTimeout'] = (): void => undefined;
   }
   phase = 'enabled';
-  recordedOps = [];
-  recordedCursor = 0;
+  resetRecordedOps();
   backgroundHistory = [];
   warnedPostHydrationOps = false;
   renderSealed = false;
@@ -160,7 +219,7 @@ function recordAndApply(ops: unknown[]): void {
     return;
   }
 
-  recordedOps.push(...ops);
+  appendRecordedOps(ops);
   applyOps(ops, !inSyncRender);
 }
 
@@ -173,8 +232,7 @@ export function sealIfrRender(): void {
 export function runIfrRender(): void {
   if (phase === 'inactive') return;
 
-  recordedOps = [];
-  recordedCursor = 0;
+  resetRecordedOps();
   backgroundHistory = [];
   phase = 'enabled';
   renderSealed = false;
@@ -223,7 +281,7 @@ export function runIfrRender(): void {
  */
 export function completeIfrHydration(): void {
   if (phase !== 'rendered') return;
-  if (recordedCursor < recordedOps.length) {
+  if (recordedCursor.position < recordedLength) {
     fallbackToBackground();
   } else {
     finishHydration();
@@ -246,7 +304,7 @@ export function interceptPatchUpdate(data: string): boolean {
 
   // A render that emitted no operations cannot be reconciled. Hand ownership
   // to BG and let entry-main apply this batch through the normal path.
-  if (recordedOps.length === 0) {
+  if (recordedLength === 0) {
     finishHydration();
     return false;
   }
@@ -257,13 +315,18 @@ export function interceptPatchUpdate(data: string): boolean {
   while (incomingCursor < incoming.length) {
     // The background produced valid trailing frames after matching the whole
     // first-screen stream. They are normal BG updates and apply verbatim.
-    if (recordedCursor >= recordedOps.length) {
-      patchOps.push(...incoming.slice(incomingCursor));
+    if (recordedCursor.position >= recordedLength) {
+      appendRange(
+        patchOps,
+        incoming,
+        incomingCursor,
+        incoming.length,
+      );
       incomingCursor = incoming.length;
       break;
     }
 
-    const recordedCode = recordedOps[recordedCursor] as number;
+    const recordedCode = readRecorded(recordedCursor) as number;
     const incomingCode = incoming[incomingCursor] as number;
     const recordedArity = ARITY[recordedCode];
     const incomingArity = ARITY[incomingCode];
@@ -273,7 +336,7 @@ export function interceptPatchUpdate(data: string): boolean {
       || recordedArity === undefined
       || incomingArity === undefined
       || recordedArity !== incomingArity
-      || recordedCursor + recordedArity >= recordedOps.length
+      || recordedCursor.position + recordedArity >= recordedLength
       || incomingCursor + incomingArity >= incoming.length
     ) {
       fallbackToBackground();
@@ -287,7 +350,7 @@ export function interceptPatchUpdate(data: string): boolean {
     let matches = true;
     for (let offset = 1; offset <= strictArguments; offset++) {
       if (!sameValue(
-        recordedOps[recordedCursor + offset],
+        readRecorded(recordedCursor, offset),
         incoming[incomingCursor + offset],
       )) {
         matches = false;
@@ -300,7 +363,7 @@ export function interceptPatchUpdate(data: string): boolean {
     }
 
     if (valueMode !== undefined) {
-      const recordedValue = recordedOps[recordedCursor + recordedArity];
+      const recordedValue = readRecorded(recordedCursor, recordedArity);
       const incomingValue = incoming[incomingCursor + incomingArity];
       if (
         recordedCode === OP.SET_PROP
@@ -318,16 +381,16 @@ export function interceptPatchUpdate(data: string): boolean {
         valueMode === 'always'
         || !sameValue(recordedValue, incomingValue)
       ) {
-        patchOps.push(
-          ...incoming.slice(
-            incomingCursor,
-            incomingCursor + incomingArity + 1,
-          ),
+        appendRange(
+          patchOps,
+          incoming,
+          incomingCursor,
+          incomingCursor + incomingArity + 1,
         );
       }
     }
 
-    recordedCursor += recordedArity + 1;
+    advanceRecorded(recordedCursor, recordedArity + 1);
     incomingCursor += incomingArity + 1;
   }
 
@@ -348,7 +411,7 @@ export function interceptPatchUpdate(data: string): boolean {
     }
   }
 
-  if (recordedCursor >= recordedOps.length) finishHydration();
+  if (recordedCursor.position >= recordedLength) finishHydration();
   return true;
 }
 
@@ -386,8 +449,7 @@ function finishHydration(adoptIfrTree = true): void {
   else clearIfrSelectorAttributeDeferral();
   phase = 'hydrated';
   renderSealed = true;
-  recordedOps = [];
-  recordedCursor = 0;
+  resetRecordedOps();
   backgroundHistory = [];
 }
 
@@ -398,25 +460,34 @@ function finishHydration(adoptIfrTree = true): void {
  */
 function teardownIfrTree(): void {
   const rootChildren = new Set<number>();
-  let cursor = 0;
-  while (cursor < recordedOps.length) {
-    const code = recordedOps[cursor] as number;
+  const cursor: OpsCursor = {
+    segmentIndex: 0,
+    segmentOffset: 0,
+    position: 0,
+  };
+  while (cursor.position < recordedLength) {
+    const code = readRecorded(cursor) as number;
     const arity = ARITY[code];
-    if (arity === undefined || cursor + arity >= recordedOps.length) break;
+    if (
+      arity === undefined
+      || cursor.position + arity >= recordedLength
+    ) {
+      break;
+    }
 
     if (code === OP.INSERT) {
-      const parentId = recordedOps[cursor + 1] as number;
-      const childId = recordedOps[cursor + 2] as number;
+      const parentId = readRecorded(cursor, 1) as number;
+      const childId = readRecorded(cursor, 2) as number;
       if (parentId === PAGE_ROOT_ID) rootChildren.add(childId);
       else rootChildren.delete(childId);
     } else if (code === OP.REMOVE) {
-      const parentId = recordedOps[cursor + 1] as number;
+      const parentId = readRecorded(cursor, 1) as number;
       if (parentId === PAGE_ROOT_ID) {
-        rootChildren.delete(recordedOps[cursor + 2] as number);
+        rootChildren.delete(readRecorded(cursor, 2) as number);
       }
     }
 
-    cursor += arity + 1;
+    advanceRecorded(cursor, arity + 1);
   }
 
   const page = elements.get(PAGE_ROOT_ID);
@@ -440,8 +511,7 @@ function teardownIfrTree(): void {
 export function resetIfrForTesting(): void {
   clearIfrSelectorAttributeDeferral();
   phase = 'inactive';
-  recordedOps = [];
-  recordedCursor = 0;
+  resetRecordedOps();
   backgroundHistory = [];
   warnedPostHydrationOps = false;
   renderSealed = false;

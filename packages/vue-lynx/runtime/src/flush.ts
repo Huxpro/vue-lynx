@@ -149,6 +149,16 @@ export function scheduleFlush(): void {
   queuePostFlushCb(doFlush);
 }
 
+function snapshotOps(ops: unknown[]): unknown[] {
+  const snapshot: unknown[] = [];
+  const length = ops.length;
+  snapshot.length = length;
+  for (let index = 0; index < length; index++) {
+    snapshot[index] = ops[index];
+  }
+  return snapshot;
+}
+
 /** Reset module state – for testing only. */
 export function resetFlushState(): void {
   scheduled = false;
@@ -191,7 +201,7 @@ function doFlush(): void {
       IFR_APPLY_OPS_GLOBAL
     ] as ((value: unknown[]) => void) | undefined;
     if (applyLocal) {
-      applyLocal(ops);
+      applyLocal(hook ? snapshotOps(ops) : ops);
     } else if (__DEV__) {
       console.warn(
         '[vue-lynx] IFR main-thread ops sink is unavailable; dropping the batch.',
