@@ -7,9 +7,7 @@ export { OP } from 'vue-lynx/internal/ops';
 let buffer: unknown[] = [];
 
 export function pushOp(...args: unknown[]): void {
-  for (const arg of args) {
-    buffer.push(arg);
-  }
+  buffer.push(...args);
 }
 
 export function takeOps(): unknown[] {
