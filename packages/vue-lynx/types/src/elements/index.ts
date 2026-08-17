@@ -1,4 +1,4 @@
-import type { DefineComponent } from 'vue';
+import type { DefineComponent } from '@vue/runtime-core';
 import type { IntrinsicElements } from '@lynx-js/types';
 
 type ExtractBindAsOn<T> = {
@@ -96,6 +96,6 @@ export type VueLynxElements = {
   [K in keyof IntrinsicElements]: VueLynxComponent<IntrinsicElements[K]>
 }
 
-declare module "vue" {
+declare module "@vue/runtime-core" {
   export interface GlobalComponents extends VueLynxElements {}
 }

@@ -165,7 +165,9 @@ export function applyOps(ops: unknown[], flush = true): void {
           if (isListParent(parentId)) {
             // Keep listItems / update-list-info in sync — otherwise Reset
             // re-inserts the same item-keys and native list errors 2202.
-            removeListItem(parentId, childId);
+            // A row native never pulled in via componentAtIndex is not in the
+            // element tree, so there is nothing left to detach.
+            if (!removeListItem(parentId, childId)) break;
           }
           __RemoveElement(parent, child);
         }
@@ -236,7 +238,7 @@ export function applyOps(ops: unknown[], flush = true): void {
         const id = ops[i++] as number;
         const idStr = ops[i++] as string | null | undefined;
         const el = elements.get(id);
-        if (el) __SetID(el, idStr ?? undefined);
+        if (el) __SetID(el, idStr ?? null);
         break;
       }
 

@@ -22,8 +22,8 @@
     "vue-lynx": "workspace:*"
   },
   "devDependencies": {
-    "@lynx-js/qrcode-rsbuild-plugin": "^0.4.6",
-    "@lynx-js/rspeedy": "^0.13.5",
+    "@lynx-js/qrcode-rsbuild-plugin": "^0.4.7",
+    "@lynx-js/rspeedy": "^0.14.5",
     "@lynx-js/tailwind-preset": "^0.4.0",
     "@rsbuild/plugin-vue": "^1.2.6",
     "rsbuild-plugin-tailwindcss": "^0.2.3",

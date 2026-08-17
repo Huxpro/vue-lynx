@@ -26,6 +26,12 @@ import { elements, pageUniqueId } from './element-registry.js';
 export interface ListItemEntry {
   el: LynxElement;
   bgId: number;
+  /**
+   * Native has pulled this row into the element tree via `componentAtIndex`.
+   * Rows native never requested are not in the tree, so they must not be
+   * passed to `__RemoveElement`.
+   */
+  attached?: boolean;
 }
 const listItems = new Map<number, ListItemEntry[]>();
 
@@ -180,8 +186,10 @@ function createListCallbacks(bgId: number): {
   ): number | undefined => {
     const items = listItems.get(bgId);
     if (!items || cellIndex < 0 || cellIndex >= items.length) return undefined;
-    const item = items[cellIndex]!.el;
+    const entry = items[cellIndex]!;
+    const item = entry.el;
     __AppendElement(list, item);
+    entry.attached = true;
     const sign = __GetElementUniqueID(item);
     __FlushElementTree(item, {
       triggerLayout: true,
@@ -208,9 +216,10 @@ function createListCallbacks(bgId: number): {
         elementIDs.push(-1);
         continue;
       }
-      const item = items[cellIndex]!.el;
-      __AppendElement(list, item);
-      elementIDs.push(__GetElementUniqueID(item));
+      const entry = items[cellIndex]!;
+      __AppendElement(list, entry.el);
+      entry.attached = true;
+      elementIDs.push(__GetElementUniqueID(entry.el));
     }
     __FlushElementTree(list, {
       triggerLayout: true,
@@ -294,16 +303,21 @@ export function insertListItem(
   }
 }
 
-/** Drop a child from the live list array (hard remove). */
-export function removeListItem(parentId: number, childId: number): void {
+/**
+ * Drop a child from the live list array (hard remove).
+ * Returns whether the row was attached to the element tree, i.e. whether the
+ * caller still has to detach it with `__RemoveElement`.
+ */
+export function removeListItem(parentId: number, childId: number): boolean {
   const items = listItems.get(parentId);
-  if (!items) return;
+  if (!items) return false;
   const idx = items.findIndex((entry) => entry.bgId === childId);
-  if (idx === -1) return;
-  items.splice(idx, 1);
+  if (idx === -1) return false;
+  const [entry] = items.splice(idx, 1);
   itemKeyMap.delete(childId);
   listItemPlatformInfo.delete(childId);
   dirtyPlatformInfo.delete(childId);
+  return entry?.attached === true;
 }
 
 /** Store a platform-info attribute; mark dirty for updateAction if already flushed. */
