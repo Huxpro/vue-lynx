@@ -191,9 +191,19 @@ function mapIrHolesOntoHtmlSlots(
     let cursor = 0;
     for (const child of d.children) {
       if (isNonTemplate(child)) {
-        // txt markers occupy no slot; appended blocks insert into THIS
-        // element (append — no anchor needed).
-        if ((child.flags & DynamicFlag.INSERT) !== 0) holeSlots.add(slot);
+        // txt markers occupy no slot. Inserted blocks target THIS element;
+        // codegen may use anchor sentinel 0 to prepend before its original
+        // first child. Keep the first materialized template child as that
+        // anchor (plus its leading comment prefix via computeAddressed).
+        if ((child.flags & DynamicFlag.INSERT) !== 0) {
+          holeSlots.add(slot);
+          const firstMaterializedChild = childSlots.find(
+            (childSlot) => htmlNodes[childSlot]?.tag !== '#comment',
+          );
+          if (firstMaterializedChild !== undefined) {
+            anchorSlots.add(firstMaterializedChild);
+          }
+        }
         continue;
       }
       const childSlot = childSlots[cursor++];

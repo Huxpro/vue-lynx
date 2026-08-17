@@ -152,7 +152,7 @@ describe('analyzeVaporAddressing', () => {
     const inner = templates.find((t) => t.templateIndex === 0)!;
     expect(outer).toMatchObject({
       holes: [0],
-      addressed: [0],
+      addressed: [0, 1],
     });
     expect(inner).toMatchObject({
       holes: [1, 2],
@@ -180,6 +180,28 @@ describe('analyzeVaporAddressing', () => {
     expect(templates[0]).toMatchObject({
       holes: [0, 1],
       addressed: [0, 1],
+    });
+  });
+
+  it('keeps a static first child as a component prepend anchor', () => {
+    const { templates } = analyze(
+      `<view><Comp /><text>static</text></view>`,
+    );
+    expect(templates[0]).toMatchObject({
+      holes: [0],
+      addressed: [0, 1],
+      tags: ['view', 'text'],
+    });
+  });
+
+  it('keeps leading comments through the first materialized prepend anchor', () => {
+    const { templates } = analyze(
+      `<view><Comp /><!-- Info --><view class=info>static</view></view>`,
+    );
+    expect(templates[0]).toMatchObject({
+      holes: [0],
+      addressed: [0, 1, 2],
+      tags: ['view', '#comment', 'view'],
     });
   });
 
