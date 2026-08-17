@@ -43,6 +43,7 @@ import {
 } from 'vue-lynx/vapor';
 import { publishEvent } from '../../../vue-lynx/runtime/src/event-registry.js';
 import {
+  completeIfrInitialRender,
   scheduleFlush,
   waitForFlush,
 } from '../../../vue-lynx/runtime/src/flush.js';
@@ -134,6 +135,28 @@ function renderMtOps(...batches: unknown[][]): void {
   globals['__vueLynxIfrMountApps'] = () => {
     const apply = localSink();
     for (const batch of batches) apply(batch);
+  };
+  papi.renderPage();
+  expect(ifr().getIfrPhase()).toBe('rendered');
+}
+
+/** Render one real runtime flush synchronously inside renderPage. */
+function renderMtFlush(
+  batch: unknown[],
+  onApply?: (ops: unknown[]) => void,
+): void {
+  ifr().enableIFR();
+  if (onApply) {
+    const apply = localSink();
+    globals['__vueLynxIfrApplyOps'] = (ops: unknown[]) => {
+      onApply(ops);
+      apply(ops);
+    };
+  }
+  globals['__vueLynxIfrMountApps'] = () => {
+    pushOp(...batch);
+    scheduleFlush();
+    completeIfrInitialRender();
   };
   papi.renderPage();
   expect(ifr().getIfrPhase()).toBe('rendered');
@@ -363,9 +386,12 @@ async function expectNoPendingFlushAck(): Promise<void> {
 }
 
 describe('Vapor IFR local flush transport', () => {
-  it('runs the observability hook before the local sink without IPC or an ack', async () => {
-    const batch = [OP.SET_TEXT, 1, 'local-first-frame'];
+  it('hands the local sink a shallow post-hook snapshot without IPC or an ack', async () => {
+    const payload = { state: 'painted' };
+    const batch = [OP.SET_PROP, 1, 'payload', payload];
     const order: string[] = [];
+    let hookOps: unknown[] | undefined;
+    let sinkOps: unknown[] | undefined;
     const lynxStub = globals['lynx'] as { getNativeApp(): unknown };
     const getNativeApp = vi.spyOn(lynxStub, 'getNativeApp');
 
@@ -375,12 +401,15 @@ describe('Vapor IFR local flush transport', () => {
       serialized: string,
     ) => {
       order.push('hook');
+      hookOps = ops;
       expect(ops).toEqual(batch);
       expect(serialized).toBe(JSON.stringify(batch));
+      ops[2] = 'hook-payload';
     };
     globals['__vueLynxIfrApplyOps'] = (ops: unknown[]) => {
       order.push('sink');
-      expect(ops).toEqual(batch);
+      sinkOps = ops;
+      expect(ops).toEqual([OP.SET_PROP, 1, 'hook-payload', payload]);
     };
 
     pushOp(...batch);
@@ -388,9 +417,184 @@ describe('Vapor IFR local flush transport', () => {
     await runtimeCore.nextTick();
 
     expect(order).toEqual(['hook', 'sink']);
+    expect(sinkOps).not.toBe(hookOps);
+    expect(sinkOps?.[3]).toBe(hookOps?.[3]);
+    expect(Object.isFrozen(hookOps)).toBe(false);
+    expect(() => {
+      hookOps![2] = 'retained-late-mutation';
+    }).not.toThrow();
+    expect(sinkOps?.[2]).toBe('hook-payload');
+    payload.state = 'retained-nested-mutation';
+    expect(sinkOps?.[3]).toEqual({ state: 'retained-nested-mutation' });
     expect(getNativeApp).not.toHaveBeenCalled();
     expect(papi.patchBatches).toHaveLength(0);
     await expectNoPendingFlushAck();
+  });
+
+  it('restores no-hook batch identity after runtime and IFR reset', async () => {
+    let observedOps: unknown[] | undefined;
+    let sinkOps: unknown[] | undefined;
+
+    ifr().enableIFR();
+    globals['__VUE_LYNX_FLUSH_HOOK__'] = (ops: unknown[]) => {
+      observedOps = ops;
+    };
+    globals['__vueLynxIfrApplyOps'] = (ops: unknown[]) => {
+      sinkOps = ops;
+    };
+    pushOp(OP.SET_TEXT, 1, 'hooked-cycle');
+    scheduleFlush();
+    await runtimeCore.nextTick();
+    expect(sinkOps).not.toBe(observedOps);
+
+    ifr().resetIfrForTesting();
+    resetForTesting();
+    delete globals['__VUE_LYNX_FLUSH_HOOK__'];
+    ifr().enableIFR();
+
+    const marker = { cycle: 'no-hook' };
+    let naturalBatch: unknown[] | undefined;
+    const originalPush = Array.prototype.push;
+    Array.prototype.push = function<T>(
+      this: T[],
+      ...items: T[]
+    ): number {
+      if (items.some((item) => item === marker)) {
+        naturalBatch = this as unknown[];
+      }
+      return originalPush.apply(this, items);
+    };
+    try {
+      pushOp(OP.SET_PROP, 1, 'marker', marker);
+    } finally {
+      Array.prototype.push = originalPush;
+    }
+
+    sinkOps = undefined;
+    globals['__vueLynxIfrApplyOps'] = (ops: unknown[]) => {
+      sinkOps = ops;
+    };
+    scheduleFlush();
+    await runtimeCore.nextTick();
+
+    expect(naturalBatch).toBeDefined();
+    expect(sinkOps).toBe(naturalBatch);
+    await expectNoPendingFlushAck();
+  });
+
+  it('paints a shallow snapshot when the hook poisons array helpers', () => {
+    const payload = { state: 'shared' };
+    const mtBatch = [
+      OP.CREATE,
+      2,
+      'view',
+      OP.SET_PROP,
+      2,
+      'payload',
+      payload,
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ];
+    let hookOps: unknown[] | undefined;
+    let sinkOps: unknown[] | undefined;
+    globals['__VUE_LYNX_FLUSH_HOOK__'] = (ops: unknown[]) => {
+      hookOps = ops;
+      ops[2] = 'image';
+      const mutableOps = ops as unknown as Record<PropertyKey, unknown>;
+      mutableOps['slice'] = undefined;
+      mutableOps[Symbol.iterator] = undefined;
+    };
+
+    renderMtFlush(mtBatch, (ops) => {
+      sinkOps = ops;
+    });
+
+    const paintedImage = papi.queryOne('image');
+    expect(paintedImage).toBeDefined();
+    expect(papi.queryAll('view')).toHaveLength(0);
+    expect(sinkOps).not.toBe(hookOps);
+    expect(sinkOps).toEqual([
+      OP.CREATE,
+      2,
+      'image',
+      OP.SET_PROP,
+      2,
+      'payload',
+      payload,
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ]);
+    expect(sinkOps?.[6]).toBe(hookOps?.[6]);
+    expect(Reflect.get(hookOps!, 'slice')).toBeUndefined();
+    expect(Reflect.get(hookOps!, Symbol.iterator)).toBeUndefined();
+    expect(paintedImage?.attrs['payload']).toBe(payload);
+
+    hookOps![2] = 'retained-late-mutation';
+
+    papi.patch([
+      OP.CREATE,
+      2,
+      'image',
+      OP.SET_PROP,
+      2,
+      'payload',
+      payload,
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ]);
+
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+    expect(papi.queryOne('image')).toBe(paintedImage);
+    expect(papi.root()?.children).toEqual([paintedImage]);
+  });
+
+  it('isolates a retained hook batch after paint even when the hook removes itself', () => {
+    const mtBatch = [
+      OP.CREATE,
+      2,
+      'view',
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ];
+    let retainedOps: unknown[] | undefined;
+    globals['__VUE_LYNX_FLUSH_HOOK__'] = (ops: unknown[]) => {
+      retainedOps = ops;
+      delete globals['__VUE_LYNX_FLUSH_HOOK__'];
+    };
+
+    renderMtFlush(mtBatch);
+
+    expect(retainedOps).toEqual(mtBatch);
+    expect(globals['__VUE_LYNX_FLUSH_HOOK__']).toBeUndefined();
+    expect(papi.root()?.children).toHaveLength(1);
+    expect(papi.queryAll('view')).toHaveLength(1);
+
+    expect(() => {
+      retainedOps![5] = 999;
+    }).not.toThrow();
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    papi.patch([
+      OP.CREATE,
+      2,
+      'image',
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ]);
+
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+    expect(papi.root()?.children).toHaveLength(1);
+    expect(papi.queryAll('view')).toHaveLength(0);
+    expect(papi.queryAll('image')).toHaveLength(1);
   });
 
   it('still observes and drops a local batch when the sink is missing', async () => {
@@ -1080,6 +1284,250 @@ describe('Vapor IFR flattened frame-stream hydration', () => {
 
     expect(ifr().getIfrPhase()).toBe('rendered');
     expect(papi.queryOne('text')?.attrs['text']).toBe('first frame');
+  });
+});
+
+describe('Vapor IFR natural-batch recorded cursor', () => {
+  const viewFrame = [
+    OP.CREATE,
+    2,
+    'view',
+    OP.SET_CLASS,
+    2,
+    'card',
+    OP.INSERT,
+    1,
+    2,
+    -1,
+  ];
+
+  it('hydrates an exact match across natural MT batch segments', () => {
+    renderMtOps(
+      [OP.CREATE, 2, 'view'],
+      [OP.SET_CLASS, 2, 'card'],
+      [OP.INSERT, 1, 2, -1],
+    );
+
+    papi.patch(viewFrame);
+
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+    expect(papi.queryAll('view')).toHaveLength(1);
+    expect(papi.queryOne('view')?.classes).toBe('card');
+  });
+
+  it('reads one recorded frame across two natural MT batch segments', () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    renderMtOps(
+      [
+        OP.CREATE,
+        2,
+        'view',
+        OP.SET_PROP,
+        999,
+        'data-segment-boundary',
+      ],
+      ['crossed'],
+      [OP.INSERT, 1, 2, -1],
+    );
+
+    papi.patch([
+      OP.CREATE,
+      2,
+      'view',
+      OP.SET_PROP,
+      999,
+      'data-segment-boundary',
+      'crossed',
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ]);
+
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+    expect(papi.queryAll('view')).toHaveLength(1);
+    expect(papi.root()?.children).toHaveLength(1);
+  });
+
+  it('replays an early mismatch from BG history', () => {
+    renderMtOps(viewFrame);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    papi.patch([
+      OP.CREATE,
+      2,
+      'image',
+      OP.SET_PROP,
+      2,
+      'src',
+      'early.png',
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ]);
+
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+    expect(papi.queryAll('view')).toHaveLength(0);
+    expect(papi.queryOne('image')?.attrs['src']).toBe('early.png');
+  });
+
+  it('replays all BG batches after a late mismatch', () => {
+    const mtTail = [
+      OP.CREATE_TEXT,
+      3,
+      OP.SET_TEXT,
+      3,
+      'main',
+      OP.INSERT,
+      2,
+      3,
+      -1,
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ];
+    renderMtOps(
+      [OP.CREATE, 2, 'view'],
+      [OP.SET_CLASS, 2, 'card'],
+      mtTail,
+    );
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    papi.patch([
+      OP.CREATE,
+      2,
+      'view',
+      OP.SET_CLASS,
+      2,
+      'card',
+    ]);
+    expect(ifr().getIfrPhase()).toBe('rendered');
+
+    papi.patch([
+      OP.CREATE,
+      3,
+      'image',
+      OP.SET_PROP,
+      3,
+      'src',
+      'late.png',
+      OP.INSERT,
+      2,
+      3,
+      -1,
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ]);
+
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+    expect(papi.queryAll('view')).toHaveLength(1);
+    expect(papi.queryOne('image')?.attrs['src']).toBe('late.png');
+    expect(papi.root()?.children[0]).toBe(papi.queryOne('view'));
+  });
+
+  it('applies a late BG tail after the recorded segments match', () => {
+    renderMtOps(
+      [OP.CREATE, 2, 'view'],
+      [OP.INSERT, 1, 2, -1],
+    );
+
+    papi.patch([
+      OP.CREATE,
+      2,
+      'view',
+      OP.INSERT,
+      1,
+      2,
+      -1,
+      OP.CREATE_TEXT,
+      3,
+      OP.SET_TEXT,
+      3,
+      'late tail',
+      OP.INSERT,
+      2,
+      3,
+      -1,
+    ]);
+
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+    expect(papi.queryOne('text')?.attrs['text']).toBe('late tail');
+    expect(papi.queryOne('view')?.children).toHaveLength(1);
+  });
+
+  it('preserves partial-frame fallback before normal late BG ops', () => {
+    renderMtOps(viewFrame);
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    expect(() => papi.patch([OP.SET_CLASS, 2])).not.toThrow();
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+    expect(papi.root()?.children).toHaveLength(0);
+
+    papi.patch([
+      OP.CREATE,
+      2,
+      'image',
+      OP.SET_PROP,
+      2,
+      'src',
+      'after-partial.png',
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ]);
+
+    expect(papi.queryOne('image')?.attrs['src']).toBe('after-partial.png');
+    expect(papi.root()?.children).toHaveLength(1);
+  });
+
+  it('resets every cursor field before a second hydration cycle', () => {
+    renderMtOps(
+      [OP.CREATE, 2, 'view'],
+      [OP.INSERT, 1, 2, -1],
+    );
+    papi.patch([
+      OP.CREATE,
+      2,
+      'view',
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ]);
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+
+    ifr().resetIfrForTesting();
+    resetMainThreadState();
+    papi.reset();
+
+    renderMtOps(
+      [OP.CREATE, 2, 'image'],
+      [OP.SET_PROP, 2, 'src', 'second-cycle.png'],
+      [OP.INSERT, 1, 2, -1],
+    );
+    papi.patch([
+      OP.CREATE,
+      2,
+      'image',
+      OP.SET_PROP,
+      2,
+      'src',
+      'second-cycle.png',
+      OP.INSERT,
+      1,
+      2,
+      -1,
+    ]);
+
+    expect(ifr().getIfrPhase()).toBe('hydrated');
+    expect(papi.queryAll('view')).toHaveLength(0);
+    expect(papi.queryOne('image')?.attrs['src']).toBe('second-cycle.png');
+    expect(papi.root()?.children).toHaveLength(1);
   });
 });
 
