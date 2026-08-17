@@ -39,6 +39,7 @@ import {
   sparseNamingEnabled,
 } from './flags.js';
 import { scheduleFlush } from './flush.js';
+import { observeTimingFlagProp } from './performance.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
 import {
@@ -681,6 +682,8 @@ export class ShadowElement {
       if (this._attrs) {
         clone._attrs = new Map(this._attrs);
         for (const [key, value] of clone._attrs) {
+          // A cloned prototype can carry a static Timing Flag.
+          observeTimingFlagProp(key, value);
           pushOp(OP.SET_PROP, clone.uid, key, value);
         }
       }
@@ -808,6 +811,10 @@ export class ShadowElement {
       this._addScopeClass(key);
     } else {
       (this._attrs ??= new Map()).set(key, strValue);
+      // An application Timing Flag makes the pipeline this batch rides in
+      // reportable — the engine reads the attribute off the element, the
+      // framework only has to ask for timestamps.
+      observeTimingFlagProp(key, value);
       pushOp(OP.SET_PROP, this.uid, key, value);
       scheduleFlush();
     }
