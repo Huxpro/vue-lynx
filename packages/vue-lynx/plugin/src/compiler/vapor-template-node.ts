@@ -42,6 +42,7 @@ const VOID_ELEMENTS = new Set([
   'col',
   'embed',
   'hr',
+  'image',
   'img',
   'input',
   'link',

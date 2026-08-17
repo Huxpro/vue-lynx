@@ -4,7 +4,7 @@ import { pluginVueLynx } from 'vue-lynx/plugin';
 // One config, multi-cell builds. build-matrix.mjs sets env per build:
 //   SFC_PROBE_VAPOR=0|1     renderer mode
 //   SFC_PROBE_IFR=0|1       enableIFR
-//   SFC_PROBE_ET=0|1        enableElementTemplates (explicit; never rely on default)
+//   SFC_PROBE_ET=0|1        VDOM ET lowering / Vapor IFR×ET sparse paint
 //   SFC_PROBE_SPARSE=0|1    templateNaming sparse|dense (Named Tree vs Data-Template; #301/#321)
 //   SFC_PROBE_STAGING=…     templateStaging override (e.g. 'engine' for the Engine-Template cell; #323; 'code' = vapor +b:c, #337)
 //   SFC_PROBE_DELIVERY=…    templateDelivery override ('bundle' = vapor +b!, #338)

@@ -3,7 +3,7 @@ import { pluginVueLynx } from 'vue-lynx/plugin';
 
 /**
  * Unified / graph-eng four-axis matrix cells (#301/#321/#325/#337/#338/#340):
- *   BENCH_CELL=off|dense|engine|code|bundle|ifr|ifr-dense|ifr-sparse|ifr-engine-et|ifr-code-paint
+ *   BENCH_CELL=off|dense|engine|code|bundle|ifr|ifr-et|ifr-dense|ifr-sparse|ifr-engine-et|ifr-code-paint
  *
  * - off: Data-Template sparse, no IFR (product no-IFR default)
  * - dense: Named Tree, no IFR — naming main-effect anchor
@@ -28,7 +28,9 @@ if (autoRowsRaw?.trim() === '' || !Number.isSafeInteger(autoRows) || autoRows < 
 }
 const enableIFR =
   cell === 'ifr' || cell === 'ifr-dense' || cell === 'ifr-sparse'
-  || cell === 'ifr-engine-et' || cell === 'ifr-code-paint';
+  || cell === 'ifr-et' || cell === 'ifr-engine-et'
+  || cell === 'ifr-code-paint';
+const enableElementTemplates = cell === 'ifr-et';
 const templateNaming =
   cell === 'dense' || cell === 'ifr-dense'
     ? 'dense' as const
@@ -75,8 +77,7 @@ export default defineConfig({
       templateStaging,
       templateDelivery,
       ifrPaint,
-      // Explicit: vapor never enables VDOM element templates.
-      enableElementTemplates: false,
+      enableElementTemplates,
     }),
   ],
 });

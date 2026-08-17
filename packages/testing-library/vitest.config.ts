@@ -34,6 +34,20 @@ export default defineConfig({
         ),
       },
       {
+        find: 'vue-lynx/internal/html-to-template-node',
+        replacement: path.resolve(
+          __dirname,
+          '../vue-lynx/internal/src/html-to-template-node.ts',
+        ),
+      },
+      {
+        find: 'vue-lynx/internal/vapor-ifr-et',
+        replacement: path.resolve(
+          __dirname,
+          '../vue-lynx/internal/src/vapor-ifr-et.ts',
+        ),
+      },
+      {
         find: /^vue-lynx$/,
         replacement: path.resolve(
           __dirname,

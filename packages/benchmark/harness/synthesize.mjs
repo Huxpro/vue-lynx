@@ -294,7 +294,7 @@ function parseIfrName(name) {
   if (!name) return {};
   // Longer arch ids first (vapor-ifr-dense before vapor-ifr before vapor).
   const archAlt =
-    'vapor-ifr-engine-et|vapor-ifr-code-paint|vapor-ifr-dense|vapor-ifr-sparse|vapor-engine|vapor-dense|vapor-bang|vapor-code|vdom-ifr-et|vdom-ifr|vdom-et|vdom|vapor-ifr|vapor|react';
+    'vapor-ifr-engine-et|vapor-ifr-code-paint|vapor-ifr-dense|vapor-ifr-sparse|vapor-ifr-et|vapor-engine|vapor-dense|vapor-bang|vapor-code|vdom-ifr-et|vdom-ifr|vdom-et|vdom|vapor-ifr|vapor|react';
   // Strip bundle suffix once so both @scale and fixed-size forms match
   // (graph-eng FCP rows use `bundle: content-vapor-ifr-dense.web.bundle`).
   const base = String(name).replace(/\.web\.bundle$/, '');
@@ -1066,6 +1066,7 @@ function renderStormTable(unified) {
     'vdom-ifr-et',
     'vapor',
     'vapor-ifr',
+    'vapor-ifr-et',
   ].filter((m) =>
     cells(unified, { architecture: m, workload: 'table', metric: 'selectStorm' })
       .length,
@@ -1090,7 +1091,15 @@ function renderStormTable(unified) {
 }
 
 function renderFcpTable(unified) {
-  const modes = ['react', 'vdom', 'vdom-ifr', 'vdom-ifr-et', 'vapor', 'vapor-ifr'];
+  const modes = [
+    'react',
+    'vdom',
+    'vdom-ifr',
+    'vdom-ifr-et',
+    'vapor',
+    'vapor-ifr',
+    'vapor-ifr-et',
+  ];
   let md = `### Content-probe FCP (lynx-web ×1, ms median)\n\n`;
   md += `| scale | ${modes.join(' | ')} |\n|---|${modes.map(() => '---').join('|')}|\n`;
   let any = false;

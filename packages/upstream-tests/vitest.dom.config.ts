@@ -176,6 +176,7 @@ export default defineConfig({
     __FEATURE_PROD_HYDRATION_MISMATCH_DETAILS__: 'false',
     __COMPAT__: 'false',
     __VUE_LYNX_AUTO_PIXEL_UNIT__: 'true',
+    __VUE_LYNX_VAPOR_IFR_ET__: 'true',
     __VERSION__: '"3.6.0-beta.17"',
   },
   test: {
@@ -195,6 +196,20 @@ export default defineConfig({
       {
         find: 'vue-lynx/internal/ops',
         replacement: path.resolve(__dirname, '../vue-lynx/internal/src/ops.ts'),
+      },
+      {
+        find: 'vue-lynx/internal/html-to-template-node',
+        replacement: path.resolve(
+          __dirname,
+          '../vue-lynx/internal/src/html-to-template-node.ts',
+        ),
+      },
+      {
+        find: 'vue-lynx/internal/vapor-ifr-et',
+        replacement: path.resolve(
+          __dirname,
+          '../vue-lynx/internal/src/vapor-ifr-et.ts',
+        ),
       },
       {
         find: /^vue-lynx$/,

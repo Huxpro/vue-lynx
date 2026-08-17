@@ -37,6 +37,8 @@ declare global {
   const __VUE_LYNX_TEMPLATE_DELIVERY__: string;
   /** Axis-D IFR paint mode ('plain'|'disposable-et'|'engine-et'). */
   const __VUE_LYNX_IFR_PAINT__: string;
+  /** Vapor IFR×ET sparse first-frame paint switch. */
+  const __VUE_LYNX_VAPOR_IFR_ET__: boolean;
 
   /** Injected by entry-background.ts; called by Lynx Native on event fire */
   function publishEvent(sign: string, data: unknown): void;

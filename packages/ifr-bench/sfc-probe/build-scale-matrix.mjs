@@ -54,6 +54,7 @@ const VARIANTS = [
   { id: 'vapor-code', mode: 'vapor', ifr: '0', et: '0', staging: 'code', label: 'Vapor +b:c (code)' },
   { id: 'vapor-bang', mode: 'vapor', ifr: '0', et: '0', delivery: 'bundle', label: 'Vapor +b! (bundle)' },
   { id: 'vapor-ifr', mode: 'vapor', ifr: '1', et: '0', label: 'Vapor+IFR' },
+  { id: 'vapor-ifr-et', mode: 'vapor', ifr: '1', et: '1', label: 'Vapor+IFR+ET' },
   { id: 'vapor-ifr-dense', mode: 'vapor', ifr: '1', et: '0', sparse: '0', label: 'Vapor+IFR dense' },
   { id: 'vapor-ifr-engine-et', mode: 'vapor', ifr: '1', et: '0', ifrPaint: 'engine-et', label: 'Vapor+IFR engine-et (stub)' },
 ];
