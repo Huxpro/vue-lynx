@@ -44,6 +44,7 @@ import { onMounted, watchPostEffect } from '@vue/runtime-dom';
 import type { App, Component } from '@vue/runtime-core';
 
 import {
+  DSL_VUE_VAPOR,
   VAPOR_ADDRESSING_KEY,
   type VaporTreeAddressing,
 } from 'vue-lynx/internal/ops';
@@ -51,6 +52,7 @@ import { registerMount } from '../app-registry.js';
 import { looseToNumber, withKeys, withModifiers } from '../event-modifiers.js';
 import type { InputEventData } from '../event-modifiers.js';
 import { isIfrMainThread } from '../ifr-env.js';
+import { setFrameworkDsl } from '../performance.js';
 import {
   createPageRoot,
   setPendingVaporAddressing,
@@ -387,6 +389,10 @@ export function createVaporApp(
   rootComponent: Component,
   rootProps?: Record<string, unknown>,
 ): VueLynxApp {
+  // Vapor and the vdom renderer share one ops pipeline, so they would report
+  // pipelines under one `dsl` unless told apart. Their framework-rendering
+  // cost profiles are the thing this data exists to compare.
+  setFrameworkDsl(DSL_VUE_VAPOR);
   const internalApp = _createVaporApp(
     rootComponent as Parameters<typeof _createVaporApp>[0],
     rootProps as Parameters<typeof _createVaporApp>[1],

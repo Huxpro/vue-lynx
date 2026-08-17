@@ -169,9 +169,15 @@ export function sealIfrRender(): void {
   renderSealed = true;
 }
 
-/** Run the app mounts deferred by the Vapor runtime inside renderPage. */
-export function runIfrRender(): void {
-  if (phase === 'inactive') return;
+/**
+ * Run the app mounts deferred by the Vapor runtime inside renderPage.
+ *
+ * @returns Whether a first screen was actually built on this thread. `false`
+ *   means `renderPage` leaves an empty page behind, so the engine's load
+ *   pipeline still belongs to whichever later flush submits real content.
+ */
+export function runIfrRender(): boolean {
+  if (phase === 'inactive') return false;
 
   recordedOps = [];
   recordedCursor = 0;
@@ -182,7 +188,7 @@ export function runIfrRender(): void {
   const trigger = (globalThis as Record<string, unknown>)[
     IFR_MOUNT_APPS_GLOBAL
   ] as (() => void) | undefined;
-  if (!trigger) return;
+  if (!trigger) return false;
 
   beginIfrSelectorAttributeDeferral();
   try {
@@ -193,6 +199,9 @@ export function runIfrRender(): void {
     } finally {
       inSyncRender = false;
     }
+    // An app that rendered nothing (opted out of the IFR mount, or rendered
+    // an empty tree) leaves the same empty page a non-IFR build would.
+    return recordedOps.length > 0;
   } catch (error) {
     console.error(
       '[vue-lynx] IFR first-screen render failed; falling back to the '
@@ -214,6 +223,7 @@ export function runIfrRender(): void {
     } finally {
       finishHydration(false);
     }
+    return false;
   }
 }
 

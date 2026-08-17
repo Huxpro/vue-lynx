@@ -33,7 +33,25 @@ import {
   runIfrRender,
 } from './ifr.js';
 import { applyOps, resetMainThreadState } from './ops-apply.js';
+import {
+  flushElementTree,
+  markTiming,
+  setPageElement,
+  setPendingLoadPipeline,
+  setPipeline,
+} from './performance.js';
 import { runOnBackground } from './run-on-background-mt.js';
+
+import type { FlushOptions, PipelineOptions } from 'vue-lynx/internal/ops';
+
+/**
+ * Options the engine passes to the page lifecycle callbacks. Only the field
+ * this integration consumes is named; the engine owns the rest and they are
+ * forwarded untouched.
+ */
+interface EnginePageOptions extends FlushOptions {
+  pipelineOptions?: PipelineOptions;
+}
 
 const g = globalThis as Record<string, unknown>;
 
@@ -91,11 +109,15 @@ g['processData'] = function(data: unknown, _processorName?: string): unknown {
 // Lynx calls renderPage on the Main Thread first (before Background JS runs).
 // We create the root page element and store it as id=1 so Background ops that
 // target the root can resolve it correctly.
-g['renderPage'] = function(_data: unknown): void {
+g['renderPage'] = function(
+  _data: unknown,
+  options?: EnginePageOptions,
+): void {
   // Clear all element state from the previous page. This is essential for:
   // 1. Testing: prevents duplicate batch detection from skipping ops
   //    when ShadowElement IDs restart from 2 between test renders.
   // 2. Hot reload: ensures stale element handles don't persist.
+  // It also discards any pipeline held for the page being replaced.
   resetMainThreadState();
   const page = __CreatePage('0', 0);
   // Set global CSS scope on page so its style_sheet_manager_ is populated.
@@ -103,31 +125,87 @@ g['renderPage'] = function(_data: unknown): void {
   __SetCSSId([page], 0);
   setPageUniqueId(__GetElementUniqueID(page));
   elements.set(PAGE_ROOT_ID, page);
+  setPageElement(page);
+  // The engine started a `loadBundle` pipeline before this call. Retain it:
+  // whether it is committed here or by a later batch depends on which of them
+  // submits the actual first screen.
+  setPendingLoadPipeline(options ? options.pipelineOptions : undefined);
   // IFR: mount any Vue app that user code registered on this thread and
   // paint the first frame synchronously.  No-op in non-IFR bundles (user
   // code on the MT layer is stripped to worklet registrations, so no app
   // ever registers).
-  runIfrRender();
-  __FlushElementTree(page);
+  const rendered = runIfrRender();
+  // IFR built the real first screen here, so this flush is the one that
+  // submits it and the load pipeline goes with it. Without IFR the page is
+  // still empty — a placeholder — and the pipeline stays pending for the
+  // background thread's first batch.
+  if (rendered) {
+    flushElementTree(page);
+  } else {
+    __FlushElementTree(page);
+  }
 };
 
-// Lynx may call updatePage / updateGlobalProps after data changes.
-// We have no data binding on Main Thread, so these are no-ops.
-g['updatePage'] = function(_data: unknown): void {
-  // no-op: Vue Main Thread has no direct data binding
+// Lynx may call updatePage / updateGlobalProps after data changes. The Vue
+// main thread has no data binding, so neither produces element changes — but
+// an engine-initiated pipeline arriving with one still has to reach a flush,
+// otherwise it never completes and no entry is ever reported for it.
+g['updatePage'] = function(
+  _data: unknown,
+  options?: EnginePageOptions,
+): void {
+  forwardEnginePipeline(options);
 };
 
-g['updateGlobalProps'] = function(_data: unknown): void {
-  // no-op
+g['updateGlobalProps'] = function(
+  _data: unknown,
+  options?: EnginePageOptions,
+): void {
+  forwardEnginePipeline(options);
 };
 
-// Called by the BG Thread via callLepusMethod('vuePatchUpdate', { data }).
-g['vuePatchUpdate'] = function({ data }: { data: string }): void {
+function forwardEnginePipeline(options?: EnginePageOptions): void {
+  if (!options) return;
+  const page = elements.get(PAGE_ROOT_ID);
+  if (!page) return;
+  // Forward the engine's own options verbatim — they are the flush options for
+  // this update, `pipelineOptions` included.
+  __FlushElementTree(page, options);
+}
+
+// Called by the BG Thread via callLepusMethod('vuePatchUpdate', payload).
+g['vuePatchUpdate'] = function(
+  { data, pipelineOptions }: {
+    data: string;
+    pipelineOptions?: PipelineOptions;
+  },
+): void {
+  // Adopt the background thread's pipeline before any main-thread work so the
+  // stages recorded below land on it. `undefined` is normal: the first batch
+  // rides the engine's load pipeline instead.
+  setPipeline(pipelineOptions);
+
   // IFR hydration: the background thread's initial batches replay the
   // main-thread first-screen render — skip/patch them instead of applying.
-  if (interceptPatchUpdate(data)) return;
+  if (interceptPatchUpdate(data)) {
+    // Hydration consumed the batch; whatever it submitted it did on its own
+    // terms. Release this batch's pipeline rather than let it ride a later
+    // update — but leave any pending load pipeline alone, it is still waiting
+    // for the flush that submits real content.
+    setPipeline(undefined);
+    return;
+  }
+
+  markTiming('parseChangesStart');
   const ops = JSON.parse(data) as unknown[];
-  applyOps(ops);
+  markTiming('parseChangesEnd');
+
+  if (!applyOps(ops)) {
+    // An empty or already-applied batch submits nothing. It must not consume
+    // the load pipeline waiting for real content — but a background pipeline
+    // that came with it has nowhere to go.
+    setPipeline(undefined);
+  }
 };
 
 // Sent by the IFR Background entry after its complete initial op stream has

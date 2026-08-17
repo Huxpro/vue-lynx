@@ -15,6 +15,7 @@ import {
 import { scheduleFlush } from './flush.js';
 import { applyMainThreadProp } from './main-thread-props.js';
 import { OP, pushOp } from './ops.js';
+import { observeTimingFlagProp } from './performance.js';
 import { ShadowElement } from './shadow-element.js';
 import { renderTemplateSlot } from './slot-host.js';
 import { normalizeStyleObject } from './style-normalization.js';
@@ -242,6 +243,10 @@ export const nodeOps: RendererOptions<ShadowElement, ShadowElement> = {
       setIdAttr(el, nextValue);
       return;
     } else {
+      // An application Timing Flag makes the pipeline this batch rides in
+      // reportable — the engine reads the attribute off the element, the
+      // framework only has to ask for timestamps.
+      observeTimingFlagProp(key, nextValue);
       pushOp(OP.SET_PROP, el.uid, key, nextValue);
     }
 

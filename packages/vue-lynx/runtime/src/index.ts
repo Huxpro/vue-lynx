@@ -66,6 +66,7 @@ import { registerMount, resetAppRegistry } from './app-registry.js';
 import { runOnMainThread } from './cross-thread.js';
 import { resetRegistry } from './event-registry.js';
 import { resetFlushState, scheduleFlush } from './flush.js';
+import { resetPerformanceState } from './performance.js';
 import { resetFunctionCallState } from './function-call.js';
 import {
   ifrInert,
@@ -1277,6 +1278,16 @@ export { nodeOps };
 export { takeOps };
 
 /**
+ * Override the `dsl` reported to the Lynx Performance API for pipelines this
+ * renderer initiates. Defaults to `'vue'`; an alternative rendering strategy
+ * built on the same ops protocol (Vapor) reports itself separately so the two
+ * stay distinguishable in pipeline data.
+ *
+ * @internal
+ */
+export { setFrameworkDsl } from './performance.js';
+
+/**
  * Reset all module-level state between tests.
  * Must be called before each test to ensure isolation.
  * @internal
@@ -1285,6 +1296,7 @@ export function resetForTesting(): void {
   resetRegistry();
   resetNodeOpsState();
   resetFlushState();
+  resetPerformanceState();
   resetMainThreadRefState();
   resetFunctionCallState();
   resetRunOnBackgroundState();

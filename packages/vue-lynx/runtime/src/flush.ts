@@ -8,6 +8,13 @@ import { IFR_APPLY_OPS_GLOBAL } from 'vue-lynx/internal/ops';
 
 import { isIfrEnabled, isIfrMainThread } from './ifr-env.js';
 import { takeOps } from './ops.js';
+import {
+  beginUpdatePipeline,
+  dropPipeline,
+  markTiming,
+  notePipelineBatchDispatched,
+  takePipeline,
+} from './performance.js';
 
 /**
  * Schedule a flush of the ops buffer via Vue's post-flush hook.
@@ -146,6 +153,11 @@ export function waitForFlush(): Promise<void> {
 export function scheduleFlush(): void {
   if (scheduled) return;
   scheduled = true;
+  // First mutation of this tick — the framework rendering window that the
+  // pipeline attributes starts here. Vue's scheduler exposes no "a render is
+  // about to run" hook, so this is the earliest point both the virtual-DOM
+  // renderer and Vapor reach on every update.
+  beginUpdatePipeline();
   queuePostFlushCb(doFlush);
 }
 
@@ -165,9 +177,17 @@ function doFlush(): void {
   scheduled = false;
   const ops = takeOps();
   if (ops.length === 0) {
+    // The tick produced no element changes after all. A pipeline opened for it
+    // has nothing to submit — drop it rather than let it ride an unrelated
+    // later update.
+    dropPipeline();
     deliverInitialRenderCompletion();
     return;
   }
+
+  // All renders for this tick are done (queuePostFlushCb runs after the
+  // scheduler drains), so the framework rendering window closes here.
+  markTiming('diffVdomEnd');
 
   // Optional observability hook (benchmarks, debugging): called with every
   // flushed batch before it is posted to the Main Thread.
@@ -197,6 +217,10 @@ function doFlush(): void {
         '[vue-lynx] IFR main-thread ops sink is unavailable; dropping the batch.',
       );
     }
+    // renderPage submits this render, carrying the engine's load pipeline.
+    // There is no framework pipeline on this path (beginUpdatePipeline bails
+    // out in the IFR main-thread realm), so nothing is left to release.
+    notePipelineBatchDispatched();
     deliverInitialRenderCompletion();
     return;
   }
@@ -238,16 +262,23 @@ function doFlush(): void {
     deliverInitialRenderCompletion();
   });
 
-  // The local IFR path avoids serialization unless an observability hook
-  // requested it. Background IPC still needs the wire payload.
+  // Serialising the batch is framework rendering work the pipeline should
+  // account for, and it is the last thing that happens to the ops on this
+  // thread — so the pipeline travels with the payload it describes. The local
+  // IFR path avoids the serialization unless an observability hook already
+  // requested it; background IPC always needs the wire payload.
+  markTiming('packChangesStart');
   if (data === undefined) data = JSON.stringify(ops);
+  markTiming('packChangesEnd');
+  const pipelineOptions = takePipeline();
+  notePipelineBatchDispatched();
 
   // `lynx` is a bare AMD-injected identifier — in non-Lynx environments
   // (vitest node env) referencing it directly would throw ReferenceError.
   const app = typeof lynx === 'undefined' ? undefined : lynx?.getNativeApp?.();
   app?.callLepusMethod?.(
     'vuePatchUpdate',
-    { data },
+    { data, pipelineOptions },
     () => {
       // Main thread has finished applying the ops — resolve the promise and
       // latch that this engine delivers callbacks. State cleanup and the IFR
