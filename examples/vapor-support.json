@@ -118,7 +118,7 @@
       },
       "scenario": "ai-chat/main",
       "verification": {
-        "sourceHash": "433fde61917d7d55faef97a091a5a4b832df9cce34ae5f0050905f5b9155083f",
+        "sourceHash": "8e644e143c2b5ecdde7e065c6fe5a7a2680ed2cf4c98ad1fe4dbccad33b36b13",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -166,7 +166,7 @@
       },
       "scenario": "css-features/main",
       "verification": {
-        "sourceHash": "b8132559cd04ac4b62cd087f3e2f1641d95501ee202b2d8d4ab7c04c6b71c7ed",
+        "sourceHash": "ca0984b62f35ab2ff0a2fac0dfba784792a3b91ccac861528724bc7fe443739d",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -185,7 +185,7 @@
       },
       "scenario": "elk-viewpager/main",
       "verification": {
-        "sourceHash": "68fe58361d93094841f346003403d3d20960e8786622e6895f1bdebd040a6050",
+        "sourceHash": "2a7e08e3c4a58b8be823fe715dbbde5af7dec10c52e66c9388b76f83bdff35ee",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -204,7 +204,7 @@
       },
       "scenario": "elk/main",
       "verification": {
-        "sourceHash": "df7d21b17722672e5e5b7db2ca19155d3a03690273760ba798efcd3aa2b8aff5",
+        "sourceHash": "788972109e4e43a28032a4616ee27b1a0021061e161f6377d4b36d008638b607",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -234,7 +234,7 @@
       },
       "scenario": "gallery/GalleryAutoScroll",
       "verification": {
-        "sourceHash": "37342c373ca5ffd1c64a63df7a490f96d1479e353649b5619a2884f3aee4c20d",
+        "sourceHash": "1c0662b750df8c863c21522a7d4c87ec313abbd78e7574c51c452a27e1e5ea60",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -249,7 +249,7 @@
       },
       "scenario": "gallery/GalleryComplete",
       "verification": {
-        "sourceHash": "648b2209324364c3a3ef64b2d4f8682700842773a2b29b4daab56d871f246a6c",
+        "sourceHash": "f5fc9913fdbc5730ce22542c5744360764041fccf6cbe6c67302e2dd21bec0a2",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -264,7 +264,7 @@
       },
       "scenario": "gallery/GalleryList",
       "verification": {
-        "sourceHash": "d3b87ba0ce518b97e696d3dcef8f0ef509d4c7252bbf3eee2b7957ad95fd6cac",
+        "sourceHash": "6549f1b7518c25686a26aecca7830bcf2640df9c70b02eca0c6b9a5257cf9a58",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -279,7 +279,7 @@
       },
       "scenario": "gallery/GalleryScrollbar",
       "verification": {
-        "sourceHash": "0bb7170d8453026d1b207482da581ebc5b7b1277b7258cec18b91c94845fa460",
+        "sourceHash": "a4c8845d7283d5c3e970025cf98548f846c394d272e6a591b0621a3395ad247e",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -294,7 +294,7 @@
       },
       "scenario": "gallery/GalleryScrollbarCompare",
       "verification": {
-        "sourceHash": "1b960f8ffd4a6d52890cc3f7a9d9c38765eb87d44522ce35fa0e31cc65a3cc91",
+        "sourceHash": "0e1418b81fc0851659cdf250cc10fd82bdddc0a9cea88e0a9a5f6890f2ff7b59",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -310,7 +310,7 @@
       },
       "scenario": "gallery/ImageCard",
       "verification": {
-        "sourceHash": "5b080bdfe6c9ae2443ee0e3ba5349994a5a3892dee946f2b17a614c33a0355e4",
+        "sourceHash": "b4d476a4ab8737ba7d3713c37e3de6371195d640444bd9c0e1dc4eccebb2df9d",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -326,7 +326,7 @@
       },
       "scenario": "gallery/LikeCard",
       "verification": {
-        "sourceHash": "df0df0d6b442d80252437e3f930bcdbc2cec745276d5ff8f6384cd13a40729b7",
+        "sourceHash": "d6f017c35b7cdc3ed6eb019b2959dfb2ba2a68287e6a8fdbd7a0417a84ae1d3f",
         "vdomWeb": "passed",
         "vaporWeb": "passed",
         "parity": "passed"
@@ -345,7 +345,7 @@
       },
       "scenario": "hackernews-css/main",
       "verification": {
-        "sourceHash": "cae6483b7a53afc0204892c2192b6c515fa1e14695a4060d1fc2b5d11152d25a",
+        "sourceHash": "4ed16e076a7ff14b3812fe04c60d4d1dd8f65ee982e2b4d9132999642bbdff1d",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -364,7 +364,7 @@
       },
       "scenario": "hackernews-tailwind/main",
       "verification": {
-        "sourceHash": "c65e8f6fda8bbcca9ecd5db08dd08b7d3490fffa14891e099314bf35ff39e1fc",
+        "sourceHash": "6d8ccd158fb395e384f1c7e12af71cc4dc237e39aba4eacdd78ea3cb60e1eef8",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
@@ -894,7 +894,7 @@
       },
       "scenario": "transition/transition",
       "verification": {
-        "sourceHash": "408977978f030cc9d1f0cf9b0d48f5e6a505d26a31f0bca99dd6d810228a00e5",
+        "sourceHash": "c2aec1e61fb5f7c295c34bf68fb81cedcdae3174fce70fd156a3a03205d6706a",
         "vdomWeb": "passed",
         "vaporWeb": "unsupported",
         "parity": "not-applicable"
