@@ -21,7 +21,6 @@
     "@vue/reactivity": "^3.5.0",
     "@vue/runtime-core": "^3.5.0",
     "@vue/runtime-dom": "^3.5.0",
-    "@vue/runtime-dom": "^3.5.0",
     "@vue/shared": "^3.5.0",
     "jsdom": "^25.0.0",
     "vitest": "^3.0.0"
