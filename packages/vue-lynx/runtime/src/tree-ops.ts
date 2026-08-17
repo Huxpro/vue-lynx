@@ -52,8 +52,12 @@ export function releaseSubtree(el: ShadowElement): void {
 export function resolveClass(el: ShadowElement): string {
   const parts: string[] = [];
   if (el._baseClass) parts.push(el._baseClass);
-  for (const cls of el._scopeClasses) parts.push(cls);
-  for (const cls of el._transitionClasses) parts.push(cls);
+  if (el._scopeClassSet) {
+    for (const cls of el._scopeClassSet) parts.push(cls);
+  }
+  if (el._transitionClassSet) {
+    for (const cls of el._transitionClassSet) parts.push(cls);
+  }
   return parts.join(' ');
 }
 
