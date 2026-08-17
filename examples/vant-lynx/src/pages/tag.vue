@@ -8,7 +8,7 @@ function onClose() { showTag.value = false; }
 
 <template>
   <DemoPage title="Tag">
-    
+
 
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Type</text>

@@ -9,7 +9,7 @@ const rate3 = ref(80);
 
 <template>
   <DemoPage title="Circle">
-    
+
 
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Basic Usage</text>

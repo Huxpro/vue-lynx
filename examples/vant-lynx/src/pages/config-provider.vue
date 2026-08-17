@@ -14,7 +14,7 @@ const customVars = {
 
 <template>
   <DemoPage title="ConfigProvider">
-    
+
 
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
 

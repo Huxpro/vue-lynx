@@ -6,7 +6,7 @@ import Button from '../components/Button/index.vue';
 
 <template>
   <DemoPage title="Space">
-    
+
 
     <view :style="{ padding: 16, display: 'flex', flexDirection: 'column' }">
       <text :style="{ fontSize: 14, color: '#969799', marginBottom: 12 }">Horizontal</text>

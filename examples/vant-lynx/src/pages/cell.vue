@@ -7,7 +7,7 @@ import Icon from '../components/Icon/index.vue';
 
 <template>
   <DemoPage title="Cell">
-    
+
 
     <view :style="{ padding: 0, display: 'flex', flexDirection: 'column' }">
       <!-- Basic Usage -->
