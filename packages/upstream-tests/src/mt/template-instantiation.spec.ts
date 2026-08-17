@@ -7,7 +7,7 @@
  * contiguous block the BG thread reserves for its shadow clone.
  */
 
-import { beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { OP } from 'vue-lynx/internal/ops';
 // Same-process module state as the pipeline set up by runtime-dom-setup.ts.
@@ -19,6 +19,10 @@ let ROOT = 0;
 beforeEach(() => {
   ROOT = nextId++;
   applyOps([OP.CREATE, ROOT, 'view']);
+});
+
+afterEach(() => {
+  vi.restoreAllMocks();
 });
 
 // <view class=row style=…><text class=cell>(text folded: "hi")</text><!></view>
@@ -37,6 +41,31 @@ function structure() {
 }
 
 describe('MT template instantiation', () => {
+  it('batches clone CSS IDs before granular typed list creation', () => {
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += 3;
+    const granular = nextId++;
+    const granularText = nextId++;
+
+    const setCSSId = vi.spyOn(globalThis, '__SetCSSId');
+    applyOps([
+      OP.REGISTER_TREE, tplId, structure(), 0,
+      OP.CLONE_TREE, tplId, base,
+      OP.CREATE, granular, 'list',
+      OP.CREATE_TEXT, granularText,
+    ]);
+
+    expect((elements.get(granular) as Element).tagName.toLowerCase()).toBe(
+      'list',
+    );
+    expect(setCSSId.mock.calls).toEqual([
+      [[elements.get(base), elements.get(base + 1)], 0],
+      [[elements.get(granular)], 0],
+      [[elements.get(granularText)], 0],
+    ]);
+  });
+
   it('instantiates a registered template with pre-order uids', () => {
     const tplId = nextTplId++;
     const base = nextId;
@@ -156,6 +185,51 @@ describe('MT sparse A2 template instantiation (#298)', () => {
       ],
     ];
   }
+
+  it('batches named and anonymous native handles in preorder', () => {
+    const tplId = nextTplId++;
+    const base = nextId;
+    nextId += 2;
+
+    const setCSSId = vi.spyOn(globalThis, '__SetCSSId');
+    applyOps([
+      OP.REGISTER_TREE, tplId, sparseStructure(), [0, 2],
+      OP.CLONE_TREE, tplId, base,
+    ]);
+
+    const root = elements.get(base) as Element;
+    expect(setCSSId.mock.calls).toEqual([[[root, ...root.childNodes], 0]]);
+  });
+
+  it('does not swallow clone or batched CSS initialization errors', () => {
+    const originalSetClasses = globalThis.__SetClasses;
+    const clone = (): void => {
+      const tplId = nextTplId++;
+      const base = nextId;
+      nextId += 2;
+      applyOps([
+        OP.REGISTER_TREE, tplId, sparseStructure(), [0, 2],
+        OP.CLONE_TREE, tplId, base,
+      ]);
+    };
+
+    vi.spyOn(globalThis, '__SetClasses').mockImplementation(
+      (node, value): void => {
+        if (value === 'static') throw new Error('static class rejection');
+        originalSetClasses(node, value);
+      },
+    );
+    const setCSSId = vi.spyOn(globalThis, '__SetCSSId');
+    expect(clone).toThrow('static class rejection');
+    expect(setCSSId).not.toHaveBeenCalled();
+
+    vi.restoreAllMocks();
+    const cssError = new Error('CSS initialization rejection');
+    vi.spyOn(globalThis, '__SetCSSId').mockImplementation(() => {
+      throw cssError;
+    });
+    expect(clone).toThrow(cssError);
+  });
 
   it('names only addressed slots; static skeleton stays anonymous', () => {
     const tplId = nextTplId++;

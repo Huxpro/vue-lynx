@@ -212,12 +212,17 @@ function applyStaticProps(el: LynxElement, props: TemplateNode[1]): void {
  * walk consumes their uid (keeping both sides' pre-order counters in
  * lockstep) but creates no Main Thread element — returns null.
  */
+interface TemplateInstantiationState {
+  value: number;
+  cssIdElements: LynxElement[];
+}
+
 function instantiateTemplateDense(
   node: TemplateNode,
   base: number,
-  counter: { value: number },
+  state: TemplateInstantiationState,
 ): { el: LynxElement; uid: number } | null {
-  const uid = base + counter.value++;
+  const uid = base + state.value++;
   const [tag, props, children] = node;
 
   if (tag === '#comment') return null;
@@ -231,13 +236,17 @@ function instantiateTemplateDense(
   } else {
     el = createTypedElement(tag, pageUniqueId);
   }
-  __SetCSSId([el], 0);
+  state.cssIdElements.push(el);
   elements.set(uid, el);
   installSelectorAttribute(uid, el);
   applyStaticProps(el, props);
 
   for (const childNode of children) {
-    const child = instantiateTemplateDense(childNode, base, counter);
+    const child = instantiateTemplateDense(
+      childNode,
+      base,
+      state,
+    );
     if (child) {
       __AppendElement(el, child.el);
       trackInsert(uid, child.uid);
@@ -258,11 +267,11 @@ function instantiateTemplateDense(
 function instantiateTemplateSparse(
   node: TemplateNode,
   base: number,
-  counter: { value: number },
+  state: TemplateInstantiationState,
   slotToSparse: ReadonlyMap<number, number>,
   parentUid: number | null,
 ): { el: LynxElement; uid: number | null } | null {
-  const slot = counter.value++;
+  const slot = state.value++;
   const [tag, props, children] = node;
 
   if (tag === '#comment') return null;
@@ -276,7 +285,7 @@ function instantiateTemplateSparse(
   } else {
     el = createTypedElement(tag, pageUniqueId);
   }
-  __SetCSSId([el], 0);
+  state.cssIdElements.push(el);
   applyStaticProps(el, props);
 
   const sparseIdx = slotToSparse.get(slot);
@@ -291,7 +300,7 @@ function instantiateTemplateSparse(
     const child = instantiateTemplateSparse(
       childNode,
       base,
-      counter,
+      state,
       slotToSparse,
       uid,
     );
@@ -509,17 +518,22 @@ function instantiateRegisteredTree(
   entry: RegisteredTree,
   baseUid: number,
 ): void {
+  const state: TemplateInstantiationState = {
+    value: 0,
+    cssIdElements: [],
+  };
   if (entry.slotToSparse) {
     instantiateTemplateSparse(
       entry.structure,
       baseUid,
-      { value: 0 },
+      state,
       entry.slotToSparse,
       null,
     );
   } else {
-    instantiateTemplateDense(entry.structure, baseUid, { value: 0 });
+    instantiateTemplateDense(entry.structure, baseUid, state);
   }
+  if (state.cssIdElements.length > 0) __SetCSSId(state.cssIdElements, 0);
 }
 
 function registeredTree(
