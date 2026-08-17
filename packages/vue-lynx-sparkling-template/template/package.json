@@ -20,7 +20,7 @@
     "@lynx-js/rspeedy": "^0.13.3",
     "@lynx-js/types": "^3.6.0",
     "@rsbuild/plugin-vue": "^1.2.6",
-    "sparkling-types": "~2.0.1",
+    "sparkling-types": "~2.0.0",
     "sparkling-app-cli": "~2.0.1",
     "typescript": "^5.9.3"
   },
