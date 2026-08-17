@@ -238,8 +238,22 @@ export class ShadowElement {
   // _transitionClasses: classes added/removed by <Transition> hooks.
   // The effective class sent to MT = base + scopes + transitions.
   _baseClass = '';
-  _scopeClasses: Set<string> = new Set();
-  _transitionClasses: Set<string> = new Set();
+  /** @internal */
+  _scopeClassSet: Set<string> | undefined = undefined;
+  /** @internal */
+  _transitionClassSet: Set<string> | undefined = undefined;
+  get _scopeClasses(): Set<string> {
+    return this._scopeClassSet ??= new Set();
+  }
+  set _scopeClasses(scopeClasses: Set<string>) {
+    this._scopeClassSet = scopeClasses;
+  }
+  get _transitionClasses(): Set<string> {
+    return this._transitionClassSet ??= new Set();
+  }
+  set _transitionClasses(transitionClasses: Set<string>) {
+    this._transitionClassSet = transitionClasses;
+  }
   // Generation counter bumped each time whenTransitionEnds() starts waiting
   // on this element. Lets a stale/superseded finish() (fired by the fallback
   // timeout after a newer transition has already started) detect it's stale
@@ -629,7 +643,9 @@ export class ShadowElement {
     } else {
       pushOp(OP.CREATE, clone.uid, this.tag);
       clone._baseClass = this._baseClass;
-      clone._scopeClasses = new Set(this._scopeClasses);
+      if (this._scopeClassSet && this._scopeClassSet.size > 0) {
+        clone._scopeClassSet = new Set(this._scopeClassSet);
+      }
       const resolvedClass = resolveClass(clone);
       if (resolvedClass) pushOp(OP.SET_CLASS, clone.uid, resolvedClass);
       if (Object.keys(this._style).length > 0) {
@@ -811,7 +827,7 @@ export class ShadowElement {
         setIdAttr(this, null);
       }
     } else if (key.startsWith('data-v-')) {
-      if (!this._scopeClasses.delete(key)) return;
+      if (!this._removeScopeClass(key)) return;
       if (!this._inert) {
         pushOp(OP.SET_CLASS, this.uid, resolveClass(this));
         scheduleFlush();
@@ -837,18 +853,36 @@ export class ShadowElement {
   }
 
   hasAttribute(key: string): boolean {
-    if (key.startsWith('data-v-')) return this._scopeClasses.has(key);
+    if (key.startsWith('data-v-')) {
+      return this._scopeClassSet?.has(key) ?? false;
+    }
     return this.getAttribute(key) != null;
   }
 
   /** Add a Vue scope token without allowing duplicate class emission. */
   _addScopeClass(scopeClass: string): void {
-    if (this._scopeClasses.has(scopeClass)) return;
-    this._scopeClasses.add(scopeClass);
+    const scopeClasses = this._scopeClassSet ??= new Set();
+    if (scopeClasses.has(scopeClass)) return;
+    scopeClasses.add(scopeClass);
     if (!this._inert) {
       pushOp(OP.SET_CLASS, this.uid, resolveClass(this));
       scheduleFlush();
     }
+  }
+
+  /** @internal */
+  _removeScopeClass(scopeClass: string): boolean {
+    return this._scopeClassSet?.delete(scopeClass) ?? false;
+  }
+
+  /** @internal */
+  _addTransitionClass(transitionClass: string): void {
+    (this._transitionClassSet ??= new Set()).add(transitionClass);
+  }
+
+  /** @internal */
+  _removeTransitionClass(transitionClass: string): boolean {
+    return this._transitionClassSet?.delete(transitionClass) ?? false;
   }
 
   // --- class / style -------------------------------------------------------------
@@ -1166,7 +1200,9 @@ function buildShadowClone(
   }
 
   clone._baseClass = proto._baseClass;
-  clone._scopeClasses = new Set(proto._scopeClasses);
+  if (proto._scopeClassSet && proto._scopeClassSet.size > 0) {
+    clone._scopeClassSet = new Set(proto._scopeClassSet);
+  }
   if (hasAnyKey(proto._style)) clone._style = { ...proto._style };
   if (proto._attrs) clone._attrs = new Map(proto._attrs);
   if (proto._id !== undefined) {
@@ -1250,7 +1286,9 @@ function buildShadowCloneSparse(
   }
 
   clone._baseClass = proto._baseClass;
-  clone._scopeClasses = new Set(proto._scopeClasses);
+  if (proto._scopeClassSet && proto._scopeClassSet.size > 0) {
+    clone._scopeClassSet = new Set(proto._scopeClassSet);
+  }
   if (hasAnyKey(proto._style)) clone._style = { ...proto._style };
   if (proto._attrs) clone._attrs = new Map(proto._attrs);
   if (proto._id !== undefined) {
