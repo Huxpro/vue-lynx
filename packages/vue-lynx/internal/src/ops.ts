@@ -115,6 +115,88 @@ export const IFR_MOUNT_APPS_GLOBAL = '__vueLynxIfrMountApps';
 /** MT executor registry for element-template create() functions. */
 export const TPL_EXECUTOR_REGISTRY_GLOBAL = '__vueLynxRegisterTemplate';
 
+// ---------------------------------------------------------------------------
+// Performance API integration — the BG/MT half of the contract that both
+// threads must agree on.
+//
+// A "Lynx Pipeline" is the attribution unit that runs from a rendering trigger
+// to the pixels it produces. The engine correlates framework work with the
+// pixel pipeline through a `PipelineOptions` object that the framework must
+// carry, unchanged, alongside the UI changes it describes — across the BG→MT
+// hop and into the `__FlushElementTree` call that submits them.
+//
+// See `plans/0817-1-performance-api-integration.md`.
+// ---------------------------------------------------------------------------
+
+/**
+ * Engine-generated correlation context for one Lynx Pipeline.
+ *
+ * Only `pipelineID` is engine-owned and immutable; the rest is framework
+ * metadata populated before `_onPipelineStart`. Unknown fields must survive
+ * the BG→MT transfer, which is why the whole object is forwarded rather than
+ * just the id.
+ */
+export interface PipelineOptions {
+  /** Engine-generated. Never invent, replace, or reuse this value. */
+  pipelineID: string;
+  /** What initiated the pipeline — see {@link PIPELINE_ORIGIN_UPDATE_BTS}. */
+  pipelineOrigin?: string;
+  /** Whether the engine should record detailed framework timing points. */
+  needTimestamps?: boolean;
+  /** Stable identifier of the framework that produced the changes. */
+  dsl?: string;
+  /** Framework rendering stage — `hydrate` or `update`. */
+  stage?: string;
+  [key: string]: unknown;
+}
+
+/** Framework-facing subset of the engine's `__FlushElementTree` options. */
+export interface FlushOptions {
+  triggerLayout?: boolean;
+  pipelineOptions?: PipelineOptions;
+  [key: string]: unknown;
+}
+
+/**
+ * Standard framework rendering timing keys.
+ *
+ * `diffVdom*` is named for ReactLynx's virtual-DOM diff. Vue Lynx records the
+ * same window — from the first tree mutation of a scheduler tick to the point
+ * the ops buffer is taken — for both the vdom renderer and Vapor, where no
+ * virtual DOM exists at all. Vue Lynx never emits `hydrateParseSnapshot*` (it
+ * re-renders rather than parsing a snapshot) or the deprecated `update*` keys.
+ */
+export type FrameworkTimingKey =
+  | 'diffVdomStart'
+  | 'diffVdomEnd'
+  | 'packChangesStart'
+  | 'packChangesEnd'
+  | 'parseChangesStart'
+  | 'parseChangesEnd'
+  | 'patchChangesStart'
+  | 'patchChangesEnd';
+
+/**
+ * The only pipeline origin a custom framework may assign. Every other origin
+ * in the Performance API is created by the engine or by native integrations,
+ * and `reactLynxHydrate` is ReactLynx-private.
+ */
+export const PIPELINE_ORIGIN_UPDATE_BTS = 'updateTriggeredByBts';
+
+/** `PipelineOptions.stage` values with a defined public meaning. */
+export const PIPELINE_STAGE_UPDATE = 'update';
+
+/** `PipelineOptions.dsl` reported by the virtual-DOM renderer. */
+export const DSL_VUE = 'vue';
+
+/**
+ * Attribute through which an application marks the pipeline it cares about.
+ * The engine reads it off the element and emits a `PipelineEntry` whose
+ * `identifier` is the flag; the framework's only job is to raise
+ * `needTimestamps` on the pipeline the flagged content rides in.
+ */
+export const TIMING_FLAG_ATTR = '__lynx_timing_flag';
+
 /**
  * Convert a Vue scope ID (data-v-xxxxx) to a Lynx cssId (numeric).
  * Vue uses 8-char hex hash strings.  Lynx engine uses int32 for cssId,

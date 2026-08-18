@@ -184,9 +184,13 @@ function recordAndApply(ops: unknown[]): void {
  * Run the deferred main-thread mount(s).  Called from `renderPage` right
  * after the page root element is created.  No-op unless {@link enableIFR}
  * ran and user code registered an app on this thread.
+ *
+ * @returns Whether a first screen was actually built on this thread. `false`
+ *   means `renderPage` leaves an empty page behind, so the engine's load
+ *   pipeline still belongs to whichever later flush submits real content.
  */
-export function runIfrRender(): void {
-  if (phase === 'inactive') return;
+export function runIfrRender(): boolean {
+  if (phase === 'inactive') return false;
 
   // renderPage may fire again in the same context (test envs, reload paths);
   // start every render from a clean slate.
@@ -198,7 +202,7 @@ export function runIfrRender(): void {
   const trigger = (globalThis as Record<string, unknown>)[
     IFR_MOUNT_APPS_GLOBAL
   ] as (() => void) | undefined;
-  if (!trigger) return;
+  if (!trigger) return false;
 
   try {
     // Mounting is fully synchronous: Vue renders, the runtime's flush hook
@@ -207,6 +211,9 @@ export function runIfrRender(): void {
     inSyncRender = true;
     trigger();
     phase = 'rendered';
+    // An app that rendered nothing (opted out of the IFR mount, or rendered
+    // an empty tree) leaves the same empty page a non-IFR build would.
+    return recordedBatches.length > 0;
   } catch (err) {
     // A failed first-screen render must not take down renderPage — tear down
     // whatever was partially applied and let the background thread render
@@ -217,6 +224,7 @@ export function runIfrRender(): void {
     );
     teardownIfrTree();
     phase = 'hydrated';
+    return false;
   } finally {
     inSyncRender = false;
   }
