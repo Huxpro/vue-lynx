@@ -6,6 +6,9 @@ import VBindCSS from './VBindCSS.vue'
 import VBindThreads from './VBindThreads.vue'
 import CSSVarsWorkaround from './CSSVarsWorkaround.vue'
 import ImportedCSS from './ImportedCSS.vue'
+import DeepSelector from './DeepSelector.vue'
+import SlottedSelector from './SlottedSelector.vue'
+import GlobalSelector from './GlobalSelector.vue'
 </script>
 
 <template>
@@ -37,5 +40,17 @@ import ImportedCSS from './ImportedCSS.vue'
 
     <!-- 6. Imported .css file — WORKS -->
     <ImportedCSS />
+
+    <!-- 7. :deep() in <style scoped> — #165 / PR #379 -->
+    <DeepSelector />
+
+    <!-- 8. :slotted() in <style scoped> — #165 / PR #379 -->
+    <SlottedSelector />
+
+    <!-- 9. :global() in <style scoped> — #164 / PR #381 -->
+    <GlobalSelector />
+    <!-- Probe styled ONLY by GlobalSelector's :global() rule. It lives here,
+         outside that component, so color proves the rule escaped its scope. -->
+    <text class="global-probe">:global() — should be TEAL if :global() works</text>
   </scroll-view>
 </template>
