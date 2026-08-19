@@ -1,13 +1,12 @@
 /**
  * Scoped CSS tests — verify the cssId pipeline:
  *
- * 1. nodeOps.setScopeId() → SET_SCOPE_ID op with correct numeric cssId
- * 2. Full component render with __scopeId → ops reach main thread
+ * 1. nodeOps.setScopeId() → composable scope classes
+ * 2. Full component render with __scopeId → class ops reach main thread
  *
  * These tests capture the integration points between:
- * - scope-bridge.ts (scopeIdToCssId conversion)
- * - node-ops.ts (setScopeId → pushOp)
- * - ops-apply.ts (SET_SCOPE_ID → __SetCSSId)
+ * - node-ops.ts (setScopeId → resolved class state)
+ * - tree-ops.ts (base + scope + transition class composition)
  *
  * Build-time CSS wrapping (@cssId in extracted CSS) is verified by the
  * examples/css-features pipeline build in CI, not here.
@@ -17,93 +16,48 @@ import { describe, it, expect } from 'vitest';
 import {
   h,
   defineComponent,
-  nextTick,
   registerElementTemplate,
 } from 'vue-lynx';
 import { OP } from '../../../vue-lynx/internal/src/ops.js';
-import { applyScopeId, nodeOps } from '../../../vue-lynx/runtime/src/node-ops.js';
+import { nodeOps } from '../../../vue-lynx/runtime/src/node-ops.js';
 import { takeOps } from '../../../vue-lynx/runtime/src/ops.js';
 import { ShadowElement } from '../../../vue-lynx/runtime/src/shadow-element.js';
-import { scopeIdToCssId } from '../../../vue-lynx/runtime/src/scope-bridge.js';
+import { resolveClass } from '../../../vue-lynx/runtime/src/tree-ops.js';
 import { render } from '../index.js';
 
 // ---------------------------------------------------------------------------
-// Low-level: nodeOps.setScopeId → ops buffer
+// Low-level: nodeOps.setScopeId → composable class state
 // ---------------------------------------------------------------------------
 
-describe('SET_SCOPE_ID (nodeOps)', () => {
-  it('pushes SET_SCOPE_ID op with numeric cssId', () => {
+describe('scoped CSS classes (nodeOps)', () => {
+  it('adds a scope token to the resolved class', () => {
     const el = new ShadowElement('view', 99);
 
-    nodeOps.setScopeId!(el,'data-v-8f634878');
+    nodeOps.setScopeId!(el, 'data-v-8f634878');
 
     const ops = takeOps();
-    expect(ops[0]).toBe(OP.SET_SCOPE_ID);
+    expect(ops[0]).toBe(OP.SET_CLASS);
     expect(ops[1]).toBe(99); // element id
-    // 0x8f634878 & 0x7fffffff = 258164856
-    expect(ops[2]).toBe(258164856);
+    expect(ops[2]).toBe('data-v-8f634878');
+    expect(el._scopeClasses).toEqual(new Set(['data-v-8f634878']));
   });
 
-  it('cssId conversion matches between scope-bridge and plugin formula', () => {
-    // The build-time plugin uses the same formula:
-    //   Number.parseInt(hash, 16) & 0x7fffffff
-    // This test ensures the runtime conversion stays in sync.
-    const cases = [
-      ['data-v-8f634878', Number.parseInt('8f634878', 16) & 0x7fffffff],
-      ['data-v-00000001', 1],
-      ['data-v-7fffffff', 0x7fffffff],
-      // High bit set — mask must clamp to positive int32
-      ['data-v-ffffffff', Number.parseInt('ffffffff', 16) & 0x7fffffff],
-    ] as const;
-
-    for (const [scopeId, expected] of cases) {
-      expect(scopeIdToCssId(scopeId)).toBe(expected);
-    }
-  });
-
-  it('keeps the first scope when Vue applies several to one element', () => {
+  it('composes and deduplicates multiple scope tokens', () => {
     const el = new ShadowElement('view', 10);
+    el._baseClass = 'box';
 
-    // Vue calls setScopeId once per scope on the element: its own scope
-    // first, then the scope of every ancestor component whose subtree root
-    // it is. Lynx elements carry exactly one cssId, so only the first (the
-    // owning component's) survives — otherwise the component's own scoped
-    // rules stop matching its root element (issue #317).
     nodeOps.setScopeId!(el, 'data-v-aaa00001');
     nodeOps.setScopeId!(el, 'data-v-bbb00002');
-
-    const ops = takeOps();
-    expect(ops).toEqual([
-      OP.SET_SCOPE_ID,
-      10,
-      scopeIdToCssId('data-v-aaa00001'),
-    ]);
-  });
-
-  it('applyScopeId overrides an existing association', () => {
-    const el = new ShadowElement('view', 11);
-
     nodeOps.setScopeId!(el, 'data-v-aaa00001');
-    // The page root is claimed and released by <page> wrappers, so it must
-    // stay re-scopable (see Page.ts).
-    applyScopeId(el, 'data-v-bbb00002');
-    applyScopeId(el, '');
 
     const ops = takeOps();
-    expect(ops).toEqual([
-      OP.SET_SCOPE_ID, 11, scopeIdToCssId('data-v-aaa00001'),
-      OP.SET_SCOPE_ID, 11, scopeIdToCssId('data-v-bbb00002'),
-      OP.SET_SCOPE_ID, 11, 0,
-    ]);
-  });
-
-  it('applyScopeId skips a redundant re-application', () => {
-    const el = new ShadowElement('view', 12);
-
-    applyScopeId(el, 'data-v-aaa00001');
-    applyScopeId(el, 'data-v-aaa00001');
-
-    expect(takeOps()).toHaveLength(3);
+    expect(ops).toHaveLength(6);
+    expect(el._scopeClasses).toEqual(
+      new Set(['data-v-aaa00001', 'data-v-bbb00002']),
+    );
+    expect(resolveClass(el)).toBe(
+      'box data-v-aaa00001 data-v-bbb00002',
+    );
   });
 });
 
@@ -111,8 +65,8 @@ describe('SET_SCOPE_ID (nodeOps)', () => {
 // Full pipeline: component with __scopeId → dual-thread render
 // ---------------------------------------------------------------------------
 
-describe('SET_SCOPE_ID (full pipeline)', () => {
-  it('component with __scopeId renders and applies cssId', () => {
+describe('scoped CSS classes (full pipeline)', () => {
+  it('component with __scopeId renders and applies its scope class', () => {
     const Scoped = defineComponent({
       __scopeId: 'data-v-8f634878',
       render() {
@@ -127,8 +81,7 @@ describe('SET_SCOPE_ID (full pipeline)', () => {
     // Element should be rendered through the full pipeline
     const view = container.querySelector('.scoped-box');
     expect(view).not.toBeNull();
-    // The SET_SCOPE_ID op was flushed to main thread during render.
-    // If __SetCSSId threw, the render would have failed.
+    expect(view!.classList).toContain('data-v-8f634878');
   });
 
   it('child component inside scoped parent renders correctly', () => {
@@ -177,17 +130,9 @@ describe('SET_SCOPE_ID (full pipeline)', () => {
 });
 
 // ---------------------------------------------------------------------------
-// Regression: a component root must stay in its OWN CSS fragment (#317)
-//
-// The testing environment records the last `__SetCSSId` on the element as
-// `cssId = "<entry>:<n>"`, which is exactly what Lynx's CSS engine matches
-// scoped rules against.
+// Regression: a component root must retain its own scope class (#317).
+// Parent scope classes are composable and may coexist on the same root.
 // ---------------------------------------------------------------------------
-
-/** cssId string the testing environment records for a Vue scope id. */
-function cardCssId(scopeId: string): string {
-  return `__Card__:${scopeIdToCssId(scopeId)}`;
-}
 
 const CHILD_SCOPE = 'data-v-11111111';
 const PARENT_SCOPE = 'data-v-22222222';
@@ -209,15 +154,14 @@ describe('component root scope (#317)', () => {
     });
 
     const { container } = render(Parent);
-    // Static class still reaches the element…
-    const toast = container.querySelector('.toast') as { cssId?: string };
+    const toast = container.querySelector('.toast');
     expect(toast).not.toBeNull();
-    // …and the element stays in the child's fragment, so the child's own
-    // `<style scoped>` rules for `.toast` still match it.
-    expect(toast.cssId).toBe(cardCssId(CHILD_SCOPE));
-    expect(
-      (container.querySelector('.parent') as { cssId?: string }).cssId,
-    ).toBe(cardCssId(PARENT_SCOPE));
+    expect(toast!.classList).toContain(CHILD_SCOPE);
+    expect(toast!.classList).toContain(PARENT_SCOPE);
+
+    const parent = container.querySelector('.parent');
+    expect(parent!.classList).toContain(PARENT_SCOPE);
+    expect(parent!.classList).not.toContain(CHILD_SCOPE);
   });
 
   it('scopes a nested component root to its own component, not its user', () => {
@@ -245,8 +189,10 @@ describe('component root scope (#317)', () => {
     });
 
     const { container } = render(Parent);
-    expect((container.querySelector('.leaf') as { cssId?: string }).cssId)
-      .toBe(cardCssId(GRANDCHILD_SCOPE));
+    const leaf = container.querySelector('.leaf');
+    expect(leaf!.classList).toContain(GRANDCHILD_SCOPE);
+    expect(leaf!.classList).toContain(CHILD_SCOPE);
+    expect(leaf!.classList).toContain(PARENT_SCOPE);
   });
 
   it('keeps slot content in the scope of the component that authored it', () => {
@@ -267,23 +213,22 @@ describe('component root scope (#317)', () => {
     });
 
     const { container } = render(Parent);
-    expect((container.querySelector('.toast') as { cssId?: string }).cssId)
-      .toBe(cardCssId(CHILD_SCOPE));
-    // Slot content is created by the parent's render, so it belongs to the
-    // parent's fragment.
-    expect((container.querySelector('.slotted') as { cssId?: string }).cssId)
-      .toBe(cardCssId(PARENT_SCOPE));
+    const toast = container.querySelector('.toast');
+    expect(toast!.classList).toContain(CHILD_SCOPE);
+    expect(toast!.classList).toContain(PARENT_SCOPE);
+
+    // Slot content is created by the parent's render, so it retains the
+    // parent's scope class.
+    const slotted = container.querySelector('.slotted');
+    expect(slotted!.classList).toContain(PARENT_SCOPE);
   });
 
   it('keeps the child scope on a lowered element-template root', () => {
-    // The compile-time lowering bakes `__SetCSSId` into the template's
-    // create(); the runtime still emits SET_SCOPE_ID for the vnode, so the
-    // lowered root must resolve its scope exactly like the vdom path.
+    // The runtime applies composable scope classes to the lowered root just
+    // like it does for the VDOM path.
     const tpl = registerElementTemplate('scoped-317', [], (P: number) => {
       const e0 = __CreateView(P);
-      __SetCSSId([e0], scopeIdToCssId(CHILD_SCOPE));
       const e1 = __CreateText(P);
-      __SetCSSId([e1], scopeIdToCssId(CHILD_SCOPE));
       __SetAttribute(e1, 'text', 'Toast');
       __AppendElement(e0, e1);
       return [e0];
@@ -304,8 +249,9 @@ describe('component root scope (#317)', () => {
     });
 
     const { container } = render(Parent);
-    expect((container.querySelector('.toast') as { cssId?: string }).cssId)
-      .toBe(cardCssId(CHILD_SCOPE));
+    const toast = container.querySelector('.toast');
+    expect(toast!.classList).toContain(CHILD_SCOPE);
+    expect(toast!.classList).toContain(PARENT_SCOPE);
   });
 
   it('falls back to the user scope for an unscoped child root', () => {
@@ -325,8 +271,7 @@ describe('component root scope (#317)', () => {
     });
 
     const { container } = render(Parent);
-    expect(
-      (container.querySelector('.plain-root') as { cssId?: string }).cssId,
-    ).toBe(cardCssId(PARENT_SCOPE));
+    expect(container.querySelector('.plain-root')!.classList)
+      .toContain(PARENT_SCOPE);
   });
 });

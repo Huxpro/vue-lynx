@@ -8,16 +8,18 @@
  * The vue-lynx compiler transform lowers eligible template subtrees — plain
  * elements with static structure — into "element templates": a `create()`
  * function of straight-line PAPI calls plus a list of *holes* (interior
- * nodes carrying a dynamic prop, event, or text binding). The compiled
- * render function then produces a single vnode of type
+ * nodes carrying a dynamic prop, event, text binding, or element slot).
+ * The compiled render function then produces a single vnode of type
  * `__vlx-tpl:<id>` with props `__h0…__hN` instead of one vnode per node.
  *
  * At runtime:
  *  - mounting the vnode emits ONE `INSTANTIATE_TEMPLATE` op; the main thread
  *    builds the whole subtree natively via the registered create() function
  *  - hole ids are allocated deterministically right after the root id, so
- *    every later update flows through the ordinary SET_* ops with zero new
- *    protocol
+ *    every later attr/text update flows through the ordinary SET_* ops
+ *  - element-slot holes (`'#slot'`) are wrapper placeholders; their content
+ *    (v-if / v-for / component VNodes carried as `__hN` props) is mounted
+ *    into the wrapper via INSERT/REMOVE_TEMPLATE_SLOT (slot-index addressing)
  *
  * This module is the background-thread (and IFR main-thread) side of the
  * registry. The generated code registers through the
@@ -39,10 +41,11 @@ import {
   TPL_EXECUTOR_REGISTRY_GLOBAL,
   TPL_HOLE_PREFIX,
   TPL_REGISTER_GLOBAL,
+  TPL_SLOT_KEY,
   TPL_TYPE_PREFIX,
 } from 'vue-lynx/internal/ops';
 
-export { TPL_HOLE_PREFIX, TPL_TYPE_PREFIX };
+export { TPL_HOLE_PREFIX, TPL_SLOT_KEY, TPL_TYPE_PREFIX };
 
 /** create(pageUniqueId) → [root, hole0, hole1, …] native handles */
 export type ElementTemplateCreate = (
@@ -50,10 +53,17 @@ export type ElementTemplateCreate = (
 ) => unknown[];
 
 /**
- * Template id → hole keys: the original prop key on each interior node, or
- * the special key `'#text'` for a text-content binding.
+ * Template id → hole keys: the original prop key on each interior node,
+ * `'#text'` for a text-content binding, or `TPL_SLOT_KEY` (`'#slot'`) for
+ * an element-slot (dynamic subtree insertion point).
  */
 const templateHoles = new Map<string, string[]>();
+
+type ExecutorRegister = (
+  id: string,
+  create: ElementTemplateCreate,
+  holes?: string[],
+) => void;
 
 /**
  * Register an element template. Called from compiler-generated code (hoisted
@@ -77,8 +87,8 @@ export function registerElementTemplate(
   // IFR and interpreter-only bundles; absent on the background thread).
   const register = (globalThis as Record<string, unknown>)[
     TPL_EXECUTOR_REGISTRY_GLOBAL
-  ] as ((id: string, create: ElementTemplateCreate) => void) | undefined;
-  register?.(id, create);
+  ] as ExecutorRegister | undefined;
+  register?.(id, create, holes);
   return id;
 }
 

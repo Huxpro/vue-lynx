@@ -139,7 +139,7 @@ export function dumpOps(): NodeOp[] {
 function makeTestElement(tag: string): TestElement {
   const se = new ShadowElement(tag);
   const node: TestElement = {
-    id: se.id,
+    id: se.uid,
     type: TestNodeTypes.ELEMENT,
     tag,
     props: {},
@@ -167,7 +167,7 @@ function makeTestElement(tag: string): TestElement {
 function makeTestText(text: string): TestText {
   const se = new ShadowElement('#text');
   const node: TestText = {
-    id: se.id,
+    id: se.uid,
     type: TestNodeTypes.TEXT,
     text,
     _se: se,
@@ -186,7 +186,7 @@ function makeTestText(text: string): TestText {
 function makeTestComment(text: string): TestComment {
   const se = new ShadowElement('#comment');
   const node: TestComment = {
-    id: se.id,
+    id: se.uid,
     type: TestNodeTypes.COMMENT,
     text,
     _se: se,
@@ -259,8 +259,8 @@ function insert(
     parentNode: parent,
     refNode: ref,
   });
-  // Use ShadowElement's insertBefore which handles detach internally
-  parent._se.insertBefore(child._se, ref ? ref._se : null);
+  // Raw shadow-tree linking (no MT ops in the in-memory adapter).
+  parent._se._link(child._se, ref ? ref._se : null);
 }
 
 function cleanupTestIds(node: TestNode): void {
@@ -285,7 +285,7 @@ function remove(child: TestNode): void {
       parentNode: parent,
     });
     cleanupTestIds(child);
-    parentSE.removeChild(child._se);
+    parentSE._unlink(child._se);
   }
 }
 
@@ -299,11 +299,11 @@ function setElementText(el: TestElement, text: string): void {
   while (el._se.firstChild) {
     const child = getTestNode(el._se.firstChild);
     cleanupTestIds(child);
-    el._se.removeChild(child._se);
+    el._se._unlink(child._se);
   }
   if (text) {
     const textNode = makeTestText(text);
-    el._se.insertBefore(textNode._se, null);
+    el._se._link(textNode._se, null);
   }
 }
 

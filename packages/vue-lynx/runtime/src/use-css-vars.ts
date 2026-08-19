@@ -23,7 +23,7 @@ const SF_COMPONENT = 6; // STATEFUL_COMPONENT (4) | FUNCTIONAL_COMPONENT (2)
 const SF_ARRAY_CHILDREN = 16;
 
 function applyVarsToEl(el: ShadowElement, vars: Record<string, string>): void {
-  const style: Record<string, unknown> = { ...el._style };
+  const style: Record<string, unknown> = { ...el._getStyle() };
   for (const key in vars) {
     // The SFC compiler passes keys WITHOUT the leading '--' (e.g. "v33993c7f").
     // We add '--' here, matching what @vue/runtime-dom does with el.style.setProperty().
@@ -31,7 +31,7 @@ function applyVarsToEl(el: ShadowElement, vars: Record<string, string>): void {
   }
   // Preserve vShow hidden state
   const effective = el._vShowHidden ? { ...style, display: 'none' } : style;
-  pushOp(OP.SET_STYLE, el.id, effective);
+  pushOp(OP.SET_STYLE, el.uid, effective);
   scheduleFlush();
 }
 

@@ -1,0 +1,135 @@
+import { Badge } from '@theme';
+
+# Vapor Mode <Badge text="v0.6" type="tip" />
+
+[Vapor mode](https://github.com/vuejs/core/releases) 是 Vue 3.6 的编译式渲染
+模式：模板直接编译为操作元素的代码，没有 Virtual DOM，也没有逐组件 diff。
+Vue Lynx 把它跑在 Lynx 双线程架构上。更新路径上，后台线程相对 VDOM 快
+**5.8–9.8×**（端到端 2.1–6.3×），创建持平，跨线程流量约减半，代价是 gzip
+包体约 **+26%**——完整数据（含可交互 playground；ReactLynx 作参考系）见
+[框架测试](/zh/guide/benchmark-vapor)。
+
+:::warning 实验性
+Vapor mode 本身**尚未进入任何 Vue 稳定版本**——截至 2026 年年中，它只发布在
+Vue 3.6 beta / prerelease 线中。Vue Lynx 固定 `vue@3.6.0-beta.17`，并继承
+这一状态。
+:::
+
+## 开启 Vapor mode
+
+Vapor 是**以应用为粒度的构建期决策**。开启需要改三处：插件开关、
+`vue-lynx/vapor` 入口，以及每个 `<script setup>` 上的 `vapor` 属性：
+
+```ts title="lynx.config.ts"
+import { defineConfig } from '@lynx-js/rspeedy'
+import { pluginVueLynx } from 'vue-lynx/plugin'
+
+export default defineConfig({
+  plugins: [
+    pluginVueLynx({
+      vapor: true, // [!code highlight]
+    }),
+  ],
+})
+```
+
+```ts title="src/index.ts"
+import { createApp } from 'vue-lynx/vapor' // [!code highlight]
+import App from './App.vue'
+
+createApp(App).mount()
+```
+
+`import { ref } from 'vue'` 照常工作——`vapor: true` 时插件把 `'vue'` alias
+到 `vue-lynx/vapor`。该入口是 Vapor 运行时 + Lynx DOM 兼容层（不是默认的
+`vue-lynx` VDOM 入口）。完整导出列表见
+[`vue-lynx/vapor` API 参考](/zh/guide/api/vapor/)。
+
+下面是仓库里的 Vapor 示例——同样三处改动，嵌在本页可直接运行：
+
+<Go example="vapor" defaultFile="src/App.vue" defaultEntryName="main" />
+
+本站许多示例可用导航栏的 **VDOM | Vapor** 切换（以及示例底栏徽标）在两种
+渲染器间翻转。覆盖范围与不支持原因见
+[example 支持附录](#example-support)。
+
+## 首屏直出
+
+Vapor 在 **0.6** 直接支持
+[首屏直出（IFR）](/zh/guide/ifr)——在后台线程启动前、于 `loadTemplate` 期间
+绘制同步内容。与 `vapor` 一起打开即可：
+
+```ts title="lynx.config.ts"
+pluginVueLynx({
+  vapor: true,
+  enableIFR: true, // [!code highlight]
+})
+```
+
+Vapor IFR 走已编译的 `template()` / 树协议（不用 VDOM 元素模板）。产品论点与开启方式见
+[IFR](/zh/guide/ifr#开启)；实测取舍见
+[IFR 性能数据](/zh/guide/ifr-benchmarks)。
+
+<span id="当前限制" />
+<span id="current-limitations" />
+
+## 限制
+
+### 与上游 Vapor 一致
+
+与 [Vue Vapor 的约束](https://github.com/vuejs/core/releases)一致：
+
+- **无 Options API** —— 仅 `<script setup>`；`getCurrentInstance()` 返回
+  `null`。
+- **上游尚未提供：** `<Transition>`、`<Teleport>`、`<KeepAlive>`、
+  `<Suspense>`，以及其他 VDOM 专属 API（`h()` 等）。它们在
+  `vue-lynx/vapor` 上不存在，误用会在构建期失败。
+
+Lynx 也没有 HTML 字符串表面，因此 `v-html` 与 SSR / HTML hydration 不可用
+（与 VDOM 模式的 Vue Lynx 相同）。双线程
+[IFR hydration](/zh/guide/ifr#hydration) 是另一套机制。
+
+### 一个应用，一种模式
+
+Vue Lynx 不支持在同一应用里混用 VDOM 与 Vapor（`vaporInteropPlugin` 尚未
+接入——上游将其绑在浏览器 DOM renderer 上）。模式是严格二选一，因此发布两个
+纯入口，而不是单入口靠 tree-shaking 裁剪：
+
+| 入口 | 内容 | 用途 |
+|---|---|---|
+| `vue-lynx` | VDOM renderer + Vue runtime-core | 常规（默认）应用 |
+| `vue-lynx/vapor` | Vapor 运行时 + Lynx DOM 兼容层 | Vapor 应用 |
+
+## 附录
+
+<span id="how-it-works-on-lynx" />
+
+### 在 Lynx 上的工作原理
+
+上游 `@vue/runtime-vapor` 面向 DOM。Vue Lynx 在后台线程提供 DOM 兼容的
+ShadowElement 面；编译后的 Vapor 代码调用常规 DOM API，再发出与 VDOM 模式
+相同的 ops 流到主线程：
+
+```
+vapor 组件 → vue-lynx/vapor → @vue/runtime-vapor
+  → DOM 兼容 ShadowElement → ops → 主线程
+```
+
+Lynx 侧要点：模板字符串变成可克隆原型；关闭文档级事件委托（逐元素注册）；
+`@tap.stop` 映射为 `catchEvent`；scoped CSS 用 scope class 而非 `data-v-*`。
+
+为压低跨线程克隆成本，Vue Lynx 增加两条 op：
+
+- `REGISTER_TREE` —— 每模板一次静态结构
+- `CLONE_TREE` —— 每实例一条（两端按同一规则分配 uid）
+
+创建 1k 行时，流量从约 17k ops / 327 KB（VDOM）降到约 7k ops / 160 KB（Vapor）。
+
+<span id="example-support" />
+
+### Example 支持
+
+本站每个示例都针对两种渲染器校验。不支持的 reason code 对应上方
+[限制](#current-limitations)。
+
+<VaporSupportMatrix />

@@ -11,10 +11,31 @@ import {
 } from '@shikijs/transformers';
 
 const PUBLISH_URL = 'https://vue.lynxjs.org/';
-
 const apiSidebar = JSON.parse(
   fs.readFileSync(path.join(__dirname, 'api-sidebar.json'), 'utf-8'),
 );
+
+/**
+ * `/__example-harness` exists only for the example-harness Chromium
+ * verification run (verify-web.mjs loads it with ?bundle=…). It must keep
+ * building — the double underscore deliberately dodges rspress's `_*`
+ * exclude convention — but it is not user content: keep it out of the
+ * search index.
+ */
+const excludeHarnessFromSearch = {
+  name: 'vue-lynx:exclude-harness-from-search',
+  // `pages` here is the same array that becomes the runtime page data, so
+  // entries must not be removed (that breaks the route's SSG) — blank the
+  // searchable fields instead so the page can never match a query.
+  modifySearchIndexData(pages: Array<{ routePath: string; title?: string; content?: string }>) {
+    for (const page of pages) {
+      if (page.routePath.includes('__example-harness')) {
+        page.title = '';
+        page.content = '';
+      }
+    }
+  },
+};
 
 /** Prefix all `link` values in sidebar items with the given prefix (e.g. "/zh"). */
 function prefixSidebarLinks(
@@ -59,7 +80,9 @@ export default defineConfig({
     },
   ],
   plugins: [
-    pluginLlms(),
+    pluginLlms({
+      exclude: ({ page }) => page.routePath.includes('__example-harness'),
+    }),
     pluginRss({
       siteUrl: PUBLISH_URL,
       feed: [
@@ -85,6 +108,7 @@ export default defineConfig({
         },
       ],
     }),
+    excludeHarnessFromSearch,
   ],
   markdown: {
     shiki: {
@@ -99,6 +123,15 @@ export default defineConfig({
       path.join(__dirname, 'src/components/technique-video/TechniqueVideo.tsx'),
       path.join(__dirname, 'src/components/BlogList.tsx'),
       path.join(__dirname, 'src/components/BlogHeader.tsx'),
+      path.join(
+        __dirname,
+        'src/components/home-comps/showcase/ScaleCompare.tsx',
+      ),
+      path.join(__dirname, 'src/components/go/VaporSupportMatrix.tsx'),
+      path.join(__dirname, 'src/components/bench-playground/BenchPlayground.tsx'),
+      path.join(__dirname, 'src/components/bench-artifact/BenchArtifactFrame.tsx'),
+      path.join(__dirname, 'src/components/example-harness/ExampleHarness.tsx'),
+      path.join(__dirname, 'src/components/technique-video/TechniqueVideo.tsx'),
       path.join(
         __dirname,
         'src/components/home-comps/showcase/ScaleCompare.tsx',
@@ -131,7 +164,12 @@ export default defineConfig({
         { text: 'What is VueLynx?', link: '/guide/introduction' },
         { text: 'Vue Compatibility', link: '/guide/vue-compatibility' },
         { text: 'Main Thread Script', link: '/guide/main-thread-script' },
-        { text: 'Instant First-Frame Rendering (IFR)', link: '/guide/ifr', tag: 'v0.5' },
+        { text: 'Vapor Mode', link: '/guide/vapor-mode', context: 'vapor' },
+        {
+          text: 'Instant First-Frame Rendering (IFR)',
+          link: '/guide/ifr',
+          context: 'vapor',
+        },
         { text: 'Tutorial: Product Gallery', link: '/guide/tutorial-gallery' },
         { text: 'Tutorial: Product Swiper', link: '/guide/tutorial-swiper' },
         { text: 'Playground: Touch FX', link: '/guide/touch-fx' },
@@ -163,6 +201,27 @@ export default defineConfig({
           dividerType: 'solid',
         },
         {
+          sectionHeaderText: 'Performance',
+        },
+        {
+          text: 'Unified Matrix',
+          link: '/guide/benchmark-unified',
+          context: 'vapor',
+        },
+        {
+          text: 'Framework bench',
+          link: '/guide/benchmark-vapor',
+          context: 'vapor',
+        },
+        {
+          text: 'IFR Benchmarks',
+          link: '/guide/ifr-benchmarks',
+          context: 'vapor',
+        },
+        {
+          dividerType: 'solid',
+        },
+        {
           sectionHeaderText: 'API Reference',
         },
         ...apiSidebar,
@@ -178,7 +237,8 @@ export default defineConfig({
         { text: '什么是 VueLynx？', link: '/zh/guide/introduction' },
         { text: 'Vue 兼容性', link: '/zh/guide/vue-compatibility' },
         { text: '主线程脚本', link: '/zh/guide/main-thread-script' },
-        { text: '首屏直出（IFR）', link: '/zh/guide/ifr', tag: 'v0.5' },
+        { text: 'Vapor Mode', link: '/zh/guide/vapor-mode', context: 'vapor' },
+        { text: '首屏直出（IFR）', link: '/zh/guide/ifr', context: 'vapor' },
         { text: '教程：商品画廊', link: '/zh/guide/tutorial-gallery' },
         { text: '教程：商品轮播', link: '/zh/guide/tutorial-swiper' },
         { text: '玩一玩：触摸特效', link: '/zh/guide/touch-fx' },
@@ -206,6 +266,27 @@ export default defineConfig({
         { text: 'HackerNews', link: '/zh/guide/hackernews' },
         { text: 'AI Chat', link: '/zh/guide/ai-chat' },
         { text: 'Elk（Mastodon 客户端）', link: '/zh/guide/elk' },
+        {
+          dividerType: 'solid',
+        },
+        {
+          sectionHeaderText: '性能',
+        },
+        {
+          text: '统一基准矩阵',
+          link: '/zh/guide/benchmark-unified',
+          context: 'vapor',
+        },
+        {
+          text: '框架测试',
+          link: '/zh/guide/benchmark-vapor',
+          context: 'vapor',
+        },
+        {
+          text: 'IFR 基准测试',
+          link: '/zh/guide/ifr-benchmarks',
+          context: 'vapor',
+        },
         {
           dividerType: 'solid',
         },

@@ -1,0 +1,958 @@
+{
+  "variants": [
+    {
+      "id": "vdom",
+      "mode": "vdom",
+      "ifr": "0",
+      "et": "0",
+      "label": "VDOM"
+    },
+    {
+      "id": "vdom-ifr",
+      "mode": "vdom",
+      "ifr": "1",
+      "et": "0",
+      "label": "VDOM+IFR"
+    },
+    {
+      "id": "vdom-ifr-et",
+      "mode": "vdom",
+      "ifr": "1",
+      "et": "1",
+      "label": "VDOM+IFR+ET"
+    },
+    {
+      "id": "vapor",
+      "mode": "vapor",
+      "ifr": "0",
+      "et": "0",
+      "label": "Vapor"
+    },
+    {
+      "id": "vapor-ifr",
+      "mode": "vapor",
+      "ifr": "1",
+      "et": "0",
+      "label": "Vapor+IFR"
+    }
+  ],
+  "scales": [
+    {
+      "tag": "1k",
+      "nCards": 125
+    },
+    {
+      "tag": "3k",
+      "nCards": 375
+    },
+    {
+      "tag": "5k",
+      "nCards": 625
+    },
+    {
+      "tag": "10k",
+      "nCards": 1250
+    },
+    {
+      "tag": "20k",
+      "nCards": 2500
+    },
+    {
+      "tag": "30k",
+      "nCards": 3750
+    }
+  ],
+  "cells": [
+    {
+      "name": "vdom@1k",
+      "variant": "vdom",
+      "label": "VDOM",
+      "scale": "1k",
+      "nCards": 125,
+      "elements": 1004,
+      "buildMs": 1662,
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 147763,
+        "gzip": 35865
+      },
+      "lynxBundle": {
+        "raw": 146533,
+        "gzip": 42452
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 118443,
+        "gzip": 27841
+      }
+    },
+    {
+      "name": "vdom-ifr@1k",
+      "variant": "vdom-ifr",
+      "label": "VDOM+IFR",
+      "scale": "1k",
+      "nCards": 125,
+      "elements": 1004,
+      "buildMs": 1588,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 275149,
+        "gzip": 64430
+      },
+      "lynxBundle": {
+        "raw": 275018,
+        "gzip": 92678
+      },
+      "mtSection": {
+        "raw": 139912,
+        "gzip": 34633
+      },
+      "bgSection": {
+        "raw": 121425,
+        "gzip": 28901
+      }
+    },
+    {
+      "name": "vdom-ifr-et@1k",
+      "variant": "vdom-ifr-et",
+      "label": "VDOM+IFR+ET",
+      "scale": "1k",
+      "nCards": 125,
+      "elements": 1004,
+      "buildMs": 1768,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": true
+      },
+      "webBundle": {
+        "raw": 506539,
+        "gzip": 107079
+      },
+      "lynxBundle": {
+        "raw": 463938,
+        "gzip": 145942
+      },
+      "mtSection": {
+        "raw": 253349,
+        "gzip": 55396
+      },
+      "bgSection": {
+        "raw": 234862,
+        "gzip": 50035
+      }
+    },
+    {
+      "name": "vapor@1k",
+      "variant": "vapor",
+      "label": "Vapor",
+      "scale": "1k",
+      "nCards": 125,
+      "elements": 1004,
+      "buildMs": 1539,
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 180044,
+        "gzip": 45610
+      },
+      "lynxBundle": {
+        "raw": 182834,
+        "gzip": 52051
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 154895,
+        "gzip": 37440
+      }
+    },
+    {
+      "name": "vapor-ifr@1k",
+      "variant": "vapor-ifr",
+      "label": "Vapor+IFR",
+      "scale": "1k",
+      "nCards": 125,
+      "elements": 1004,
+      "buildMs": 1616,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 351881,
+        "gzip": 87925
+      },
+      "lynxBundle": {
+        "raw": 387538,
+        "gzip": 129125
+      },
+      "mtSection": {
+        "raw": 176011,
+        "gzip": 44296
+      },
+      "bgSection": {
+        "raw": 170354,
+        "gzip": 42544
+      }
+    },
+    {
+      "name": "vdom@3k",
+      "variant": "vdom",
+      "label": "VDOM",
+      "scale": "3k",
+      "nCards": 375,
+      "elements": 3004,
+      "buildMs": 1913,
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 247513,
+        "gzip": 36809
+      },
+      "lynxBundle": {
+        "raw": 238033,
+        "gzip": 43361
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 209193,
+        "gzip": 28694
+      }
+    },
+    {
+      "name": "vdom-ifr@3k",
+      "variant": "vdom-ifr",
+      "label": "VDOM+IFR",
+      "scale": "3k",
+      "nCards": 375,
+      "elements": 3004,
+      "buildMs": 1965,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 474649,
+        "gzip": 66274
+      },
+      "lynxBundle": {
+        "raw": 422518,
+        "gzip": 94696
+      },
+      "mtSection": {
+        "raw": 230662,
+        "gzip": 35475
+      },
+      "bgSection": {
+        "raw": 212175,
+        "gzip": 29752
+      }
+    },
+    {
+      "name": "vdom-ifr-et@3k",
+      "variant": "vdom-ifr-et",
+      "label": "VDOM+IFR+ET",
+      "scale": "3k",
+      "nCards": 375,
+      "elements": 3004,
+      "buildMs": 2847,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": true
+      },
+      "webBundle": {
+        "raw": 1169531,
+        "gzip": 189296
+      },
+      "lynxBundle": {
+        "raw": 992468,
+        "gzip": 249406
+      },
+      "mtSection": {
+        "raw": 571345,
+        "gzip": 96700
+      },
+      "bgSection": {
+        "raw": 552858,
+        "gzip": 89930
+      }
+    },
+    {
+      "name": "vapor@3k",
+      "variant": "vapor",
+      "label": "Vapor",
+      "scale": "3k",
+      "nCards": 375,
+      "elements": 3004,
+      "buildMs": 1850,
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 312544,
+        "gzip": 57102
+      },
+      "lynxBundle": {
+        "raw": 315834,
+        "gzip": 63356
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 287395,
+        "gzip": 49000
+      }
+    },
+    {
+      "name": "vapor-ifr@3k",
+      "variant": "vapor-ifr",
+      "label": "Vapor+IFR",
+      "scale": "3k",
+      "nCards": 375,
+      "elements": 3004,
+      "buildMs": 2061,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 617381,
+        "gzip": 110943
+      },
+      "lynxBundle": {
+        "raw": 669702,
+        "gzip": 167626
+      },
+      "mtSection": {
+        "raw": 308511,
+        "gzip": 55646
+      },
+      "bgSection": {
+        "raw": 303354,
+        "gzip": 53661
+      }
+    },
+    {
+      "name": "vdom@5k",
+      "variant": "vdom",
+      "label": "VDOM",
+      "scale": "5k",
+      "nCards": 625,
+      "elements": 5004,
+      "buildMs": 2026,
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 347263,
+        "gzip": 37670
+      },
+      "lynxBundle": {
+        "raw": 329533,
+        "gzip": 44201
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 299943,
+        "gzip": 29482
+      }
+    },
+    {
+      "name": "vdom-ifr@5k",
+      "variant": "vdom-ifr",
+      "label": "VDOM+IFR",
+      "scale": "5k",
+      "nCards": 625,
+      "elements": 5004,
+      "buildMs": 2268,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 674149,
+        "gzip": 68052
+      },
+      "lynxBundle": {
+        "raw": 570018,
+        "gzip": 96583
+      },
+      "mtSection": {
+        "raw": 321412,
+        "gzip": 36244
+      },
+      "bgSection": {
+        "raw": 302925,
+        "gzip": 30547
+      }
+    },
+    {
+      "name": "vdom-ifr-et@5k",
+      "variant": "vdom-ifr-et",
+      "label": "VDOM+IFR+ET",
+      "scale": "5k",
+      "nCards": 625,
+      "elements": 5004,
+      "buildMs": 3744,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": true
+      },
+      "webBundle": {
+        "raw": 1854525,
+        "gzip": 272696
+      },
+      "lynxBundle": {
+        "raw": 1534210,
+        "gzip": 355285
+      },
+      "mtSection": {
+        "raw": 900342,
+        "gzip": 137476
+      },
+      "bgSection": {
+        "raw": 881855,
+        "gzip": 131359
+      }
+    },
+    {
+      "name": "vapor@5k",
+      "variant": "vapor",
+      "label": "Vapor",
+      "scale": "5k",
+      "nCards": 625,
+      "elements": 5004,
+      "buildMs": 2046,
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 445564,
+        "gzip": 68158
+      },
+      "lynxBundle": {
+        "raw": 449356,
+        "gzip": 74618
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 420415,
+        "gzip": 59432
+      }
+    },
+    {
+      "name": "vapor-ifr@5k",
+      "variant": "vapor-ifr",
+      "label": "Vapor+IFR",
+      "scale": "5k",
+      "nCards": 625,
+      "elements": 5004,
+      "buildMs": 2582,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 883921,
+        "gzip": 133048
+      },
+      "lynxBundle": {
+        "raw": 952700,
+        "gzip": 206319
+      },
+      "mtSection": {
+        "raw": 441531,
+        "gzip": 66925
+      },
+      "bgSection": {
+        "raw": 436874,
+        "gzip": 65092
+      }
+    },
+    {
+      "name": "vdom@10k",
+      "variant": "vdom",
+      "label": "VDOM",
+      "scale": "10k",
+      "nCards": 1250,
+      "elements": 10004,
+      "buildMs": 2476,
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 596638,
+        "gzip": 39888
+      },
+      "lynxBundle": {
+        "raw": 558283,
+        "gzip": 46354
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 526818,
+        "gzip": 31307
+      }
+    },
+    {
+      "name": "vdom-ifr@10k",
+      "variant": "vdom-ifr",
+      "label": "VDOM+IFR",
+      "scale": "10k",
+      "nCards": 1250,
+      "elements": 10004,
+      "buildMs": 2891,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 1172899,
+        "gzip": 72371
+      },
+      "lynxBundle": {
+        "raw": 938768,
+        "gzip": 100958
+      },
+      "mtSection": {
+        "raw": 548287,
+        "gzip": 37943
+      },
+      "bgSection": {
+        "raw": 529800,
+        "gzip": 32514
+      }
+    },
+    {
+      "name": "vdom-ifr-et@10k",
+      "variant": "vdom-ifr-et",
+      "label": "VDOM+IFR+ET",
+      "scale": "10k",
+      "nCards": 1250,
+      "elements": 10004,
+      "buildMs": 7493,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": true
+      },
+      "webBundle": {
+        "raw": 3583275,
+        "gzip": 476923
+      },
+      "lynxBundle": {
+        "raw": 2900628,
+        "gzip": 609003
+      },
+      "mtSection": {
+        "raw": 1730967,
+        "gzip": 239507
+      },
+      "bgSection": {
+        "raw": 1712480,
+        "gzip": 232233
+      }
+    },
+    {
+      "name": "vapor@10k",
+      "variant": "vapor",
+      "label": "Vapor",
+      "scale": "10k",
+      "nCards": 1250,
+      "elements": 10004,
+      "buildMs": 2633,
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 785821,
+        "gzip": 94727
+      },
+      "lynxBundle": {
+        "raw": 790863,
+        "gzip": 100713
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 760672,
+        "gzip": 86016
+      }
+    },
+    {
+      "name": "vapor-ifr@10k",
+      "variant": "vapor-ifr",
+      "label": "Vapor+IFR",
+      "scale": "10k",
+      "nCards": 1250,
+      "elements": 10004,
+      "buildMs": 3796,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 1565685,
+        "gzip": 185166
+      },
+      "lynxBundle": {
+        "raw": 1671918,
+        "gzip": 299804
+      },
+      "mtSection": {
+        "raw": 781788,
+        "gzip": 92687
+      },
+      "bgSection": {
+        "raw": 778381,
+        "gzip": 91269
+      }
+    },
+    {
+      "name": "vdom@20k",
+      "variant": "vdom",
+      "label": "VDOM",
+      "scale": "20k",
+      "nCards": 2500,
+      "elements": 20004,
+      "buildMs": 0,
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 1095388,
+        "gzip": 43844
+      },
+      "lynxBundle": null,
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 980568,
+        "gzip": 34900
+      }
+    },
+    {
+      "name": "vdom-ifr@20k",
+      "variant": "vdom-ifr",
+      "label": "VDOM+IFR",
+      "scale": "20k",
+      "nCards": 2500,
+      "elements": 20004,
+      "buildMs": 0,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 2170399,
+        "gzip": 79770
+      },
+      "lynxBundle": null,
+      "mtSection": {
+        "raw": 1002037,
+        "gzip": 41130
+      },
+      "bgSection": {
+        "raw": 983550,
+        "gzip": 35922
+      }
+    },
+    {
+      "name": "vdom-ifr-et@20k",
+      "variant": "vdom-ifr-et",
+      "label": "VDOM+IFR+ET",
+      "scale": "20k",
+      "nCards": 2500,
+      "elements": 20004,
+      "buildMs": 0,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": true
+      },
+      "webBundle": {
+        "raw": 7040779,
+        "gzip": 883009
+      },
+      "lynxBundle": null,
+      "mtSection": {
+        "raw": 3392219,
+        "gzip": 442521
+      },
+      "bgSection": {
+        "raw": 3373732,
+        "gzip": 435159
+      }
+    },
+    {
+      "name": "vapor@20k",
+      "variant": "vapor",
+      "label": "Vapor",
+      "scale": "20k",
+      "nCards": 2500,
+      "elements": 20004,
+      "buildMs": 4115,
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 1468321,
+        "gzip": 143183
+      },
+      "lynxBundle": {
+        "raw": 1475863,
+        "gzip": 150209
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 1443172,
+        "gzip": 134451
+      }
+    },
+    {
+      "name": "vapor-ifr@20k",
+      "variant": "vapor-ifr",
+      "label": "Vapor+IFR",
+      "scale": "20k",
+      "nCards": 2500,
+      "elements": 20004,
+      "buildMs": 7764,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 2933185,
+        "gzip": 284089
+      },
+      "lynxBundle": {
+        "raw": 3123442,
+        "gzip": 486853
+      },
+      "mtSection": {
+        "raw": 1464288,
+        "gzip": 141986
+      },
+      "bgSection": {
+        "raw": 1463381,
+        "gzip": 140565
+      }
+    },
+    {
+      "name": "vdom@30k",
+      "variant": "vdom",
+      "label": "VDOM",
+      "scale": "30k",
+      "nCards": 3750,
+      "elements": 30004,
+      "buildMs": 4428,
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 1594138,
+        "gzip": 47324
+      },
+      "lynxBundle": {
+        "raw": 1473283,
+        "gzip": 52815
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 1434318,
+        "gzip": 37971
+      }
+    },
+    {
+      "name": "vdom-ifr@30k",
+      "variant": "vdom-ifr",
+      "label": "VDOM+IFR",
+      "scale": "30k",
+      "nCards": 3750,
+      "elements": 30004,
+      "buildMs": 5333,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 3167899,
+        "gzip": 86943
+      },
+      "lynxBundle": {
+        "raw": 2413771,
+        "gzip": 115530
+      },
+      "mtSection": {
+        "raw": 1455787,
+        "gzip": 44164
+      },
+      "bgSection": {
+        "raw": 1437300,
+        "gzip": 38970
+      }
+    },
+    {
+      "name": "vdom-ifr-et@30k",
+      "variant": "vdom-ifr-et",
+      "label": "VDOM+IFR+ET",
+      "scale": "30k",
+      "nCards": 3750,
+      "elements": 30004,
+      "buildMs": 37030,
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": true
+      },
+      "webBundle": {
+        "raw": 10503275,
+        "gzip": 1290348
+      },
+      "lynxBundle": {
+        "raw": 8392942,
+        "gzip": 1625926
+      },
+      "mtSection": {
+        "raw": 5055967,
+        "gzip": 643427
+      },
+      "bgSection": {
+        "raw": 5037480,
+        "gzip": 636672
+      }
+    },
+    {
+      "name": "vapor@30k",
+      "variant": "vapor",
+      "label": "Vapor",
+      "scale": "30k",
+      "nCards": 3750,
+      "elements": 30004,
+      "buildMs": 6942,
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 2150821,
+        "gzip": 191882
+      },
+      "lynxBundle": {
+        "raw": 2160863,
+        "gzip": 198802
+      },
+      "mtSection": {
+        "raw": 20975,
+        "gzip": 7239
+      },
+      "bgSection": {
+        "raw": 2125672,
+        "gzip": 182700
+      }
+    },
+    {
+      "name": "vapor-ifr@30k",
+      "variant": "vapor-ifr",
+      "label": "Vapor+IFR",
+      "scale": "30k",
+      "nCards": 3750,
+      "elements": 30004,
+      "buildMs": 12600,
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false
+      },
+      "webBundle": {
+        "raw": 4300685,
+        "gzip": 380220
+      },
+      "lynxBundle": {
+        "raw": 4585671,
+        "gzip": 669623
+      },
+      "mtSection": {
+        "raw": 2146788,
+        "gzip": 189637
+      },
+      "bgSection": {
+        "raw": 2148381,
+        "gzip": 188768
+      }
+    }
+  ]
+}

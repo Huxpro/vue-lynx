@@ -1,0 +1,346 @@
+{
+  "nCards": 125,
+  "cells": [
+    {
+      "cell": "content-vdom",
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": false,
+        "templateNaming": "sparse",
+        "templateStaging": "opstream",
+        "ifrPaint": null,
+        "slots": "off",
+        "naming": "n/a",
+        "coordinate": "OpStream/Dense/intrinsic/Split·Durable",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 151956,
+        "gzip": 36943
+      },
+      "lynxBundle": {
+        "raw": 151017,
+        "gzip": 43889
+      },
+      "mtSection": {
+        "raw": 22703,
+        "gzip": 7774
+      },
+      "bgSection": {
+        "raw": 120862,
+        "gzip": 28150
+      }
+    },
+    {
+      "cell": "content-vdom-ifr",
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "templateNaming": "sparse",
+        "templateStaging": "opstream",
+        "ifrPaint": "plain",
+        "slots": "off",
+        "naming": "n/a",
+        "coordinate": "OpStream/Dense/intrinsic/Split·Durable+Ephemeral",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 282100,
+        "gzip": 66010
+      },
+      "lynxBundle": {
+        "raw": 282809,
+        "gzip": 95239
+      },
+      "mtSection": {
+        "raw": 144247,
+        "gzip": 35608
+      },
+      "bgSection": {
+        "raw": 123965,
+        "gzip": 29313
+      }
+    },
+    {
+      "cell": "content-vdom-ifr-et",
+      "flags": {
+        "vapor": false,
+        "enableIFR": true,
+        "enableElementTemplates": true,
+        "templateNaming": "sparse",
+        "templateStaging": "code",
+        "ifrPaint": "plain",
+        "slots": "on",
+        "naming": "n/a",
+        "coordinate": "Code/Sparse/intrinsic/Split·Durable+Ephemeral",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 513490,
+        "gzip": 108660
+      },
+      "lynxBundle": {
+        "raw": 471705,
+        "gzip": 148633
+      },
+      "mtSection": {
+        "raw": 257684,
+        "gzip": 56774
+      },
+      "bgSection": {
+        "raw": 237402,
+        "gzip": 49834
+      }
+    },
+    {
+      "cell": "content-vdom-et",
+      "flags": {
+        "vapor": false,
+        "enableIFR": false,
+        "enableElementTemplates": true,
+        "templateNaming": "sparse",
+        "templateStaging": "code",
+        "ifrPaint": null,
+        "slots": "on",
+        "naming": "n/a",
+        "coordinate": "Code/Sparse/intrinsic/Split·Durable",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 421659,
+        "gzip": 77535
+      },
+      "lynxBundle": {
+        "raw": 355548,
+        "gzip": 93733
+      },
+      "mtSection": {
+        "raw": 170693,
+        "gzip": 26911
+      },
+      "bgSection": {
+        "raw": 234299,
+        "gzip": 48599
+      }
+    },
+    {
+      "cell": "content-vapor",
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false,
+        "templateNaming": "sparse",
+        "templateStaging": "data",
+        "ifrPaint": null,
+        "slots": "off",
+        "naming": "sparse",
+        "coordinate": "Data/Sparse/recovered/Split·Durable",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 184274,
+        "gzip": 46933
+      },
+      "lynxBundle": {
+        "raw": 187356,
+        "gzip": 53767
+      },
+      "mtSection": {
+        "raw": 22703,
+        "gzip": 7776
+      },
+      "bgSection": {
+        "raw": 157353,
+        "gzip": 38194
+      }
+    },
+    {
+      "cell": "content-vapor-dense",
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false,
+        "templateNaming": "dense",
+        "templateStaging": "data",
+        "ifrPaint": null,
+        "slots": "off",
+        "naming": "dense",
+        "coordinate": "Data/Dense/—/Split·Durable",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 183842,
+        "gzip": 46794
+      },
+      "lynxBundle": {
+        "raw": 186925,
+        "gzip": 53622
+      },
+      "mtSection": {
+        "raw": 22703,
+        "gzip": 7776
+      },
+      "bgSection": {
+        "raw": 156921,
+        "gzip": 38050
+      }
+    },
+    {
+      "cell": "content-vapor-ifr",
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "templateNaming": "sparse",
+        "templateStaging": "data",
+        "ifrPaint": "plain",
+        "slots": "off",
+        "naming": "sparse",
+        "coordinate": "Data/Sparse/recovered/Split·Durable+Ephemeral",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 359243,
+        "gzip": 90079
+      },
+      "lynxBundle": {
+        "raw": 395318,
+        "gzip": 132066
+      },
+      "mtSection": {
+        "raw": 180648,
+        "gzip": 45625
+      },
+      "bgSection": {
+        "raw": 173003,
+        "gzip": 43332
+      }
+    },
+    {
+      "cell": "content-vapor-ifr-dense",
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "templateNaming": "dense",
+        "templateStaging": "data",
+        "ifrPaint": "plain",
+        "slots": "off",
+        "naming": "dense",
+        "coordinate": "Data/Dense/—/Split·Durable+Ephemeral",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 358376,
+        "gzip": 89791
+      },
+      "lynxBundle": {
+        "raw": 394445,
+        "gzip": 131711
+      },
+      "mtSection": {
+        "raw": 180218,
+        "gzip": 45492
+      },
+      "bgSection": {
+        "raw": 172566,
+        "gzip": 43196
+      }
+    },
+    {
+      "cell": "content-vapor-ifr-sparse",
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "templateNaming": "sparse",
+        "templateStaging": "data",
+        "ifrPaint": "plain",
+        "slots": "off",
+        "naming": "sparse",
+        "coordinate": "Data/Sparse/recovered/Split·Durable+Ephemeral",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 359243,
+        "gzip": 90079
+      },
+      "lynxBundle": {
+        "raw": 395318,
+        "gzip": 132066
+      },
+      "mtSection": {
+        "raw": 180648,
+        "gzip": 45625
+      },
+      "bgSection": {
+        "raw": 173003,
+        "gzip": 43332
+      }
+    },
+    {
+      "cell": "content-vapor-engine",
+      "flags": {
+        "vapor": true,
+        "enableIFR": false,
+        "enableElementTemplates": false,
+        "templateNaming": "sparse",
+        "templateStaging": "engine",
+        "ifrPaint": null,
+        "slots": "off",
+        "naming": "sparse",
+        "coordinate": "Engine/Sparse/recovered/Split·Durable (stub-capable)",
+        "nativeEt": "probe(stub-on-web)"
+      },
+      "webBundle": {
+        "raw": 186646,
+        "gzip": 47641
+      },
+      "lynxBundle": {
+        "raw": 190329,
+        "gzip": 55021
+      },
+      "mtSection": {
+        "raw": 25025,
+        "gzip": 8482
+      },
+      "bgSection": {
+        "raw": 157353,
+        "gzip": 38194
+      }
+    },
+    {
+      "cell": "content-vapor-ifr-engine-et",
+      "flags": {
+        "vapor": true,
+        "enableIFR": true,
+        "enableElementTemplates": false,
+        "templateNaming": "sparse",
+        "templateStaging": "data",
+        "ifrPaint": "engine-et",
+        "slots": "off",
+        "naming": "sparse",
+        "coordinate": "Data/Sparse/recovered/Split·Durable+Ephemeral(engine-et paint)",
+        "nativeEt": "stub"
+      },
+      "webBundle": {
+        "raw": 361703,
+        "gzip": 90813
+      },
+      "lynxBundle": {
+        "raw": 398355,
+        "gzip": 133453
+      },
+      "mtSection": {
+        "raw": 183058,
+        "gzip": 46362
+      },
+      "bgSection": {
+        "raw": 173003,
+        "gzip": 43332
+      }
+    }
+  ]
+}

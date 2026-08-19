@@ -114,7 +114,10 @@ describe('Transition event-registry leak (fixed)', () => {
 
     // Advance past the fallback ceiling so every stranded fallback timer
     // fires and unregisters its sign. finish()'s unregister() itself runs
-    // synchronously once the timer callback executes.
+    // synchronously once the timer callback executes, but nextFrame()'s own
+    // rAF/setTimeout(16) chain (armed by the *next* pending re-render, if
+    // any) needs its own settle pass — settle loops until the
+    // cascade's tail drains.
     await settle(baseline);
 
     expect(registrySize()).toBe(baseline);

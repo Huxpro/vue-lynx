@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useLang } from '@rspress/core/runtime';
+import { useLang, usePageData } from '@rspress/core/runtime';
 import {
   HomeLayout as BaseHomeLayout,
   Layout as BaseLayout,
@@ -13,7 +13,7 @@ import {
   MeteorsBackground,
   ShowCase,
 } from '../src/components/home-comps';
-import { VaporModeNavLink } from '../src/components/vapor-nav/VaporModeNavLink';
+import { GoModeNavIndicator } from '../src/components/go/GoModeNavIndicator';
 
 import { AGENT_PROMPT } from './agent-prompt';
 import { useBlogBtnDom } from './hooks/use-blog-btn-dom';
@@ -240,20 +240,18 @@ function HomeLayout(props: Parameters<typeof BaseHomeLayout>[0]) {
   );
 }
 
-/**
- * Site nav gets a Vapor mode teaser: a switch-shaped link over to the Vapor
- * preview build, with an ⓘ explaining that Vapor is still an exploration on
- * the `vapor` branch.
- */
 function Layout({ beforeNavMenu, ...props }: Parameters<typeof BaseLayout>[0]) {
   const locale = useLang().startsWith('zh') ? 'zh' : 'en';
+  const { page } = usePageData();
 
   return (
     <BaseLayout
       {...props}
       beforeNavMenu={(
         <>
-          <VaporModeNavLink locale={locale} />
+          {/* Persistent on every doc page (dormant when the page has no
+              mode-aware content); the marketing home page keeps its nav clean. */}
+          {page.pageType !== 'home' && <GoModeNavIndicator locale={locale} />}
           {beforeNavMenu}
         </>
       )}

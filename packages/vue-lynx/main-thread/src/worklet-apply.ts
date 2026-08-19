@@ -93,12 +93,23 @@ export function applyInitMtRef(wvid: number, initValue: unknown): void {
   const impl = getWorkletImpl();
   if (impl?._refImpl) {
     const refMap = impl._refImpl._workletRefMap;
-    if (refMap && !(wvid in refMap)) {
-      refMap[wvid] = { current: initValue, _wvid: wvid };
+    if (refMap) {
+      const existing = refMap[wvid];
+      if (existing) {
+        // Hydration replays the BG initial value authoritatively. Mutating an
+        // existing entry also preserves references held by worklet-runtime.
+        existing.current = initValue;
+        existing._wvid = wvid;
+      } else {
+        refMap[wvid] = { current: initValue, _wvid: wvid };
+      }
     }
   }
 }
 
-/** Reset worklet state — for testing only. */
-// biome-ignore lint/suspicious/noEmptyBlockStatements: no module-level state to clear yet
-export function resetWorkletState(): void {}
+/** Clear the external worklet ref registry during page reset/fallback. */
+export function resetWorkletState(): void {
+  const refMap = getWorkletImpl()?._refImpl?._workletRefMap;
+  if (!refMap) return;
+  for (const key of Object.keys(refMap)) delete refMap[Number(key)];
+}

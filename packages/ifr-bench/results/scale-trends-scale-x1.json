@@ -1,0 +1,366 @@
+{
+  "label": "scale-x1",
+  "sizes": {
+    "1k": 1004,
+    "3k": 3004,
+    "5k": 5004,
+    "10k": 10004,
+    "20k": 20004,
+    "30k": 30004
+  },
+  "perOp": {
+    "vdom": {
+      "fcp@10k": {
+        "median": 310.3999999985099,
+        "n": 5
+      },
+      "settled@10k": {
+        "median": 313.09999999403954,
+        "n": 5
+      },
+      "fcp@1k": {
+        "median": 86.60000000149012,
+        "n": 5
+      },
+      "settled@1k": {
+        "median": 86.90000000596046,
+        "n": 5
+      },
+      "fcp@20k": {
+        "median": 586.9000000059605,
+        "n": 5
+      },
+      "settled@20k": {
+        "median": 597,
+        "n": 5
+      },
+      "fcp@30k": {
+        "median": 841.5,
+        "n": 5
+      },
+      "settled@30k": {
+        "median": 930.4000000059605,
+        "n": 5
+      },
+      "fcp@3k": {
+        "median": 143.39999999850988,
+        "n": 5
+      },
+      "settled@3k": {
+        "median": 143.79999999701977,
+        "n": 5
+      },
+      "fcp@5k": {
+        "median": 188.30000000447035,
+        "n": 5
+      },
+      "settled@5k": {
+        "median": 188.5,
+        "n": 5
+      }
+    },
+    "vdom-ifr": {
+      "fcp@10k": {
+        "median": 378.8999999985099,
+        "n": 5
+      },
+      "settled@10k": {
+        "median": 379.1000000014901,
+        "n": 5
+      },
+      "fcp@1k": {
+        "median": 77.69999999552965,
+        "n": 5
+      },
+      "settled@1k": {
+        "median": 77.79999999701977,
+        "n": 5
+      },
+      "fcp@20k": {
+        "median": 695.1000000014901,
+        "n": 5
+      },
+      "settled@20k": {
+        "median": 710.2000000029802,
+        "n": 5
+      },
+      "fcp@30k": {
+        "median": 1010,
+        "n": 5
+      },
+      "settled@30k": {
+        "median": 1072.8999999985099,
+        "n": 5
+      },
+      "fcp@3k": {
+        "median": 119.60000000149012,
+        "n": 5
+      },
+      "settled@3k": {
+        "median": 119.70000000298023,
+        "n": 5
+      },
+      "fcp@5k": {
+        "median": 163.10000000149012,
+        "n": 5
+      },
+      "settled@5k": {
+        "median": 163.39999999850988,
+        "n": 5
+      }
+    },
+    "vdom-ifr-et": {
+      "fcp@10k": {
+        "median": 278.3999999985099,
+        "n": 5
+      },
+      "settled@10k": {
+        "median": 279.1000000014901,
+        "n": 5
+      },
+      "fcp@1k": {
+        "median": 70,
+        "n": 5
+      },
+      "settled@1k": {
+        "median": 70.20000000298023,
+        "n": 5
+      },
+      "fcp@20k": {
+        "median": 526.1000000014901,
+        "n": 5
+      },
+      "settled@20k": {
+        "median": 542,
+        "n": 5
+      },
+      "fcp@30k": {
+        "median": 770.5999999940395,
+        "n": 5
+      },
+      "settled@30k": {
+        "median": 852.3999999985099,
+        "n": 5
+      },
+      "fcp@3k": {
+        "median": 118.79999999701977,
+        "n": 5
+      },
+      "settled@3k": {
+        "median": 119,
+        "n": 5
+      },
+      "fcp@5k": {
+        "median": 160.89999999850988,
+        "n": 5
+      },
+      "settled@5k": {
+        "median": 164.10000000149012,
+        "n": 5
+      }
+    },
+    "vapor": {
+      "fcp@10k": {
+        "median": 365.3999999985099,
+        "n": 5
+      },
+      "settled@10k": {
+        "median": 365.5,
+        "n": 5
+      },
+      "fcp@1k": {
+        "median": 93.29999999701977,
+        "n": 5
+      },
+      "settled@1k": {
+        "median": 93.5,
+        "n": 5
+      },
+      "fcp@20k": {
+        "median": 691.6999999955297,
+        "n": 5
+      },
+      "settled@20k": {
+        "median": 704.7999999970198,
+        "n": 5
+      },
+      "fcp@30k": {
+        "median": 1010.1000000014901,
+        "n": 5
+      },
+      "settled@30k": {
+        "median": 1083.7000000029802,
+        "n": 5
+      },
+      "fcp@3k": {
+        "median": 156.30000000447035,
+        "n": 5
+      },
+      "settled@3k": {
+        "median": 156.40000000596046,
+        "n": 5
+      },
+      "fcp@5k": {
+        "median": 209.5,
+        "n": 5
+      },
+      "settled@5k": {
+        "median": 209.70000000298023,
+        "n": 5
+      }
+    },
+    "vapor-ifr": {
+      "fcp@10k": {
+        "median": 337.6000000014901,
+        "n": 5
+      },
+      "settled@10k": {
+        "median": 340.29999999701977,
+        "n": 5
+      },
+      "fcp@1k": {
+        "median": 86.89999999850988,
+        "n": 5
+      },
+      "settled@1k": {
+        "median": 87,
+        "n": 5
+      },
+      "fcp@20k": {
+        "median": 637.1000000014901,
+        "n": 5
+      },
+      "settled@20k": {
+        "median": 644.6999999955297,
+        "n": 5
+      },
+      "fcp@30k": {
+        "median": 905.8999999985099,
+        "n": 5
+      },
+      "settled@30k": {
+        "median": 983.3999999985099,
+        "n": 5
+      },
+      "fcp@3k": {
+        "median": 141,
+        "n": 5
+      },
+      "settled@3k": {
+        "median": 141.19999999552965,
+        "n": 5
+      },
+      "fcp@5k": {
+        "median": 193.30000000447035,
+        "n": 5
+      },
+      "settled@5k": {
+        "median": 194.70000000298023,
+        "n": 5
+      }
+    }
+  },
+  "bundleGzip": {
+    "vdom": {
+      "webGzip@1k": 35865,
+      "mtGzip@1k": 7239,
+      "elements@1k": 1004,
+      "webGzip@3k": 36809,
+      "mtGzip@3k": 7239,
+      "elements@3k": 3004,
+      "webGzip@5k": 37670,
+      "mtGzip@5k": 7239,
+      "elements@5k": 5004,
+      "webGzip@10k": 39888,
+      "mtGzip@10k": 7239,
+      "elements@10k": 10004,
+      "webGzip@20k": 43844,
+      "mtGzip@20k": 7239,
+      "elements@20k": 20004,
+      "webGzip@30k": 47324,
+      "mtGzip@30k": 7239,
+      "elements@30k": 30004
+    },
+    "vdom-ifr": {
+      "webGzip@1k": 64430,
+      "mtGzip@1k": 34633,
+      "elements@1k": 1004,
+      "webGzip@3k": 66274,
+      "mtGzip@3k": 35475,
+      "elements@3k": 3004,
+      "webGzip@5k": 68052,
+      "mtGzip@5k": 36244,
+      "elements@5k": 5004,
+      "webGzip@10k": 72371,
+      "mtGzip@10k": 37943,
+      "elements@10k": 10004,
+      "webGzip@20k": 79770,
+      "mtGzip@20k": 41130,
+      "elements@20k": 20004,
+      "webGzip@30k": 86943,
+      "mtGzip@30k": 44164,
+      "elements@30k": 30004
+    },
+    "vdom-ifr-et": {
+      "webGzip@1k": 107079,
+      "mtGzip@1k": 55396,
+      "elements@1k": 1004,
+      "webGzip@3k": 189296,
+      "mtGzip@3k": 96700,
+      "elements@3k": 3004,
+      "webGzip@5k": 272696,
+      "mtGzip@5k": 137476,
+      "elements@5k": 5004,
+      "webGzip@10k": 476923,
+      "mtGzip@10k": 239507,
+      "elements@10k": 10004,
+      "webGzip@20k": 883009,
+      "mtGzip@20k": 442521,
+      "elements@20k": 20004,
+      "webGzip@30k": 1290348,
+      "mtGzip@30k": 643427,
+      "elements@30k": 30004
+    },
+    "vapor": {
+      "webGzip@1k": 45610,
+      "mtGzip@1k": 7239,
+      "elements@1k": 1004,
+      "webGzip@3k": 57102,
+      "mtGzip@3k": 7239,
+      "elements@3k": 3004,
+      "webGzip@5k": 68158,
+      "mtGzip@5k": 7239,
+      "elements@5k": 5004,
+      "webGzip@10k": 94727,
+      "mtGzip@10k": 7239,
+      "elements@10k": 10004,
+      "webGzip@20k": 143183,
+      "mtGzip@20k": 7239,
+      "elements@20k": 20004,
+      "webGzip@30k": 191882,
+      "mtGzip@30k": 7239,
+      "elements@30k": 30004
+    },
+    "vapor-ifr": {
+      "webGzip@1k": 87925,
+      "mtGzip@1k": 44296,
+      "elements@1k": 1004,
+      "webGzip@3k": 110943,
+      "mtGzip@3k": 55646,
+      "elements@3k": 3004,
+      "webGzip@5k": 133048,
+      "mtGzip@5k": 66925,
+      "elements@5k": 5004,
+      "webGzip@10k": 185166,
+      "mtGzip@10k": 92687,
+      "elements@10k": 10004,
+      "webGzip@20k": 284089,
+      "mtGzip@20k": 141986,
+      "elements@20k": 20004,
+      "webGzip@30k": 380220,
+      "mtGzip@30k": 189637,
+      "elements@30k": 30004
+    }
+  },
+  "measuredAt": "2026-07-17T16:46:06.770Z"
+}
