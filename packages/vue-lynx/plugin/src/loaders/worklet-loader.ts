@@ -19,16 +19,18 @@ import type { Rspack } from '@rsbuild/core';
 
 import { transformReactLynxSync } from '@lynx-js/react/transform';
 
+import { hasMainThreadDirective } from './worklet-utils.js';
+
 export default function workletLoader(
   this: Rspack.LoaderContext,
   source: string,
 ): string {
   this.cacheable(true);
 
-  // Quick check: skip files that don't contain the 'main thread' directive
-  if (
-    !source.includes('\'main thread\'') && !source.includes('"main thread"')
-  ) {
+  // Quick check: skip files that don't contain the 'main thread' directive.
+  // Shared with worklet-loader-mt so the two thread bundles cannot disagree
+  // about which files carry worklets.
+  if (!hasMainThreadDirective(source)) {
     return source;
   }
 

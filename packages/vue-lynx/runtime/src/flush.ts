@@ -86,7 +86,11 @@ export function createFlushAck(
     }
     fulfill();
   };
-  if (timeoutMs !== null) {
+  // Some realms have no timers (the IFR main-thread Lepus realm stubs them;
+  // minimal test realms omit them). Without setTimeout the fallback cannot be
+  // armed — acks then settle only via the engine callback, which is the strict
+  // pre-fallback behavior.
+  if (timeoutMs !== null && typeof setTimeout === 'function') {
     timer = setTimeout(() => {
       if (settled) return;
       onTimeout?.();
@@ -135,8 +139,15 @@ function doFlush(): void {
     ] as ((ops: unknown[]) => void) | undefined;
     if (applyLocal) {
       applyLocal(ops);
-      return;
+    } else if (__DEV__) {
+      console.warn(
+        '[vue-lynx] IFR main-thread ops sink is unavailable; dropping the batch.',
+      );
     }
+    // Never fall through to callLepusMethod from the main-thread realm: that
+    // would re-enter vuePatchUpdate as if the batch came from the background
+    // thread and desync the hydration stream.
+    return;
   }
 
   // Create the ack promise BEFORE sending so that any `nextTick` call that
@@ -169,7 +180,9 @@ function doFlush(): void {
     }
   });
 
-  const app = lynx?.getNativeApp?.();
+  // `lynx` is a bare AMD-injected identifier — in non-Lynx realms (plain node
+  // test envs) referencing it directly would throw ReferenceError.
+  const app = typeof lynx === 'undefined' ? undefined : lynx?.getNativeApp?.();
   app?.callLepusMethod?.(
     'vuePatchUpdate',
     { data: JSON.stringify(ops) },

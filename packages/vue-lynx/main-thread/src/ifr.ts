@@ -51,8 +51,9 @@ import {
 } from 'vue-lynx/internal/ops';
 
 import { elements } from './element-registry.js';
-import { resetListState } from './list-apply.js';
+import { isPlatformInfoAttr, resetListState } from './list-apply.js';
 import { applyOps } from './ops-apply.js';
+import { resetWorkletState } from './worklet-apply.js';
 
 // Widened view: op codes read off the wire are plain numbers and may be
 // unknown to this build (forward compat) — lookups must yield undefined.
@@ -246,15 +247,27 @@ export function interceptPatchUpdate(data: string): boolean {
   const incoming = JSON.parse(data) as unknown[];
   const patchOps = reconcileBatch(recorded, incoming);
   if (patchOps) {
-    if (patchOps.length > 0) applyOps(patchOps);
+    try {
+      if (patchOps.length > 0) applyOps(patchOps);
+    } catch (err) {
+      // A half-applied patch leaves the adopted tree in an unknown state, and
+      // `vuePatchUpdate` must stay a no-throw boundary (the throw would escape
+      // into Lepus). The background history is authoritative — rebuild from it.
+      console.error(
+        '[vue-lynx] IFR hydration patch failed; replaying the complete '
+          + 'background render.',
+        err,
+      );
+      fallbackToBackground(incoming);
+      return true;
+    }
     backgroundHistory.push(incoming);
     advanceCursor();
     return true;
   }
 
   // Structural mismatch — the renders diverged (non-deterministic render or
-  // thread-dependent branching).  Remove the IFR tree and replay the whole
-  // background render onto the clean page.
+  // thread-dependent branching).
   if (__DEV__) {
     console.warn(
       '[vue-lynx] IFR hydration mismatch: the background render differs '
@@ -263,16 +276,22 @@ export function interceptPatchUpdate(data: string): boolean {
         + 'deterministic and thread-agnostic.',
     );
   }
-  // Batches consumed before the mismatch were only ever painted as the
-  // main-thread render — teardown removes those elements, so replaying the
-  // background history is what puts them back. Capture it before teardown
-  // clears the recorded state.
+  fallbackToBackground(incoming);
+  return true;
+}
+
+/**
+ * Remove the IFR tree and replay the complete background render onto the clean
+ * page.  Batches consumed before the mismatch were only ever painted as the
+ * main-thread render, so replaying the history is what puts them back; the
+ * history is captured before teardown clears the recorded state.
+ */
+function fallbackToBackground(incoming: unknown[]): void {
   const history = backgroundHistory;
   teardownIfrTree();
   phase = 'hydrated';
   for (const batch of history) applyOps(batch);
   applyOps(incoming);
-  return true;
 }
 
 function advanceCursor(): void {
@@ -332,6 +351,18 @@ function reconcileBatch(
     if (valueMode !== undefined) {
       const rVal = recorded[ri + arity];
       const iVal = incoming[ii + arity];
+      if (
+        code === OP.SET_PROP
+        && isPlatformInfoAttr(String(incoming[ii + 2]))
+        && !sameValue(rVal, iVal)
+      ) {
+        // List platform metadata (item-key, estimated sizes, …) is reported to
+        // native through update-list-info when the row is inserted. A later
+        // SET_PROP only updates our JS map, so patching it cannot repair the
+        // item native has already been told about — rebuild from the
+        // authoritative background history instead.
+        return null;
+      }
       if (valueMode === 'always' || !sameValue(rVal, iVal)) {
         for (let k = 0; k <= arity; k++) patchOps.push(incoming[ii + k]);
       }
@@ -410,6 +441,10 @@ function teardownIfrTree(): void {
   // Clearing them makes the abandoned list's callbacks inert (they resolve
   // nothing) and lets the replay rebuild every list from scratch.
   resetListState();
+  // Same reasoning for MainThreadRefs: entries bound to destroyed elements are
+  // garbage, and the replay re-applies SET_MT_REF / INIT_MT_REF for the
+  // rebuilt tree (both are 'always' ops during hydration).
+  resetWorkletState();
 
   recordedBatches = [];
   batchCursor = 0;
