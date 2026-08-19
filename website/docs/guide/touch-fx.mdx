@@ -2,7 +2,7 @@
 
 A black stage, a glowing green orb, and your finger. Poke it, drag it, flick it — it reacts like a cat toy:
 
-- **The orb chases your finger** with a damped spring, squashing & stretching along its velocity vector. Let go and it wobbles to a stop right where you left it.
+- **The orb chases your finger** with a damped spring, squashing & stretching along its velocity vector. Let go and it wobbles to a stop right where you left it. Even a stationary tap lands — the orb recoils and flares under your finger.
 - **Water ripples** pulse continuously under your finger for the *entire* drag — a fresh ring every ~150 ms, endlessly re-triggerable.
 - **Firework sparks** burst on touch-down and release, and an ember trail follows every move. Multi-touch works too: each extra finger splashes on its own.
 
@@ -33,11 +33,12 @@ The continuous ripple feed is the part to steal for your own apps: on every fram
 
 ## Verify it headlessly
 
-The example ships with a Lynx-for-Web harness (`examples/touch-fx/harness/`) that drives **real CDP touch events** through headless Chromium and pixel-checks the frames — including a continuity assertion that effect pixels track the finger at *every* sample of a 4-second drag:
+The example ships with a Lynx-for-Web harness (`examples/touch-fx/harness/`) that drives **real CDP touch events** through headless Chromium and pixel-checks the frames — including a continuity assertion that effect pixels track the finger at *every* sample of a 4-second drag, and a coordinate-space assertion that runs with the LynxView deliberately offset inside the page, the way it sits in the preview above:
 
 ```bash
 cd examples/touch-fx
 pnpm build
-pnpm web:verify   # 10/10 checks: boot, splash, continuity, energy, firework,
-                  # settle-where-dropped, stress, and the switch both ways
+pnpm web:verify   # 12/12 checks: boot, tap recoil, view-relative coordinates,
+                  # splash, continuity, energy, firework, settle-where-dropped,
+                  # stress, and the switch both ways
 ```

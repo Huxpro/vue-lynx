@@ -1,17 +1,22 @@
 // Headless verification of the touch-fx interaction:
 //   node harness/verify.mjs
 //
-// Drives real CDP touch events through <lynx-view> (shadow DOM is closed to
-// selectors, so everything is coordinate + pixel based) and asserts:
+// Drives real CDP touch events through <lynx-view>. Assertions are pixel based
+// wherever a reader would judge by eye; the one exception reads the orb's
+// inline transform out of the (open) shadow root, because "a tap compresses the
+// orb" is a claim about the transform itself. It asserts:
 //   1. the app boots (green orb visible on the black stage)
-//   2. effects spawn at touchstart
-//   3. CONTINUITY — during one long drag, green effect pixels keep tracking
+//   2. a stationary tap compresses the orb, and effects land under the finger
+//      even though the LynxView is offset inside the page (the coordinate
+//      space has to be view-relative, not window-relative)
+//   3. effects spawn at touchstart
+//   4. CONTINUITY — during one long drag, green effect pixels keep tracking
 //      the finger at every sample point, start to finish
-//   4. a firework burst appears at release
-//   5. the orb settles where it was dropped — the default release mode — and
+//   5. a firework burst appears at release
+//   6. the orb settles where it was dropped — the default release mode — and
 //      the particles die out
-//   6. a second rapid zigzag drag still spawns effects (pool recycling)
-//   7. the hidden switch (the hint label) flips the release mode both ways:
+//   7. a second rapid zigzag drag still spawns effects (pool recycling)
+//   8. the hidden switch (the hint label) flips the release mode both ways:
 //      to homing (the orb springs back to the centre) and back to free
 //
 // Screenshots land in harness/shots/ for eyeballing.
@@ -28,6 +33,12 @@ fs.mkdirSync(SHOTS, { recursive: true });
 const PORT = Number(process.env.PORT || 8976);
 const W = 390;
 const H = 844;
+// The page is bigger than the view, and the view is not at its origin — see
+// #phone in index.html. Local (view-relative) coordinates are what the app
+// sees; `viewRect` converts them to page coordinates for CDP and screenshots.
+const PAGE_W = 520;
+const PAGE_H = 980;
+let viewRect;
 
 // --- static server -----------------------------------------------------------
 const server = spawn(process.execPath, [path.join(HARNESS, 'serve.mjs')], {
@@ -43,7 +54,7 @@ const browser = await chromium.launch({
   args: ['--no-sandbox', '--disable-dev-shm-usage'],
 });
 const ctx = await browser.newContext({
-  viewport: { width: W, height: H },
+  viewport: { width: PAGE_W, height: PAGE_H },
   deviceScaleFactor: 1,
   hasTouch: true,
 });
@@ -59,6 +70,10 @@ page.on('console', (msg) => {
 // Pixel analysis runs in a second blank page: draw the screenshot on a canvas
 // and count green-ish pixels (globally and near a point of interest).
 const lab = await ctx.newPage();
+// ...but that page must not hold the foreground: a backgrounded tab has its
+// requestAnimationFrame throttled to a crawl, which starves the engine (every
+// effect here is frame-driven) and makes the whole run flaky.
+await page.bringToFront();
 async function stats(png, poi) {
   const dataUrl = 'data:image/png;base64,' + png.toString('base64');
   return await lab.evaluate(
@@ -98,7 +113,7 @@ async function stats(png, poi) {
 }
 
 async function shotPng(name) {
-  const png = await page.screenshot({ clip: { x: 0, y: 0, width: W, height: H } });
+  const png = await page.screenshot({ clip: { ...viewRect } });
   fs.writeFileSync(path.join(SHOTS, name), png);
   return png;
 }
@@ -111,11 +126,15 @@ const cdp = await ctx.newCDPSession(page);
 const touch = (type, points) =>
   cdp.send('Input.dispatchTouchEvent', {
     type,
-    touchPoints: points.map(([x, y]) => ({ x, y })),
+    touchPoints: points.map(([x, y]) => ({ x: x + viewRect.x, y: y + viewRect.y })),
   });
 
 // --- boot ---------------------------------------------------------------------
 await page.goto(`http://localhost:${PORT}/`, { waitUntil: 'load' });
+viewRect = await page.locator('lynx-view').evaluate((view) => {
+  const r = view.getBoundingClientRect();
+  return { x: r.left, y: r.top, width: r.width, height: r.height };
+});
 
 // Poll until the orb is painted (green pixels near the orb's home position).
 const HOME = { x: W / 2, y: H * 0.42, r: 170 };
@@ -134,6 +153,58 @@ const check = (name, ok, detail) => {
 
 check('boot: orb visible at home', idle.near > 2000, `green near home=${idle.near}, total=${idle.total}`);
 
+// --- a stationary tap: recoil + view-relative coordinates ------------------------
+// Both of these only hold if the app reads touches in *its own* coordinate
+// space. The view is offset inside the page (index.html), so a handler using
+// window-relative clientX/clientY would land every effect 65px/72px away.
+
+// Sample the orb's transform from inside the page: the touch-down recoil decays
+// per frame, and a CDP round-trip is far slower than that, so measuring from
+// Node would miss it. Tapping exactly on the orb's home keeps the spring still,
+// which leaves the recoil as the only thing that can deform it.
+await page.locator('lynx-view').evaluate((view) => {
+  const orb = view.shadowRoot?.querySelector('.orb');
+  window.__maxDeform = 0;
+  if (!orb) return;
+  const until = performance.now() + 8000;
+  const scale = (t, axis) => Number(t.match(new RegExp(`scale${axis}\\(([^)]+)\\)`))?.[1] ?? 1);
+  const tick = () => {
+    const t = orb.style.transform ?? '';
+    window.__maxDeform = Math.max(
+      window.__maxDeform,
+      Math.abs(scale(t, 'X') - 1),
+      Math.abs(scale(t, 'Y') - 1),
+    );
+    if (performance.now() < until) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+});
+await touch('touchStart', [[HOME.x, HOME.y]]);
+await page.waitForTimeout(120);
+await touch('touchEnd', []);
+await page.waitForTimeout(400);
+const deform = await page.evaluate(() => window.__maxDeform);
+check(
+  'tap without drag: the orb visibly recoils',
+  deform > 0.04,
+  `peak |scale-1|=${deform.toFixed(3)}`,
+);
+
+// Now a tap near the view's top-left corner. Its effects have to paint at that
+// same local point — the offset between page and view coordinates is 65x72px
+// here, far outside this 34px radius.
+const PROBE = { x: 52, y: 66, r: 34 };
+await touch('touchStart', [[PROBE.x, PROBE.y]]);
+await page.waitForTimeout(60);
+const probe = await shot('01-tap-precise.png', PROBE);
+await touch('touchEnd', []);
+check(
+  'view-relative coordinates: tap effects land under the finger',
+  probe.near > 120,
+  `green within ${PROBE.r}px of finger=${probe.near}`,
+);
+await page.waitForTimeout(1200);
+
 // --- long circular drag (the continuity test) ----------------------------------
 // ~4s of continuous dragging around an ellipse; sample every ~600ms and
 // require effect pixels near the CURRENT finger position at every sample.
@@ -146,7 +217,7 @@ const pos = (t) => [cx + rx * Math.cos(t), cy + ry * Math.sin(t)];
 let p = pos(0);
 await touch('touchStart', [p]);
 await page.waitForTimeout(120);
-const startFx = await shot('01-touchstart.png', { x: p[0], y: p[1], r: 150 });
+const startFx = await shot('02-touchstart.png', { x: p[0], y: p[1], r: 150 });
 check('touchstart: splash spawns', startFx.near > 300, `green near finger=${startFx.near}`);
 
 const STEPS = 96;
@@ -188,16 +259,22 @@ const boom = await shot('03-firework.png', { x: p[0], y: p[1], r: 200 });
 check('release: firework burst at release point', boom.near > 300, `green near release=${boom.near}`);
 
 // --- settle ----------------------------------------------------------------------
-// Frame-based animation timing: headless Chromium can run well below 60fps,
-// so poll (up to 15s wall clock) instead of assuming a fixed decay time.
-let settledPng;
-let settled;
-for (let i = 0; i < 15; i++) {
-  await page.waitForTimeout(1000);
-  settledPng = await shotPng('04-settled.png');
-  settled = await stats(settledPng, DROPPED);
-  if (settled.near > 2000 && settled.total < idle.total * 1.35) break;
+// Frame-based animation timing: headless Chromium can run well below 60fps, so
+// poll instead of assuming a fixed decay time — and wait for the orb to have
+// *arrived* at `poi`, not merely for the particles to burn out. A slow frame
+// rate stretches the spring's flight over many seconds of wall clock.
+async function restAt(name, poi) {
+  let png;
+  for (let i = 0; i < 25; i++) {
+    await page.waitForTimeout(600);
+    png = await shotPng(name);
+    const s = await stats(png, poi);
+    if (s.near > 2000 && s.total < idle.total * 1.35) break;
+  }
+  return png;
 }
+const settledPng = await restAt('04-settled.png', DROPPED);
+const settled = await stats(settledPng, DROPPED);
 const settledHome = await stats(settledPng, HOME);
 check(
   'settle: orb rests where it was dropped, particles die out',
@@ -213,6 +290,10 @@ for (let i = 1; i <= 60; i++) {
   await touch('touchMove', [z]);
   await page.waitForTimeout(16);
 }
+// Hold still for a moment with the finger *down*: the trail keeps feeding, so
+// this samples what the pool is producing right now rather than catching the
+// gap between two frames of a violent zigzag.
+await page.waitForTimeout(150);
 const zig = await shot('05-zigzag.png', { x: z[0], y: z[1], r: 170 });
 await touch('touchEnd', []);
 check('stress: effects still spawn at end of rapid zigzag', zig.near > 300, `green near finger=${zig.near}`);
@@ -230,17 +311,6 @@ async function pressSwitch() {
   await page.waitForTimeout(250);
 }
 
-// Wait for the stage to go quiet again (frame-based decay, so poll).
-async function settleAt(name, poi) {
-  let s;
-  for (let i = 0; i < 15; i++) {
-    await page.waitForTimeout(1000);
-    s = await shot(name, poi);
-    if (s.total < idle.total * 1.35) break;
-  }
-  return s;
-}
-
 // Fling the orb to a corner and let go, so the mode under test decides where
 // it ends up.
 const FLUNG = { x: 310, y: 660, r: 170 };
@@ -253,12 +323,11 @@ async function flingToCorner() {
   await touch('touchEnd', []);
 }
 
-await settleAt('07-pre-egg.png', HOME);
-
 // Press once: homing mode. The orb leaves the corner it was parked in and
 // heads home on its own, without being touched.
 await pressSwitch();
-const flipped = await settleAt('08-switched-to-homing.png', HOME);
+const flippedPng = await restAt('07-switched-to-homing.png', HOME);
+const flipped = await stats(flippedPng, HOME);
 check(
   'easter egg: the switch sends the parked orb home',
   flipped.near > 2000,
@@ -267,12 +336,7 @@ check(
 
 // ...and the mode sticks: drag it out again and it comes back by itself.
 await flingToCorner();
-let homingPng;
-for (let i = 0; i < 15; i++) {
-  await page.waitForTimeout(1000);
-  homingPng = await shotPng('09-homing.png');
-  if ((await stats(homingPng, HOME)).total < idle.total * 1.35) break;
-}
+const homingPng = await restAt('08-homing.png', HOME);
 const homingHome = await stats(homingPng, HOME);
 const homingCorner = await stats(homingPng, FLUNG);
 check(
@@ -284,12 +348,7 @@ check(
 // Press again: back to the default, and the orb stays put once more.
 await pressSwitch();
 await flingToCorner();
-let freePng;
-for (let i = 0; i < 15; i++) {
-  await page.waitForTimeout(1000);
-  freePng = await shotPng('10-back-to-free.png');
-  if ((await stats(freePng, FLUNG)).total < idle.total * 1.35) break;
-}
+const freePng = await restAt('09-back-to-free.png', FLUNG);
 const freeCorner = await stats(freePng, FLUNG);
 const freeHome = await stats(freePng, HOME);
 check(
