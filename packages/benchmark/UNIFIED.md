@@ -99,13 +99,20 @@ pnpm --filter vue-lynx-benchmark run bench:unified:full
 
 Outputs land in `results/unified/{latest.json,ANALYSIS.md,report.html,report.zh.html}`.
 
-**Human-facing report** (playground-style tinted tables + charts):
+**Human-facing report** (the `lynx-js-framework-benchmark` UI system: selectable
+entries, switchable heat-grid baselines, cards, scale charts, and theme toggle):
 
 ```bash
 pnpm --filter vue-lynx-benchmark run bench:report
 # → results/unified/report.html
 # docs embed: /benchmark/unified.html  (via website/scripts/prepare-benchmark.mjs)
 ```
+
+The report stays a self-contained static artifact: Vue Lynx's unified JSON and
+factor analysis remain the source of truth, while
+[`harness/framework-benchmark-ui.mjs`](./harness/framework-benchmark-ui.mjs)
+adapts the canonical cross-framework benchmark UI without adding a runtime
+dependency on a sibling checkout.
 
 Docs page: [`/guide/benchmark-unified`](../../website/docs/guide/benchmark-unified.mdx).
 

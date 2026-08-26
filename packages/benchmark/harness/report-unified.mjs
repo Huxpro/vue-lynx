@@ -1,6 +1,6 @@
 /**
- * Human-facing unified benchmark report — same visual language as
- * report-table.mjs (krausest cells + scale charts), covering the full
+ * Human-facing unified benchmark report — rendered with the visual system and
+ * interaction model from lynx-js-framework-benchmark/site, covering the full
  * architecture × IFR × FCP matrix and claim reevaluation.
  *
  *   node harness/report-unified.mjs
@@ -18,6 +18,10 @@ import { fileURLToPath } from 'node:url';
 import { parseArgs } from 'node:util';
 import { copy, buildConclusions } from './report-i18n.mjs';
 import { THEME_BRIDGE_CSS, THEME_BRIDGE_SCRIPT } from './theme-bridge.mjs';
+import {
+  FRAMEWORK_BENCHMARK_CSS,
+  FRAMEWORK_BENCHMARK_SCRIPT,
+} from './framework-benchmark-ui.mjs';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const { values: args } = parseArgs({
@@ -139,6 +143,8 @@ const FCP_ARCH_KEYS = [
   { key: 'vapor-ifr-code-paint', color: '#db2777' },
   { key: 'react', color: '#eda100' },
 ];
+const ARCH_COLORS = new Map(FCP_ARCH_KEYS.map(({ key, color }) => [key, color]));
+const archColor = (key) => ARCH_COLORS.get(key) ?? '#6b6a63';
 const FCP_SCALES = ['1k', '3k', '5k', '10k', '20k', '30k'];
 /** CPU ×4: Vue campaigns only cover through 10k — clip display so React ≠ lone 30k tail. */
 const FCP_SCALES_X4 = ['1k', '3k', '5k', '10k'];
@@ -187,6 +193,7 @@ function columnsFor(t) {
   return COLUMN_KEYS.filter((key) => !isEngineNa(key)).map((key) => ({
     key,
     label: t.colLabels[key] ?? key,
+    color: archColor(key),
     perOp: perOp[key],
   }));
 }
@@ -205,52 +212,71 @@ function fcpArchsFor(t) {
   }));
 }
 
-function renderTable(rows, columns, t) {
+function renderHeatGrid({ rows, columns, valueFor, t, title }) {
   const factorsByCol = Object.fromEntries(columns.map((c) => [c.key, []]));
-  let html = `<table><thead><tr><th>${escapeHtml(t.scenario)}</th>`;
-  for (const c of columns) html += `<th>${escapeHtml(c.label)}</th>`;
+  const fastestLabel = t.lang.startsWith('zh') ? '对比行内最快' : 'vs fastest';
+  let html = `<div class="card" data-heat-grid><div class="controls-row">`
+    + `<div class="card-title">${escapeHtml(title)}</div><div class="seg" role="group" aria-label="Baseline">`
+    + `<button type="button" data-baseline="fastest" aria-pressed="true">${fastestLabel}</button>`;
+  for (const c of columns) {
+    html += `<button type="button" data-baseline="${escapeAttr(c.key)}" aria-pressed="false">`
+      + `${t.lang.startsWith('zh') ? '对比 ' : 'vs '}${escapeHtml(c.label)}</button>`;
+  }
+  html += `</div></div><div class="heat-scroll"><table class="heat"><thead><tr><th>${escapeHtml(t.scenario)}</th>`;
+  for (const c of columns) {
+    html += `<th class="colhead" data-entry="${escapeAttr(c.key)}"><span class="swatch" style="background:${c.color}"></span> ${escapeHtml(c.label)}</th>`;
+  }
   html += '</tr></thead><tbody>';
 
   for (const row of rows) {
-    const cells = columns.map((c) => c.perOp?.[row.key] ?? null);
-    const nums = cells
-      .filter((s, i) => s?.median != null && !isEngineNa(columns[i].key))
-      .map((s) => s.median);
+    const cells = columns.map((c) => valueFor(c, row));
+    const nums = cells.filter((s) => s?.median != null).map((s) => s.median);
     const best = nums.length ? Math.min(...nums) : null;
-    html += `<tr><td class="op">${escapeHtml(row.label)}</td>`;
+    html += `<tr><th class="rowhead">${escapeHtml(row.label)}</th>`;
     for (const [i, s] of cells.entries()) {
-      if (isEngineNa(columns[i].key)) {
-        html += `<td class="c na engine-na">N/A</td>`;
-      } else if (s?.median != null && best != null) {
+      const entry = escapeAttr(columns[i].key);
+      if (s?.median != null && best != null) {
         const factor = s.median / best;
         factorsByCol[columns[i].key].push(factor);
-        html += `<td class="c ${bucketClass(factor)}"><b>${fmtMs(s.median)}</b>`
-          + `<span class="f">(${factor.toFixed(2)})</span></td>`;
+        const alpha = Math.min(0.5, Math.abs(Math.log(factor) / Math.log(4)) * 0.5);
+        html += `<td class="data${factor === 1 ? ' fastest' : ''}" data-entry="${entry}" data-value="${s.median}"`
+          + ` style="background:rgba(var(--heat-slow),${alpha.toFixed(3)})" title="${escapeAttr(`${columns[i].label}: ${fmtMs(s.median)}`)}">`
+          + `<span class="ratio">${factor.toFixed(2)}×</span><span class="absolute">${fmtMs(s.median)}</span></td>`;
       } else if (s?.dnf) {
-        html += `<td class="c dnf">DNF</td>`;
+        html += `<td class="dnf" data-entry="${entry}">DNF</td>`;
       } else {
-        html += `<td class="c na">—</td>`;
+        html += `<td class="null" data-entry="${entry}">—</td>`;
       }
     }
     html += '</tr>';
   }
 
-  html += `<tr class="geo"><td class="op">${escapeHtml(t.geoMean)}</td>`;
+  html += `</tbody><tfoot><tr><th class="rowhead">${escapeHtml(t.geoMean)}</th>`;
   for (const c of columns) {
-    if (isEngineNa(c.key)) {
-      html += `<td class="c na engine-na">N/A</td>`;
-      continue;
-    }
     const f = factorsByCol[c.key];
     if (!f.length) {
-      html += `<td class="c na">—</td>`;
+      html += `<td class="null" data-entry="${escapeAttr(c.key)}">—</td>`;
       continue;
     }
     const geo = Math.exp(f.reduce((a, b) => a + Math.log(b), 0) / f.length);
-    html += `<td class="c ${bucketClass(geo)}"><b>${geo.toFixed(2)}</b></td>`;
+    html += `<td class="data" data-entry="${escapeAttr(c.key)}">${geo.toFixed(2)}×</td>`;
   }
-  html += '</tr></tbody></table>';
+  html += `</tr></tfoot></table></div><div class="note">${
+    t.lang.startsWith('zh')
+      ? '每格为该架构中位数相对所选基线的倍数；橙色更慢、绿色更快。切换上方基线会重算整张表与几何平均。'
+      : 'Each cell is that architecture’s median relative to the selected baseline; orange is slower and green is faster. Changing the baseline recomputes the grid and geomean.'
+  }</div></div>`;
   return html;
+}
+
+function renderTable(rows, columns, t) {
+  return renderHeatGrid({
+    rows,
+    columns,
+    valueFor: (column, row) => column.perOp?.[row.key] ?? null,
+    t,
+    title: t.lang.startsWith('zh') ? '全部交互场景概览' : 'All interaction cases at a glance',
+  });
 }
 
 function fcpScalesFor(cpu) {
@@ -258,34 +284,18 @@ function fcpScalesFor(cpu) {
 }
 
 function renderFcpTable(cpu, t) {
-  const archs = fcpArchsFor(t);
-  const scales = fcpScalesFor(cpu);
-  let html = `<table><thead><tr><th>${escapeHtml(t.scale)}</th>`;
-  for (const a of archs) {
-    html += `<th${isEngineNa(a.key) ? ' class="engine-na"' : ''}>${escapeHtml(a.label)}</th>`;
-  }
-  html += '</tr></thead><tbody>';
-  for (const scale of scales) {
-    const vals = archs.map((a) => cellMetric(a.key, scale, 'fcp', cpu));
-    const nums = vals.filter(
-      (v, i) => v != null && !isEngineNa(archs[i].key),
-    );
-    const best = nums.length ? Math.min(...nums) : null;
-    html += `<tr><td class="op">${escapeHtml(t.fcpScale(scale))}</td>`;
-    for (const [i, v] of vals.entries()) {
-      if (isEngineNa(archs[i].key)) {
-        html += `<td class="c na engine-na">N/A</td>`;
-      } else if (v == null || best == null) {
-        html += `<td class="c na">—</td>`;
-      } else {
-        const factor = v / best;
-        html += `<td class="c ${bucketClass(factor)}"><b>${fmtMs(v)}</b>`
-          + `<span class="f">(${factor.toFixed(2)})</span></td>`;
-      }
-    }
-    html += '</tr>';
-  }
-  return `${html}</tbody></table>`;
+  const columns = fcpArchsFor(t).map((a) => ({ ...a, color: a.color ?? archColor(a.key) }));
+  const rows = fcpScalesFor(cpu).map((scale) => ({ scale, label: t.fcpScale(scale) }));
+  return renderHeatGrid({
+    rows,
+    columns,
+    valueFor: (column, row) => {
+      const median = cellMetric(column.key, row.scale, 'fcp', cpu);
+      return median == null ? null : { median };
+    },
+    t,
+    title: t.lang.startsWith('zh') ? `首帧 FCP · CPU ×${cpu}` : `First-contentful paint · CPU ×${cpu}`,
+  });
 }
 
 function niceLinearTicks(lo, hi, maxTicks = 6) {
@@ -350,9 +360,9 @@ function staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax }) {
   let marks = '';
   for (const s of vis) {
     const d = s.pts.map((p, k) => `${k ? 'L' : 'M'}${px(p.x).toFixed(1)},${py(p.y).toFixed(1)}`).join('');
-    marks += `<path d="${d}" class="line" style="stroke:${s.color}"/>`;
+    marks += `<path d="${d}" class="line" data-chart-entry="${escapeAttr(s.key ?? '')}" style="stroke:${s.color}"/>`;
     for (const p of s.pts) {
-      marks += `<circle cx="${px(p.x).toFixed(1)}" cy="${py(p.y).toFixed(1)}" r="4.5" class="dot" style="fill:${s.color}"/>`;
+      marks += `<circle cx="${px(p.x).toFixed(1)}" cy="${py(p.y).toFixed(1)}" r="4.5" class="dot" data-chart-entry="${escapeAttr(s.key ?? '')}" style="fill:${s.color}"/>`;
     }
   }
   // labels in endpoint-y order
@@ -363,7 +373,7 @@ function staticLineSVG(series, { W, H, ML, MR, MT, MB, logY, xmax }) {
   for (const e of ends) {
     const ly = Math.max(e.y + 4, prevY + 13);
     prevY = ly;
-    marks += `<text x="${(e.x + 9).toFixed(1)}" y="${ly.toFixed(1)}" class="slabel" fill="${e.s.color}">${escapeHtml(e.s.label)}</text>`;
+    marks += `<text x="${(e.x + 9).toFixed(1)}" y="${ly.toFixed(1)}" class="slabel" data-chart-entry="${escapeAttr(e.s.key ?? '')}" fill="${e.s.color}">${escapeHtml(e.s.label)}</text>`;
   }
   return g + marks;
 }
@@ -383,7 +393,7 @@ function renderLineChart({ title, sub, series, xLabel, yLabel, logY = false, wid
     xl: xLabel, yl: yLabel,
     s: series
       .filter((s) => s.pts.length)
-      .map((s) => ({ l: s.label, c: s.color, p: s.pts.map((p) => [p.x, p.y]) })),
+      .map((s) => ({ k: s.key, l: s.label, c: s.color, p: s.pts.map((p) => [p.x, p.y]) })),
   };
   const zh = REPORT_LANG === 'zh';
   const ctl = `<div class="cctl"><button class="creset" type="button" hidden>${
@@ -391,8 +401,8 @@ function renderLineChart({ title, sub, series, xLabel, yLabel, logY = false, wid
   }</button><span class="chint">${
     zh ? '拖框放大区域 · 滚轮缩放 · 双击复位 · hover 高亮' : 'drag a box to zoom · wheel to scale · double-click to reset · hover to highlight'
   }</span></div>`;
-  return `<figure class="chart ichart${wide ? ' wide' : ''}" id="${id}">
-<h3>${escapeHtml(title)}</h3><p class="sub">${sub}</p>
+  return `<figure class="card chart ichart${wide ? ' wide' : ''}" id="${id}">
+<figcaption><div class="card-title">${escapeHtml(title)}</div><div class="card-desc">${sub}</div></figcaption>
 ${ctl}
 <div class="ccanvas" data-chart='${escapeAttr(JSON.stringify(cfg))}'>
 <svg viewBox="0 0 ${W} ${H}" role="img" aria-label="${escapeHtml(title)}">
@@ -465,21 +475,23 @@ const LINE_CHART_JS = String.raw`(() => {
       for (const t of (logY ? logTicks(view.y0, view.y1) : linTicks(view.y0, view.y1))) { const Y = py(t); if (Y < plotT - 0.5 || Y > plotB + 0.5) continue; g += '<line x1="' + plotL + '" y1="' + Y + '" x2="' + plotR + '" y2="' + Y + '" class="grid"/><text x="' + (plotL - 6) + '" y="' + (Y + 3.5) + '" class="tick" text-anchor="end">' + fmtY(t) + '</text>'; }
       let m = ''; rendered = [];
       cfg.s.forEach((s, i) => {
+        const hidden = window.__disabledBenchmarkEntries?.has(s.k);
+        const display = hidden ? ';display:none' : '';
         const pix = s.p.map((p) => [px(p[0]), py(p[1])]);
-        rendered.push({ i, l: s.l, c: s.c, pix });
-        m += '<path d="' + pix.map((q, k) => (k ? 'L' : 'M') + q[0].toFixed(1) + ',' + q[1].toFixed(1)).join('') + '" class="line" data-i="' + i + '" style="stroke:' + s.c + '"/>';
-        for (const p of s.p) { const X = px(p[0]), Y = py(p[1]); if (X < plotL - 3 || X > plotR + 3) continue; m += '<circle cx="' + X.toFixed(1) + '" cy="' + Y.toFixed(1) + '" r="4" class="dot" data-i="' + i + '" style="fill:' + s.c + '"/>'; }
+        if (!hidden) rendered.push({ i, l: s.l, c: s.c, pix });
+        m += '<path d="' + pix.map((q, k) => (k ? 'L' : 'M') + q[0].toFixed(1) + ',' + q[1].toFixed(1)).join('') + '" class="line" data-i="' + i + '" data-chart-entry="' + esc(s.k || '') + '" style="stroke:' + s.c + display + '"/>';
+        for (const p of s.p) { const X = px(p[0]), Y = py(p[1]); if (X < plotL - 3 || X > plotR + 3) continue; m += '<circle cx="' + X.toFixed(1) + '" cy="' + Y.toFixed(1) + '" r="4" class="dot" data-i="' + i + '" data-chart-entry="' + esc(s.k || '') + '" style="fill:' + s.c + display + '"/>'; }
       });
       // labels anchored at the right edge (value where each line meets x1), in y order
-      const ends = cfg.s.map((s, i) => {
+      const ends = cfg.s.filter((s) => !window.__disabledBenchmarkEntries?.has(s.k)).map((s, i) => {
         const last = s.p[s.p.length - 1];
         const xa = Math.min(view.x1, last[0]);
         let yv = last[1];
         if (xa < last[0]) { for (let k = 1; k < s.p.length; k++) { if (s.p[k][0] >= xa) { const a = s.p[k - 1], b = s.p[k]; yv = a[1] + (b[1] - a[1]) * ((xa - a[0]) / ((b[0] - a[0]) || 1)); break; } } }
-        return { i, l: s.l, c: s.c, x: Math.min(px(xa), plotR) + 9, y: py(yv) };
+        return { i: cfg.s.indexOf(s), k: s.k, l: s.l, c: s.c, x: Math.min(px(xa), plotR) + 9, y: py(yv) };
       }).filter((e) => e.y >= plotT - 24 && e.y <= plotB + 24).sort((a, b) => a.y - b.y);
       let prev = -1e9, lab = '';
-      for (const e of ends) { const ly = Math.max(e.y + 4, prev + 13); prev = ly; lab += '<text x="' + e.x.toFixed(1) + '" y="' + ly.toFixed(1) + '" class="slabel" data-i="' + e.i + '" fill="' + e.c + '">' + esc(e.l) + '</text>'; }
+      for (const e of ends) { const ly = Math.max(e.y + 4, prev + 13); prev = ly; lab += '<text x="' + e.x.toFixed(1) + '" y="' + ly.toFixed(1) + '" class="slabel" data-i="' + e.i + '" data-chart-entry="' + esc(e.k || '') + '" fill="' + e.c + '">' + esc(e.l) + '</text>'; }
       const ax = '<text x="' + (plotL + plotW / 2) + '" y="' + (H - 6) + '" class="axis" text-anchor="middle">' + esc(cfg.xl) + '</text>'
         + '<text x="14" y="' + (plotT + plotH / 2) + '" class="axis" text-anchor="middle" transform="rotate(-90 14 ' + (plotT + plotH / 2) + ')">' + esc(cfg.yl) + '</text>';
       svg.innerHTML = '<defs><clipPath id="' + clipId + '"><rect x="' + plotL + '" y="' + plotT + '" width="' + plotW + '" height="' + plotH + '"/></clipPath></defs>'
@@ -564,7 +576,7 @@ function stormSeries(op, t, ticks = 1, pred = null) {
           return { x: SIZE_N[size], y: v / ticks, label: size };
         })
         .filter(Boolean);
-      return { label: c.label, color: colors[i], pts };
+      return { key: c.key, label: c.label, color: colors[i], pts };
     })
     .filter((s) => s.pts.length);
 }
@@ -574,6 +586,7 @@ function fcpSeries(cpu, t) {
   return fcpArchsFor(t)
     .filter((a) => !isEngineNa(a.key))
     .map((a) => ({
+      key: a.key,
       label: a.label,
       color: a.color,
       pts: scales.map((scale) => {
@@ -1196,6 +1209,16 @@ function renderReport(lang, outPath) {
   const cols = columnsFor(t);
   const rows = stormRowsFor(t);
   const ch = t.charts;
+  const nav = t.lang.startsWith('zh')
+    ? { overview: '概览', scale: '规模', factors: '优化因子', method: '方法' }
+    : { overview: 'Overview', scale: 'Scale', factors: 'Factors', method: 'Method' };
+  const legendEntries = [...new Map(
+    [...cols, ...fcpArchsFor(t)].map((entry) => [entry.key, entry]),
+  ).values()];
+  const entryLegend = `<div class="entry-legend" role="group" aria-label="Entries">${legendEntries.map((entry) =>
+    `<button type="button" class="item" data-entry-toggle="${escapeAttr(entry.key)}" aria-pressed="true">`
+      + `<span class="swatch" style="background:${entry.color ?? archColor(entry.key)}"></span>${escapeHtml(entry.label)}</button>`,
+  ).join('')}</div>`;
 
   return `<!doctype html>
 <html lang="${t.lang}">
@@ -1320,11 +1343,25 @@ function renderReport(lang, outPath) {
     font-size: 12px; border: 1px solid var(--line); border-radius: 999px;
     padding: 4px 10px; color: var(--ink-2);
   }
+${FRAMEWORK_BENCHMARK_CSS}
 </style>
 </head>
 <body>
+<main class="page">
+<header class="site-header">
+  <div class="site-title"><span class="lynx">Lynx</span> Unified Benchmark</div>
+  <nav class="site-nav" aria-label="Pages">
+    <a href="#overview" aria-current="page">${nav.overview}</a>
+    <a href="#scale">${nav.scale}</a>
+    <a href="#factors">${nav.factors}</a>
+    <a href="#method">${nav.method}</a>
+  </nav>
+  <div class="harness-switch" role="group" aria-label="Harness"><span aria-pressed="true">Lynx for Web</span></div>
+  <a class="lang-switch" href="${alt.href}">${escapeHtml(alt.label)}</a>
+  <button class="theme-toggle" type="button" data-theme-toggle aria-label="Toggle theme">☾</button>
+</header>
 <h1>${escapeHtml(t.title)}</h1>
-<p class="sub">
+<p class="subtitle">
   ${t.lede}
   ${escapeHtml(t.generated(meta))}.
 </p>
@@ -1339,23 +1376,17 @@ function renderReport(lang, outPath) {
       : 'Engine cells: N/A on this host (no engine ET PAPI on Lynx for Web) — omitted from all tables and charts'
   }</span>
 </div>
-<p class="lang-switch"><a href="${alt.href}">${escapeHtml(alt.label)}</a></p>
+${entryLegend}
 
-<h2>${escapeHtml(t.hConclusions)}</h2>
+<h2 id="overview">${escapeHtml(t.hConclusions)}</h2>
 <p class="sub">${escapeHtml(t.subConclusions)}</p>
 ${conclusionsHtml}
 
 <h2>${escapeHtml(t.hStorms)}</h2>
 <p class="sub">${t.subStorms}</p>
-<div class="scroll">${renderTable(rows, cols, t)}</div>
-<div class="legend">
-  <span><i style="background:color-mix(in srgb, var(--good) var(--tint), var(--surface))"></i>≤ 1.15×</span>
-  <span><i style="background:color-mix(in srgb, var(--warn) var(--tint), var(--surface))"></i>≤ 2.5×</span>
-  <span><i style="background:color-mix(in srgb, var(--serious) var(--tint), var(--surface))"></i>≤ 10×</span>
-  <span><i style="background:color-mix(in srgb, var(--critical) var(--tint), var(--surface))"></i>&gt; 10×</span>
-</div>
+${renderTable(rows, cols, t)}
 
-<h2>${escapeHtml(t.hStormScale)}</h2>
+<h2 id="scale">${escapeHtml(t.hStormScale)}</h2>
 <p class="sub">${escapeHtml(t.subStormScale)}</p>
 <div class="charts">
   ${renderLineChart({
@@ -1405,9 +1436,9 @@ ${conclusionsHtml}
 
 <h2>${escapeHtml(t.hFcp)}</h2>
 <p class="sub">${t.subFcp}</p>
-<div class="scroll">${renderFcpTable(1, t)}</div>
+${renderFcpTable(1, t)}
 <p class="sub" style="margin-top:16px">${escapeHtml(t.subFcp4)}</p>
-<div class="scroll">${renderFcpTable(4, t)}</div>
+${renderFcpTable(4, t)}
 <div class="charts" style="margin-top:16px">
   ${renderLineChart({
     title: ch.fcp1.title,
@@ -1431,12 +1462,12 @@ ${conclusionsHtml}
   })}
 </div>
 
-<h2>${escapeHtml(t.hGraphEng)}</h2>
+<h2 id="factors">${escapeHtml(t.hGraphEng)}</h2>
 <p class="sub">${t.subGraphEng}</p>
 <div class="scroll">${graphEngNamingTable(t)}</div>
 ${graphEngFactorsSection(t)}
 
-<h2>${escapeHtml(t.hCoverage)}</h2>
+<h2 id="method">${escapeHtml(t.hCoverage)}</h2>
 <p class="sub">${escapeHtml(t.subCoverage)}</p>
 <div class="scroll">${coverageTable(t)}</div>
 
@@ -1445,7 +1476,13 @@ ${graphEngFactorsSection(t)}
     ${t.notes.map((n) => `<li>${n}</li>`).join('\n    ')}
   </ul>
 </div>
+<footer class="note report-footer">
+  UI adapted from <a href="https://github.com/Huxpro/lynx-js-framework-benchmark" target="_blank" rel="noreferrer">lynx-js-framework-benchmark</a>
+  · <code>results/unified/latest.json</code> remains the source of truth.
+</footer>
+</main>
 <script>${THEME_BRIDGE_SCRIPT}</script>
+<script>${FRAMEWORK_BENCHMARK_SCRIPT}</script>
 <script>${LINE_CHART_JS}</script>
 </body>
 </html>
