@@ -46,3 +46,31 @@ export function buildData(count = 1000): RowData[] {
   }
   return data;
 }
+
+// Deterministic mount data is evaluated independently by Lynx's main and
+// background runtimes, so both first renders must receive byte-identical rows.
+export function buildDataSeeded(count: number): RowData[] {
+  let seed = 42 >>> 0;
+  const random = () => {
+    seed = (seed + 0x6d2b79f5) >>> 0;
+    let value = seed;
+    value = Math.imul(value ^ (value >>> 15), value | 1);
+    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+  const pick = (max: number) => Math.round(random() * 1000) % max;
+  const data: RowData[] = [];
+  for (let i = 0; i < count; i++) {
+    data.push({
+      id: ID++,
+      label: shallowRef(
+        adjectives[pick(adjectives.length)]
+          + ' '
+          + colours[pick(colours.length)]
+          + ' '
+          + nouns[pick(nouns.length)],
+      ),
+    });
+  }
+  return data;
+}

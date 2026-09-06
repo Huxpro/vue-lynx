@@ -6,6 +6,7 @@ import { pluginVueLynx } from 'vue-lynx/plugin';
 // 'et' = intrinsic Code-Template WITHOUT IFR — the four-axis matrix's
 // create-benefit cell (#321/#325).
 const cell = process.env.BENCH_CELL ?? 'off';
+const autoRows = Number(process.env.BENCH_AUTOROWS ?? '0');
 const enableIFR = cell === 'ifr' || cell === 'ifr-et';
 const enableElementTemplates = cell === 'ifr-et' || cell === 'et';
 const modeLabel =
@@ -41,6 +42,7 @@ export default defineConfig({
     },
     define: {
       __BENCH_MODE__: JSON.stringify(modeLabel),
+      __BENCH_AUTOROWS__: JSON.stringify(autoRows),
     },
   },
   plugins: [

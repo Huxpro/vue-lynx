@@ -4,10 +4,17 @@
 // immutable state updates + memoized row component.
 import { memo, useCallback, useEffect, useRef, useState } from '@lynx-js/react';
 
-import { buildData } from './data';
+import { buildData, buildDataSeeded } from './data';
 import type { RowData } from './data';
 
 import './App.css';
+
+// Startup scale is a build-time cell. A deterministic initializer keeps the
+// main/background first render identical while exercising the real mount path.
+declare const __BENCH_AUTOROWS__: number;
+const INITIAL_ROWS = __BENCH_AUTOROWS__ > 0
+  ? buildDataSeeded(__BENCH_AUTOROWS__)
+  : [];
 
 // -- storms: N sequential state→render→DOM ticks from one click --------------
 // Each tick runs in its own macrotask (MessageChannel avoids the nested
@@ -62,7 +69,7 @@ const Row = memo(function Row({ row, isSelected, onSelect, onRemove }: RowProps)
 });
 
 export function App() {
-  const [rows, setRows] = useState<RowData[]>([]);
+  const [rows, setRows] = useState<RowData[]>(INITIAL_ROWS);
   const [selected, setSelected] = useState<number | undefined>(undefined);
 
   const run = useCallback(() => {
