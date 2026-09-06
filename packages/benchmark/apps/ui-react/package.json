@@ -10,12 +10,12 @@
     "build:compiler": "rspeedy build --config lynx.compiler.config.ts"
   },
   "dependencies": {
-    "@lynx-js/react": "^0.122.1",
+    "@lynx-js/react": "0.126.0",
     "react-compiler-runtime": "^1.0.0"
   },
   "devDependencies": {
-    "@lynx-js/react-rsbuild-plugin": "^0.17.2",
-    "@lynx-js/rspeedy": "^0.15.2",
+    "@lynx-js/react-rsbuild-plugin": "0.20.1",
+    "@lynx-js/rspeedy": "0.17.1",
     "@lynx-js/types": "^3.4.0",
     "@types/react": "^18.3.0",
     "typescript": "^5.0.0",
