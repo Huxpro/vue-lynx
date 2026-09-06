@@ -21,6 +21,7 @@ import { pluginVueLynx } from 'vue-lynx/plugin';
  *   frame via the compiled Code-Template create(); measurable on web
  */
 const cell = process.env.BENCH_CELL ?? 'off';
+const autoRows = Number(process.env.BENCH_AUTOROWS ?? '0');
 const enableIFR =
   cell === 'ifr' || cell === 'ifr-dense' || cell === 'ifr-sparse'
   || cell === 'ifr-engine-et' || cell === 'ifr-code-paint';
@@ -58,6 +59,7 @@ export default defineConfig({
     },
     define: {
       __BENCH_MODE__: JSON.stringify(modeLabel),
+      __BENCH_AUTOROWS__: JSON.stringify(autoRows),
     },
   },
   plugins: [

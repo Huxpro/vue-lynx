@@ -5,6 +5,7 @@ import { defineConfig } from '@lynx-js/rspeedy';
 // comparator on the same source and toolchain. The benchmark build sets this
 // variable explicitly and records the selected capability in its manifest.
 const useElementTemplate = process.env.BENCH_ENABLE_ET === '1';
+const autoRows = Number(process.env.BENCH_AUTOROWS ?? '0');
 
 export default defineConfig({
   environments: {
@@ -14,6 +15,9 @@ export default defineConfig({
   source: {
     entry: {
       main: './src/index.tsx',
+    },
+    define: {
+      __BENCH_AUTOROWS__: JSON.stringify(autoRows),
     },
   },
   plugins: [
