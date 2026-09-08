@@ -13,16 +13,20 @@ import './App.css';
 const STORM_UPDATE_TICKS = 50;
 const STORM_SELECT_TICKS = 30;
 
-const _stormChannel = new MessageChannel();
+const _stormChannel = typeof MessageChannel === 'function'
+  ? new MessageChannel()
+  : null;
 let _stormPending: (() => void) | null = null;
-_stormChannel.port1.onmessage = () => {
+function flushMacrotask() {
   const cb = _stormPending;
   _stormPending = null;
   if (cb) cb();
-};
+}
+if (_stormChannel) _stormChannel.port1.onmessage = flushMacrotask;
 function nextMacrotask(cb: () => void) {
   _stormPending = cb;
-  _stormChannel.port2.postMessage(0);
+  if (_stormChannel) _stormChannel.port2.postMessage(0);
+  else lynx.setTimeout(flushMacrotask, 0);
 }
 
 // Module-scope storm driver: the tick counter must not be a mutated binding
