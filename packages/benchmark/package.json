@@ -7,6 +7,7 @@
   "scripts": {
     "build": "node harness/build.mjs",
     "build:unified": "node harness/build-unified.mjs",
+    "test:native-protocol": "node --test shared/native-protocol.test.mjs",
     "bench": "node harness/run.mjs",
     "bench:quick": "node harness/run.mjs --startup-count 2",
     "bench:cross": "node harness/cross.mjs",
