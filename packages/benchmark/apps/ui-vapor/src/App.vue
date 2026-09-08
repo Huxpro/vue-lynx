@@ -1,15 +1,20 @@
 <!-- GENERATED from apps/ui-vdom/src/App.vue — do not edit -->
 <script setup vapor lang="ts">
-// Black-box cross-framework benchmark UI (no instrumentation).
+// Cross-framework benchmark UI. Web keeps the black-box workload unchanged;
+// Native adds only the shared, versioned handler-to-frame receipt.
 // Lynx port of the krausest js-framework-benchmark table app, matching the
 // semantics of vuejs/core packages-private/benchmark client/App.vue.
 // The vapor variant is GENERATED from this file (the build inserts the
 // `vapor` attribute on the script tag). Do not edit apps/ui-vapor/src/App.vue
 // by hand. The React variant (apps/ui-react) mirrors these operations with
 // idiomatic React state.
-import { ref, shallowRef, triggerRef } from 'vue'
+import { onBeforeUnmount, ref, shallowRef, triggerRef } from 'vue'
 import { buildData, buildDataSeeded } from '../../../shared/data'
 import type { RowData } from '../../../shared/data'
+import {
+  NATIVE_STARTUP_TIMING_FLAG,
+  nativeBenchmark,
+} from '../../../shared/native-protocol'
 
 const MODE = __BENCH_MODE__
 declare const __BENCH_AUTOROWS__: number
@@ -21,63 +26,101 @@ const rows = shallowRef<RowData[]>(
 const ready = ref('ready')
 
 function run() {
-  rows.value = buildData()
-  selected.value = undefined
+  nativeBenchmark.measure('create', () => {
+    rows.value = buildData()
+    selected.value = undefined
+  })
 }
 function runLots() {
-  rows.value = buildData(10000)
-  selected.value = undefined
+  nativeBenchmark.measure('create', () => {
+    rows.value = buildData(10000)
+    selected.value = undefined
+  })
 }
 function run3k() {
-  rows.value = buildData(3000)
-  selected.value = undefined
+  nativeBenchmark.measure('create', () => {
+    rows.value = buildData(3000)
+    selected.value = undefined
+  })
 }
 function run5k() {
-  rows.value = buildData(5000)
-  selected.value = undefined
+  nativeBenchmark.measure('create', () => {
+    rows.value = buildData(5000)
+    selected.value = undefined
+  })
 }
 function run20k() {
-  rows.value = buildData(20000)
-  selected.value = undefined
+  nativeBenchmark.measure('create', () => {
+    rows.value = buildData(20000)
+    selected.value = undefined
+  })
 }
 function run30k() {
-  rows.value = buildData(30000)
-  selected.value = undefined
+  nativeBenchmark.measure('create', () => {
+    rows.value = buildData(30000)
+    selected.value = undefined
+  })
 }
 function add() {
-  rows.value.push(...buildData(1000))
-  triggerRef(rows)
+  nativeBenchmark.measure('append1k', () => {
+    rows.value.push(...buildData(1000))
+    triggerRef(rows)
+  })
 }
 function update() {
-  const _rows = rows.value
-  for (let i = 0, len = _rows.length; i < len; i += 10) {
-    _rows[i].label.value += ' !!!'
-  }
+  nativeBenchmark.measure('update10th', () => {
+    const _rows = rows.value
+    for (let i = 0, len = _rows.length; i < len; i += 10) {
+      _rows[i].label.value += ' !!!'
+    }
+  })
 }
 function select(id: number) {
-  selected.value = id
+  nativeBenchmark.measure('select', () => {
+    selected.value = id
+  })
 }
 function remove(id: number) {
-  rows.value.splice(
-    rows.value.findIndex(d => d.id === id),
-    1,
-  )
-  triggerRef(rows)
+  nativeBenchmark.measure('remove', () => {
+    rows.value.splice(
+      rows.value.findIndex(d => d.id === id),
+      1,
+    )
+    triggerRef(rows)
+  })
 }
 function swapRows() {
-  const _rows = rows.value
-  if (_rows.length > 998) {
-    const d1 = _rows[1]
-    const d998 = _rows[998]
-    _rows[1] = d998
-    _rows[998] = d1
-    triggerRef(rows)
-  }
+  nativeBenchmark.measure('swap', () => {
+    const _rows = rows.value
+    if (_rows.length > 998) {
+      const d1 = _rows[1]
+      const d998 = _rows[998]
+      _rows[1] = d998
+      _rows[998] = d1
+      triggerRef(rows)
+    }
+  })
 }
 function clear() {
-  rows.value = []
-  selected.value = undefined
+  nativeBenchmark.measure('clear', () => {
+    rows.value = []
+    selected.value = undefined
+  })
 }
+
+const removeSnapshot = nativeBenchmark.installSnapshot(() => {
+  const current = rows.value
+  return {
+    rowCount: current.length,
+    firstId: current[0]?.id ?? null,
+    secondId: current[1]?.id ?? null,
+    thirdId: current[2]?.id ?? null,
+    row998Id: current[998]?.id ?? null,
+    firstLabel: current[0]?.label.value ?? null,
+    selectedId: selected.value ?? null,
+  }
+})
+onBeforeUnmount(removeSnapshot)
 
 // -- storms: N sequential state→render→tree ticks from one click -------------
 // Each tick runs in its own macrotask so every mutation goes through a full
@@ -106,6 +149,18 @@ function nextMacrotask(cb: () => void) {
 }
 
 function stormUpdate() {
+  if (nativeBenchmark.isNative) {
+    nativeBenchmark.measure('updateStorm', () => nativeBenchmark.runStorm(
+      STORM_UPDATE_TICKS,
+      t => {
+        const _rows = rows.value
+        for (let i = 0, len = _rows.length; i < len; i += 10) {
+          _rows[i].label.value = 'bench ' + t
+        }
+      },
+    ))
+    return
+  }
   let t = 0
   const step = () => {
     t++
@@ -119,6 +174,18 @@ function stormUpdate() {
 }
 
 function stormSelect() {
+  if (nativeBenchmark.isNative) {
+    nativeBenchmark.measure('selectStorm', () => nativeBenchmark.runStorm(
+      STORM_SELECT_TICKS,
+      t => {
+        const _rows = rows.value
+        selected.value = t < STORM_SELECT_TICKS
+          ? _rows[(t * 97) % _rows.length].id
+          : _rows[0].id
+      },
+    ))
+    return
+  }
   let t = 0
   const step = () => {
     t++
@@ -133,7 +200,7 @@ function stormSelect() {
 </script>
 
 <template>
-  <view class="page">
+  <view class="page" :__lynx_timing_flag="NATIVE_STARTUP_TIMING_FLAG">
     <text class="title">Vue ({{ MODE }}) UI Benchmark on Lynx · {{ ready }}</text>
     <view class="toolbar">
       <view class="btn" @tap="run()"><text class="btn-text">Create 1,000 rows</text></view>

@@ -99,6 +99,26 @@ pnpm --filter vue-lynx-benchmark run bench:unified:full
 
 Outputs land in `results/unified/{latest.json,ANALYSIS.md,report.html,report.zh.html}`.
 
+## Native producer protocol
+
+The table fixtures preserve the existing Lynx-for-Web black-box workload and
+add a versioned receipt only in the Native background VM:
+
+- `lynx-native-bench-v2` measures a real tap-handler entry through the second
+  `lynx.requestAnimationFrame`, with pre/post framework-state snapshots. It
+  reports transport acknowledgement as unavailable instead of inferring it.
+- Storms use `lynx.setTimeout` and prove one native frame barrier per tick, so
+  a batched or incomplete storm cannot be reported as a successful sample.
+- `lynx-native-startup-v1` is a two-frame state receipt, not FCP. The root also
+  carries the public `__lynx_timing_flag="lynx-native-bench-startup"`; formal
+  startup timing must come from the matching engine `PipelineEntry` or
+  `LoadBundleEntry` and is DNF when that host evidence is absent.
+- Producer failures emit `__NATIVE_BENCH_ERROR__`. Instrumentation failures
+  invalidate the sample but never suppress the benchmark action itself.
+
+The marker names, state predicates, SDK identity, and bundle provenance are
+validated by the native benchmark host before a sample is accepted.
+
 **Human-facing report** (the `lynx-js-framework-benchmark` UI system: selectable
 entries, switchable heat-grid baselines, cards, scale charts, and theme toggle):
 

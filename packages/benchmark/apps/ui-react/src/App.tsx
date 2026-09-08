@@ -6,6 +6,10 @@ import { memo, useCallback, useEffect, useRef, useState } from '@lynx-js/react';
 
 import { buildData, buildDataSeeded } from './data';
 import type { RowData } from './data';
+import {
+  NATIVE_STARTUP_TIMING_FLAG,
+  nativeBenchmark,
+} from '../../../shared/native-protocol';
 
 import './App.css';
 
@@ -43,6 +47,7 @@ function nextMacrotask(cb: () => void) {
 // Module-scope storm driver — mirrors AppNaive.tsx (the tick counter must not
 // be a mutated binding captured inside the component; see note there).
 function runStorm(ticks: number, step: (t: number) => void) {
+  if (nativeBenchmark.isNative) return nativeBenchmark.runStorm(ticks, step);
   let t = 0;
   const tick = () => {
     t += 1;
@@ -78,63 +83,85 @@ export function App() {
   const [selected, setSelected] = useState<number | undefined>(undefined);
 
   const run = useCallback(() => {
-    setRows(buildData());
-    setSelected(undefined);
+    nativeBenchmark.measure('create', () => {
+      setRows(buildData());
+      setSelected(undefined);
+    });
   }, []);
   const runLots = useCallback(() => {
-    setRows(buildData(10000));
-    setSelected(undefined);
+    nativeBenchmark.measure('create', () => {
+      setRows(buildData(10000));
+      setSelected(undefined);
+    });
   }, []);
   const run3k = useCallback(() => {
-    setRows(buildData(3000));
-    setSelected(undefined);
+    nativeBenchmark.measure('create', () => {
+      setRows(buildData(3000));
+      setSelected(undefined);
+    });
   }, []);
   const run5k = useCallback(() => {
-    setRows(buildData(5000));
-    setSelected(undefined);
+    nativeBenchmark.measure('create', () => {
+      setRows(buildData(5000));
+      setSelected(undefined);
+    });
   }, []);
   const run20k = useCallback(() => {
-    setRows(buildData(20000));
-    setSelected(undefined);
+    nativeBenchmark.measure('create', () => {
+      setRows(buildData(20000));
+      setSelected(undefined);
+    });
   }, []);
   const run30k = useCallback(() => {
-    setRows(buildData(30000));
-    setSelected(undefined);
+    nativeBenchmark.measure('create', () => {
+      setRows(buildData(30000));
+      setSelected(undefined);
+    });
   }, []);
   const add = useCallback(() => {
-    setRows((prev) => prev.concat(buildData(1000)));
+    nativeBenchmark.measure('append1k', () => {
+      setRows((prev) => prev.concat(buildData(1000)));
+    });
   }, []);
   const update = useCallback(() => {
-    setRows((prev) => {
-      const next = prev.slice();
-      for (let i = 0; i < next.length; i += 10) {
-        next[i] = { id: next[i].id, label: `${next[i].label} !!!` };
-      }
-      return next;
+    nativeBenchmark.measure('update10th', () => {
+      setRows((prev) => {
+        const next = prev.slice();
+        for (let i = 0; i < next.length; i += 10) {
+          next[i] = { id: next[i].id, label: `${next[i].label} !!!` };
+        }
+        return next;
+      });
     });
   }, []);
   const select = useCallback((id: number) => {
-    setSelected(id);
+    nativeBenchmark.measure('select', () => setSelected(id));
   }, []);
   const remove = useCallback((id: number) => {
-    setRows((prev) => {
-      const idx = prev.findIndex((d) => d.id === id);
-      return prev.slice(0, idx).concat(prev.slice(idx + 1));
+    nativeBenchmark.measure('remove', () => {
+      setRows((prev) => {
+        const idx = prev.findIndex((d) => d.id === id);
+        return prev.slice(0, idx).concat(prev.slice(idx + 1));
+      });
     });
   }, []);
   const swapRows = useCallback(() => {
-    setRows((prev) => {
-      if (prev.length <= 998) return prev;
-      const next = prev.slice();
-      const d1 = next[1];
-      next[1] = next[998];
-      next[998] = d1;
-      return next;
+    nativeBenchmark.measure('swap', () => {
+      setRows((prev) => {
+        if (prev.length <= 998) return prev;
+        const next = prev.slice();
+        const d1 = next[1];
+        next[1] = next[998];
+        next[998] = d1;
+        return next;
+      });
     });
   }, []);
   const clear = useCallback(() => {
-    setRows([]);
-    setSelected(undefined);
+    nativeBenchmark.measure('clear', () => {
+      setRows([]);
+      setSelected(undefined);
+    });
   }, []);
 
   const idsRef = useRef<number[]>([]);
@@ -142,23 +169,48 @@ export function App() {
     idsRef.current = rows.map((r) => r.id);
   }, [rows]);
 
+  const rowsRef = useRef(rows);
+  rowsRef.current = rows;
+  const selectedRef = useRef(selected);
+  selectedRef.current = selected;
+  const snapshotGetterRef = useRef(() => {
+    const current = rowsRef.current;
+    return {
+      rowCount: current.length,
+      firstId: current[0]?.id ?? null,
+      secondId: current[1]?.id ?? null,
+      thirdId: current[2]?.id ?? null,
+      row998Id: current[998]?.id ?? null,
+      firstLabel: current[0]?.label ?? null,
+      selectedId: selectedRef.current ?? null,
+    };
+  });
+  const snapshotCleanupRef = useRef<(() => void) | null>(null);
+  if (snapshotCleanupRef.current === null) {
+    // Startup schedules its frame receipt immediately after root.render(), so
+    // the getter must exist during the synchronous mount rather than in a
+    // passive effect.
+    snapshotCleanupRef.current = nativeBenchmark.installSnapshot(snapshotGetterRef.current);
+  }
+  useEffect(() => () => snapshotCleanupRef.current?.(), []);
+
   const stormUpdate = useCallback(() => {
-    runStorm(STORM_UPDATE_TICKS, (t) =>
+    nativeBenchmark.measure('updateStorm', () => runStorm(STORM_UPDATE_TICKS, (t) =>
       setRows((prev) =>
         prev.map((r, i) => (i % 10 === 0 ? { id: r.id, label: `bench ${t}` } : r)),
       ),
-    );
+    ));
   }, []);
 
   const stormSelect = useCallback(() => {
-    runStorm(STORM_SELECT_TICKS, (t) => {
+    nativeBenchmark.measure('selectStorm', () => runStorm(STORM_SELECT_TICKS, (t) => {
       const ids = idsRef.current;
       setSelected(t < STORM_SELECT_TICKS ? ids[(t * 97) % ids.length] : ids[0]);
-    });
+    }));
   }, []);
 
   return (
-    <view className="page">
+    <view className="page" __lynx_timing_flag={NATIVE_STARTUP_TIMING_FLAG}>
       <text className="title">React UI Benchmark on Lynx · ready</text>
       <view className="toolbar">
         <view className="btn" bindtap={run}>
