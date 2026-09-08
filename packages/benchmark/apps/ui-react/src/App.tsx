@@ -16,23 +16,28 @@ const INITIAL_ROWS = __BENCH_AUTOROWS__ > 0
   ? buildDataSeeded(__BENCH_AUTOROWS__)
   : [];
 
-// -- storms: N sequential state→render→DOM ticks from one click --------------
-// Each tick runs in its own macrotask (MessageChannel avoids the nested
-// setTimeout 4ms clamp) so every mutation goes through a full render cycle
-// instead of batching. Mirrors apps/ui-vdom/src/App.vue.
+// -- storms: N sequential state→render→tree ticks from one click -------------
+// Each tick runs in its own macrotask so every mutation goes through a full
+// render cycle instead of batching. Browsers use MessageChannel to avoid the
+// nested setTimeout 4ms clamp; native Lynx has no MessageChannel and uses its
+// native timer queue. Mirrors apps/ui-vdom/src/App.vue.
 const STORM_UPDATE_TICKS = 50;
 const STORM_SELECT_TICKS = 30;
 
-const _stormChannel = new MessageChannel();
+const _stormChannel = typeof MessageChannel === 'function'
+  ? new MessageChannel()
+  : null;
 let _stormPending: (() => void) | null = null;
-_stormChannel.port1.onmessage = () => {
+function flushMacrotask() {
   const cb = _stormPending;
   _stormPending = null;
   if (cb) cb();
-};
+}
+if (_stormChannel) _stormChannel.port1.onmessage = flushMacrotask;
 function nextMacrotask(cb: () => void) {
   _stormPending = cb;
-  _stormChannel.port2.postMessage(0);
+  if (_stormChannel) _stormChannel.port2.postMessage(0);
+  else lynx.setTimeout(flushMacrotask, 0);
 }
 
 // Module-scope storm driver — mirrors AppNaive.tsx (the tick counter must not

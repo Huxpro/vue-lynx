@@ -79,25 +79,30 @@ function clear() {
   selected.value = undefined
 }
 
-// -- storms: N sequential state→render→DOM ticks from one click --------------
-// Each tick runs in its own macrotask (MessageChannel avoids the nested
-// setTimeout 4ms clamp) so every mutation goes through a full render cycle
-// instead of batching. Total wall time to the final DOM state is a
-// throughput measure that amplifies sub-frame update costs above the
-// harness's one-frame observation floor.
+// -- storms: N sequential state→render→tree ticks from one click -------------
+// Each tick runs in its own macrotask so every mutation goes through a full
+// render cycle instead of batching. Browsers use MessageChannel to avoid the
+// nested setTimeout 4ms clamp; native Lynx has no MessageChannel and uses its
+// native timer queue. Total wall time to the final rendered state is a
+// throughput measure that amplifies sub-frame update costs above the harness's
+// one-frame observation floor.
 const STORM_UPDATE_TICKS = 50
 const STORM_SELECT_TICKS = 30
 
-const _stormChannel = new MessageChannel()
+const _stormChannel = typeof MessageChannel === 'function'
+  ? new MessageChannel()
+  : null
 let _stormPending: (() => void) | null = null
-_stormChannel.port1.onmessage = () => {
+function flushMacrotask() {
   const cb = _stormPending
   _stormPending = null
   if (cb) cb()
 }
+if (_stormChannel) _stormChannel.port1.onmessage = flushMacrotask
 function nextMacrotask(cb: () => void) {
   _stormPending = cb
-  _stormChannel.port2.postMessage(0)
+  if (_stormChannel) _stormChannel.port2.postMessage(0)
+  else lynx.setTimeout(flushMacrotask, 0)
 }
 
 function stormUpdate() {
