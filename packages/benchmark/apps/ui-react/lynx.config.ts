@@ -6,6 +6,10 @@ import { defineConfig } from '@lynx-js/rspeedy';
 // variable explicitly and records the selected capability in its manifest.
 const useElementTemplate = process.env.BENCH_ENABLE_ET === '1';
 const autoRows = Number(process.env.BENCH_AUTOROWS ?? '0');
+const listRows = Number(process.env.BENCH_LIST_ROWS ?? '0');
+if (autoRows > 0 && listRows > 0) {
+  throw new TypeError('BENCH_AUTOROWS and BENCH_LIST_ROWS are mutually exclusive.');
+}
 
 export default defineConfig({
   environments: {
@@ -14,12 +18,14 @@ export default defineConfig({
   },
   source: {
     entry: {
-      main: './src/index.tsx',
+      main: listRows > 0 ? './src/list-index.tsx' : './src/index.tsx',
     },
     define: {
       __BENCH_AUTOROWS__: JSON.stringify(autoRows),
+      __BENCH_LIST_ROWS__: JSON.stringify(listRows),
     },
   },
+  output: listRows > 0 ? { distPath: { root: `dist-list-rows${listRows}` } } : {},
   plugins: [
     pluginReactLynx({
       experimental_useElementTemplate: useElementTemplate,
