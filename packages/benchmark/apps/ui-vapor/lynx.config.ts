@@ -22,6 +22,10 @@ import { pluginVueLynx } from 'vue-lynx/plugin';
  */
 const cell = process.env.BENCH_CELL ?? 'off';
 const autoRows = Number(process.env.BENCH_AUTOROWS ?? '0');
+const listRows = Number(process.env.BENCH_LIST_ROWS ?? '0');
+if (autoRows > 0 && listRows > 0) {
+  throw new TypeError('BENCH_AUTOROWS and BENCH_LIST_ROWS are mutually exclusive.');
+}
 const enableIFR =
   cell === 'ifr' || cell === 'ifr-dense' || cell === 'ifr-sparse'
   || cell === 'ifr-engine-et' || cell === 'ifr-code-paint';
@@ -41,7 +45,8 @@ const ifrPaint = cell === 'ifr-engine-et'
   ? 'code-paint' as const
   : undefined;
 const modeLabel = cell === 'off' ? 'vapor' : `vapor-${cell}`;
-const distRoot = cell === 'off' ? 'dist' : `dist-${cell}`;
+const distRoot = (cell === 'off' ? 'dist' : `dist-${cell}`)
+  + (listRows > 0 ? `-list-rows${listRows}` : '');
 
 export default defineConfig({
   environments: {
@@ -55,11 +60,12 @@ export default defineConfig({
   },
   source: {
     entry: {
-      main: './src/index.ts',
+      main: listRows > 0 ? './src/list-index.ts' : './src/index.ts',
     },
     define: {
       __BENCH_MODE__: JSON.stringify(modeLabel),
       __BENCH_AUTOROWS__: JSON.stringify(autoRows),
+      __BENCH_LIST_ROWS__: JSON.stringify(listRows),
     },
   },
   plugins: [
