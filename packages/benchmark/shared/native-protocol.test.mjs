@@ -165,6 +165,75 @@ test('host-commit tracker keeps each native app bound to its own transport', asy
   assert.deepEqual(secondCalls, ['ordinarySecondAppCall']);
 });
 
+test('host-commit tracker observes real Lynx getter-only NativeApp through a facade', async () => {
+  const { createHostCommitTracker, createNativeAppFacadeInstaller } =
+    await loadProtocol();
+  const calls = [];
+  const originalCallLepusMethod = function (method, params, callback) {
+    calls.push({ receiver: this, method, params, callback });
+  };
+  const app = {};
+  Object.defineProperty(app, 'callLepusMethod', {
+    configurable: false,
+    enumerable: false,
+    get: () => originalCallLepusMethod,
+  });
+  Object.defineProperty(app, 'receiverCheck', {
+    configurable: false,
+    get: () => function () {
+      return this;
+    },
+  });
+  const nativeLynx = {
+    getNativeApp() {
+      return app;
+    },
+  };
+  const originalGetNativeApp = nativeLynx.getNativeApp.bind(nativeLynx);
+  const arm = createHostCommitTracker(
+    originalGetNativeApp,
+    () => 456,
+    createNativeAppFacadeInstaller(nativeLynx)
+  );
+
+  const wait = arm(['rLynxChange']);
+  const facade = nativeLynx.getNativeApp();
+  assert.notEqual(facade, app);
+  assert.equal(nativeLynx.getNativeApp(), facade);
+  assert.equal(facade.receiverCheck(), app);
+  facade.callLepusMethod('rLynxChange', { rows: 1000 }, () => {});
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].receiver, app);
+  calls[0].callback();
+
+  assert.deepEqual(await wait.promise, {
+    kind: 'framework-host-commit-callback',
+    method: 'rLynxChange',
+    acknowledged: true,
+    acknowledgedAtMs: 456,
+  });
+  assert.equal(app.callLepusMethod, originalCallLepusMethod);
+});
+
+test('getter-only NativeApp observer failure rejects without breaking the app', async () => {
+  const { createHostCommitTracker } = await loadProtocol();
+  const app = {};
+  Object.defineProperty(app, 'callLepusMethod', {
+    configurable: false,
+    get: () => () => {},
+  });
+  const arm = createHostCommitTracker(() => app, () => 0);
+
+  let wait;
+  assert.doesNotThrow(() => {
+    wait = arm();
+  });
+  await assert.rejects(
+    wait.promise,
+    /cannot install host-commit observer:.*(?:setter|getter|read only)/i
+  );
+});
+
 test('native operation reports the versioned two-frame payload', async () => {
   const { createNativeBenchmarkProtocol } = await loadProtocol();
   const { runtime, reports } = createRuntime();

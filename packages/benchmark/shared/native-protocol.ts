@@ -85,9 +85,70 @@ interface NativeAppLike {
   ): void;
 }
 
+interface NativeLynxLike {
+  getNativeApp(): NativeAppLike | null | undefined;
+}
+
+type InstallHostCommitInterceptor = (
+  app: NativeAppLike,
+  callLepusMethod: NativeAppLike['callLepusMethod']
+) => void;
+
+/**
+ * NativeApp exposes callLepusMethod as a non-configurable getter without a
+ * setter on real Lynx runtimes. Install a stable JS facade at the writable
+ * lynx.getNativeApp boundary instead of trying to overwrite that native
+ * accessor. Native methods other than callLepusMethod remain bound to the real
+ * NativeApp so the facade does not change their receiver.
+ */
+export function createNativeAppFacadeInstaller(
+  nativeLynx: NativeLynxLike
+): InstallHostCommitInterceptor {
+  const originalGetNativeApp = nativeLynx.getNativeApp.bind(nativeLynx);
+  const facades = new WeakMap<NativeAppLike, NativeAppLike>();
+  const interceptors = new WeakMap<
+    NativeAppLike,
+    NativeAppLike['callLepusMethod']
+  >();
+  let installed = false;
+
+  const facadeFor = (app: NativeAppLike): NativeAppLike => {
+    const cached = facades.get(app);
+    if (cached) return cached;
+    // Do not proxy NativeApp itself: Proxy invariants still forbid reporting a
+    // successful write to its non-configurable getter-only property. An empty
+    // target lets the facade expose the interceptor as an ordinary JS value.
+    const facade = new Proxy({} as NativeAppLike, {
+      get(_target, property) {
+        if (property === 'callLepusMethod') {
+          return interceptors.get(app) ?? app.callLepusMethod.bind(app);
+        }
+        const value = Reflect.get(app as object, property, app);
+        return typeof value === 'function' ? value.bind(app) : value;
+      },
+      set(_target, property, value) {
+        return Reflect.set(app as object, property, value, app);
+      },
+    });
+    facades.set(app, facade);
+    return facade;
+  };
+
+  return (app, callLepusMethod) => {
+    interceptors.set(app, callLepusMethod);
+    if (installed) return;
+    nativeLynx.getNativeApp = () => {
+      const current = originalGetNativeApp();
+      return current ? facadeFor(current) : current;
+    };
+    installed = true;
+  };
+}
+
 export function createHostCommitTracker(
   getNativeApp: () => NativeAppLike | null | undefined,
-  now: () => number
+  now: () => number,
+  installInterceptor?: InstallHostCommitInterceptor
 ): NativeBenchmarkRuntime['armHostCommit'] {
   const commitMethods = new Set<HostCommitMethod>([
     'rLynxChange',
@@ -102,27 +163,31 @@ export function createHostCommitTracker(
     reject(error: unknown): void;
   };
   const waiters: Waiter[] = [];
-  let trackedApp: NativeAppLike | null | undefined;
+  const trackedApps = new WeakSet<NativeAppLike>();
+
+  const rejectedWait = (error: unknown): HostCommitWait => {
+    const promise = Promise.reject<HostCommitEvidence>(error);
+    // The consumer normally attaches its rejection handler immediately after
+    // running the action. Mark it handled now as well, so a user action that
+    // throws cannot leave an instrumentation rejection behind.
+    void promise.catch(() => {});
+    return { promise, cancel() {} };
+  };
 
   return (methods = [...commitMethods]): HostCommitWait => {
     const app = getNativeApp();
     if (!app || typeof app.callLepusMethod !== 'function') {
-      const promise = Promise.reject<HostCommitEvidence>(
+      return rejectedWait(
         new Error('Native benchmark cannot observe framework host commits')
       );
-      // The consumer normally attaches its rejection handler immediately
-      // after running the action. Mark it handled now as well, so a user
-      // action that throws cannot leave an instrumentation rejection behind.
-      void promise.catch(() => {});
-      return {
-        promise,
-        cancel() {},
-      };
     }
-    if (trackedApp !== app) {
-      trackedApp = app;
+    if (!trackedApps.has(app)) {
       const originalCallLepusMethod = app.callLepusMethod.bind(app);
-      app.callLepusMethod = (method, params, callback) => {
+      const interceptedCallLepusMethod: NativeAppLike['callLepusMethod'] = (
+        method,
+        params,
+        callback
+      ) => {
         const commitMethod = method as HostCommitMethod;
         const waiter = commitMethods.has(commitMethod)
           ? waiters.find(
@@ -167,6 +232,22 @@ export function createHostCommitTracker(
           throw error;
         }
       };
+      try {
+        if (installInterceptor) {
+          installInterceptor(app, interceptedCallLepusMethod);
+        } else {
+          app.callLepusMethod = interceptedCallLepusMethod;
+        }
+        trackedApps.add(app);
+      } catch (error) {
+        return rejectedWait(
+          new Error(
+            `Native benchmark cannot install host-commit observer: ${
+              error instanceof Error ? error.message : String(error)
+            }`
+          )
+        );
+      }
     }
 
     let resolve!: (value: HostCommitEvidence) => void;
@@ -196,13 +277,23 @@ export function createHostCommitTracker(
 
 function defaultRuntime(): NativeBenchmarkRuntime {
   const now = () => Date.now();
-  const armHostCommit = createHostCommitTracker(
-    () => lynx.getNativeApp() as NativeAppLike | null | undefined,
-    now
-  );
+  const native =
+    typeof MessageChannel !== 'function' &&
+    (typeof __BACKGROUND__ === 'undefined' || __BACKGROUND__);
+  const armHostCommit = native
+    ? (() => {
+        const nativeLynx = lynx as unknown as NativeLynxLike;
+        return createHostCommitTracker(
+          nativeLynx.getNativeApp.bind(nativeLynx),
+          now,
+          createNativeAppFacadeInstaller(nativeLynx)
+        );
+      })()
+    : createHostCommitTracker(() => undefined, now);
   return {
-    // Lynx for Web provides MessageChannel. The Native background VM does not.
-    native: typeof MessageChannel !== 'function',
+    // Lynx for Web provides MessageChannel. Native instrumentation belongs on
+    // the background VM; ReactLynx also evaluates entry modules on main thread.
+    native,
     globalObject: globalThis as BenchmarkGlobal,
     now,
     requestAnimationFrame: (callback) => lynx.requestAnimationFrame(callback),
