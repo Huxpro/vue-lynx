@@ -215,6 +215,57 @@ test('host-commit tracker observes real Lynx getter-only NativeApp through a fac
   assert.equal(app.callLepusMethod, originalCallLepusMethod);
 });
 
+test('Element Template acknowledges only after the main-thread patch listener', async () => {
+  const {
+    createElementTemplateCommitAckSubscriber,
+    createHostCommitTracker,
+    installElementTemplateCommitAckBridge,
+  } = await loadProtocol();
+  const mainListeners = new Map();
+  const backgroundListeners = new Map();
+  const order = [];
+  const backgroundContext = {
+    addEventListener(type, listener) {
+      backgroundListeners.set(type, listener);
+    },
+  };
+  const mainContext = {
+    addEventListener(type, listener) {
+      const listeners = mainListeners.get(type) ?? [];
+      listeners.push(listener);
+      mainListeners.set(type, listeners);
+    },
+    dispatchEvent(event) {
+      backgroundListeners.get(event.type)?.(event);
+    },
+  };
+  mainContext.addEventListener('rLynxElementTemplateUpdate', () => {
+    order.push('framework-patch-and-flush');
+  });
+  installElementTemplateCommitAckBridge(mainContext);
+  const app = { callLepusMethod() {} };
+  const arm = createHostCommitTracker(
+    () => app,
+    () => 789,
+    undefined,
+    createElementTemplateCommitAckSubscriber(backgroundContext)
+  );
+  const wait = arm(['rLynxElementTemplateUpdate']);
+  void wait.promise.then(() => order.push('background-ack'));
+
+  for (const listener of mainListeners.get('rLynxElementTemplateUpdate')) {
+    listener({ type: 'rLynxElementTemplateUpdate', data: null });
+  }
+  assert.deepEqual(await wait.promise, {
+    kind: 'framework-host-commit-callback',
+    method: 'rLynxElementTemplateUpdate',
+    acknowledged: true,
+    acknowledgedAtMs: 789,
+  });
+  await flushTasks();
+  assert.deepEqual(order, ['framework-patch-and-flush', 'background-ack']);
+});
+
 test('getter-only NativeApp observer failure rejects without breaking the app', async () => {
   const { createHostCommitTracker } = await loadProtocol();
   const app = {};
@@ -410,6 +461,24 @@ test('startup waits for the real framework host-commit callback', async () => {
   });
   assert.equal(payload.firstFrameMs, 123);
   assert.equal(payload.secondFrameMs, 139);
+});
+
+test('startup accepts an Element Template host-commit callback', async () => {
+  const { createNativeBenchmarkProtocol } = await loadProtocol();
+  const { runtime, reports, acknowledgeHostCommit } = createRuntime({
+    hostCommits: 'manual',
+  });
+  const protocol = createNativeBenchmarkProtocol(runtime);
+  const startup = protocol.beginStartup();
+  protocol.installSnapshot(() => state(1000));
+  protocol.finishStartup(startup);
+
+  acknowledgeHostCommit('rLynxElementTemplateUpdate');
+  await flushTasks();
+  assert.equal(
+    JSON.parse(reports[0].payload).transportEvidence.method,
+    'rLynxElementTemplateUpdate'
+  );
 });
 
 test('producer failures emit an explicit runtime marker', async () => {

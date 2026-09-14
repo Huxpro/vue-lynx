@@ -42,6 +42,7 @@ interface BenchmarkGlobal {
 
 export type HostCommitMethod =
   | 'rLynxChange'
+  | 'rLynxElementTemplateUpdate'
   | 'vuePatchUpdate'
   | 'vueIfrHydrationComplete';
 
@@ -89,10 +90,25 @@ interface NativeLynxLike {
   getNativeApp(): NativeAppLike | null | undefined;
 }
 
+interface NativeContextLike {
+  dispatchEvent(event: { type: string; data: unknown }): unknown;
+  addEventListener(
+    type: string,
+    listener: (event: { type: string; data: unknown }) => void
+  ): void;
+}
+
 type InstallHostCommitInterceptor = (
   app: NativeAppLike,
   callLepusMethod: NativeAppLike['callLepusMethod']
 ) => void;
+
+type SubscribeHostCommit = (
+  notify: (method: HostCommitMethod) => void
+) => void;
+
+const ELEMENT_TEMPLATE_UPDATE = 'rLynxElementTemplateUpdate';
+const ELEMENT_TEMPLATE_COMMIT_ACK = '__LYNX_BENCH_ET_COMMIT_ACK__';
 
 /**
  * NativeApp exposes callLepusMethod as a non-configurable getter without a
@@ -145,13 +161,48 @@ export function createNativeAppFacadeInstaller(
   };
 }
 
+/**
+ * Element Template sends commits with a ContextProxy event rather than
+ * NativeApp.callLepusMethod. Register this after ReactLynx's main-thread patch
+ * listener: ContextProxy listeners run in registration order, so the reply is
+ * emitted only after the framework applies the patch and flushes the tree.
+ */
+export function installElementTemplateCommitAckBridge(
+  context?: NativeContextLike
+): void {
+  const isMainThread =
+    typeof __MAIN_THREAD__ !== 'undefined' && __MAIN_THREAD__;
+  if (!context && !isMainThread) return;
+  const jsContext =
+    context ??
+    (lynx.getJSContext() as unknown as NativeContextLike);
+  jsContext.addEventListener(ELEMENT_TEMPLATE_UPDATE, () => {
+    jsContext.dispatchEvent({
+      type: ELEMENT_TEMPLATE_COMMIT_ACK,
+      data: null,
+    });
+  });
+}
+
+export function createElementTemplateCommitAckSubscriber(
+  context: NativeContextLike
+): SubscribeHostCommit {
+  return (notify) => {
+    context.addEventListener(ELEMENT_TEMPLATE_COMMIT_ACK, () => {
+      notify(ELEMENT_TEMPLATE_UPDATE);
+    });
+  };
+}
+
 export function createHostCommitTracker(
   getNativeApp: () => NativeAppLike | null | undefined,
   now: () => number,
-  installInterceptor?: InstallHostCommitInterceptor
+  installInterceptor?: InstallHostCommitInterceptor,
+  subscribeHostCommit?: SubscribeHostCommit
 ): NativeBenchmarkRuntime['armHostCommit'] {
   const commitMethods = new Set<HostCommitMethod>([
     'rLynxChange',
+    'rLynxElementTemplateUpdate',
     'vuePatchUpdate',
     'vueIfrHydrationComplete',
   ]);
@@ -164,6 +215,30 @@ export function createHostCommitTracker(
   };
   const waiters: Waiter[] = [];
   const trackedApps = new WeakSet<NativeAppLike>();
+
+  const retire = (waiter: Waiter) => {
+    const index = waiters.indexOf(waiter);
+    if (index !== -1) waiters.splice(index, 1);
+  };
+  const resolveWaiter = (waiter: Waiter, method: HostCommitMethod) => {
+    waiter.active = false;
+    retire(waiter);
+    waiter.resolve({
+      kind: 'framework-host-commit-callback',
+      method,
+      acknowledged: true,
+      acknowledgedAtMs: now(),
+    });
+  };
+  subscribeHostCommit?.((method) => {
+    const waiter = waiters.find(
+      (candidate) =>
+        candidate.active && !candidate.bound && candidate.methods.has(method)
+    );
+    if (!waiter) return;
+    waiter.bound = true;
+    resolveWaiter(waiter, method);
+  });
 
   const rejectedWait = (error: unknown): HostCommitWait => {
     const promise = Promise.reject<HostCommitEvidence>(error);
@@ -202,31 +277,20 @@ export function createHostCommitTracker(
           return;
         }
         waiter.bound = true;
-        const retire = () => {
-          const index = waiters.indexOf(waiter);
-          if (index !== -1) waiters.splice(index, 1);
-        };
         try {
           originalCallLepusMethod(method, params, (...args) => {
             try {
               callback?.(...args);
             } finally {
               if (waiter.active) {
-                waiter.active = false;
-                retire();
-                waiter.resolve({
-                  kind: 'framework-host-commit-callback',
-                  method: commitMethod,
-                  acknowledged: true,
-                  acknowledgedAtMs: now(),
-                });
+                resolveWaiter(waiter, commitMethod);
               }
             }
           });
         } catch (error) {
           if (waiter.active) {
             waiter.active = false;
-            retire();
+            retire(waiter);
             waiter.reject(error);
           }
           throw error;
@@ -268,8 +332,7 @@ export function createHostCommitTracker(
       promise,
       cancel() {
         waiter.active = false;
-        const index = waiters.indexOf(waiter);
-        if (index !== -1) waiters.splice(index, 1);
+        retire(waiter);
       },
     };
   };
@@ -286,7 +349,10 @@ function defaultRuntime(): NativeBenchmarkRuntime {
         return createHostCommitTracker(
           nativeLynx.getNativeApp.bind(nativeLynx),
           now,
-          createNativeAppFacadeInstaller(nativeLynx)
+          createNativeAppFacadeInstaller(nativeLynx),
+          createElementTemplateCommitAckSubscriber(
+            lynx.getCoreContext() as unknown as NativeContextLike
+          )
         );
       })()
     : createHostCommitTracker(() => undefined, now);
@@ -510,7 +576,11 @@ export function createNativeBenchmarkProtocol(
       const commit = runtime.armHostCommit(
         runtime.globalObject.__VUE_LYNX_IFR_ENABLED__
           ? ['vueIfrHydrationComplete']
-          : ['rLynxChange', 'vuePatchUpdate']
+          : [
+              'rLynxChange',
+              'rLynxElementTemplateUpdate',
+              'vuePatchUpdate',
+            ]
       );
       startupCommits.set(observation, commit);
       runtime.globalObject.__LYNX_BENCH_STARTUP__ = observation;
