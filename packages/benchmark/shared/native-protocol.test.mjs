@@ -19,9 +19,10 @@ async function loadProtocol() {
   return import(`data:text/javascript;base64,${encoded}#${Math.random()}`);
 }
 
-function createRuntime({ native = true } = {}) {
+function createRuntime({ native = true, hostCommits = 'auto' } = {}) {
   let time = 100;
   const reports = [];
+  const commitWaiters = [];
   const runtime = {
     native,
     globalObject: {},
@@ -38,7 +39,49 @@ function createRuntime({ native = true } = {}) {
       reports.push({ marker, payload });
     },
   };
-  return { runtime, reports };
+  runtime.armHostCommit = (methods = [
+    'rLynxChange',
+    'vuePatchUpdate',
+    'vueIfrHydrationComplete',
+  ]) => {
+    let active = true;
+    let resolve;
+    const promise = new Promise((accept) => {
+      resolve = accept;
+    });
+    const waiter = {
+      resolve(method) {
+        if (!active || !methods.includes(method)) return false;
+        active = false;
+        time += 7;
+        resolve({
+          kind: 'framework-host-commit-callback',
+          method,
+          acknowledged: true,
+          acknowledgedAtMs: time,
+        });
+        return true;
+      },
+    };
+    commitWaiters.push(waiter);
+    if (hostCommits === 'auto') {
+      const method = methods.includes('vuePatchUpdate')
+        ? 'vuePatchUpdate'
+        : methods[0];
+      queueMicrotask(() => waiter.resolve(method));
+    }
+    return {
+      promise,
+      cancel() {
+        active = false;
+      },
+    };
+  };
+  const acknowledgeHostCommit = (method = 'vuePatchUpdate') => {
+    const waiter = commitWaiters.find((candidate) => candidate.resolve(method));
+    assert.ok(waiter, 'no armed host-commit waiter');
+  };
+  return { runtime, reports, acknowledgeHostCommit };
 }
 
 async function flushTasks(count = 20) {
@@ -53,6 +96,73 @@ const state = (rowCount) => ({
   row998Id: rowCount > 998 ? 999 : null,
   firstLabel: rowCount > 0 ? 'pretty red table' : null,
   selectedId: null,
+});
+
+test('host-commit tracker preserves callbacks and respects the armed method', async () => {
+  const { createHostCommitTracker } = await loadProtocol();
+  const calls = [];
+  const events = [];
+  const app = {
+    callLepusMethod(method, params, callback) {
+      calls.push({ method, params, callback });
+    },
+  };
+  const arm = createHostCommitTracker(() => app, () => 123);
+  const wait = arm(['vueIfrHydrationComplete']);
+  let resolved = false;
+  void wait.promise.then(() => {
+    resolved = true;
+    events.push('resolved');
+  });
+
+  const ordinaryCallback = () => events.push('ordinary');
+  app.callLepusMethod('vuePatchUpdate', {}, ordinaryCallback);
+  assert.equal(calls[0].callback, ordinaryCallback);
+  calls[0].callback();
+  await flushTasks();
+  assert.equal(resolved, false);
+
+  app.callLepusMethod('vueIfrHydrationComplete', {}, (...args) => {
+    events.push(`framework:${args.join(',')}`);
+  });
+  assert.notEqual(calls[1].callback, undefined);
+  calls[1].callback('ack', 7);
+  const evidence = await wait.promise;
+
+  assert.deepEqual(events, ['ordinary', 'framework:ack,7', 'resolved']);
+  assert.deepEqual(evidence, {
+    kind: 'framework-host-commit-callback',
+    method: 'vueIfrHydrationComplete',
+    acknowledged: true,
+    acknowledgedAtMs: 123,
+  });
+});
+
+test('host-commit tracker keeps each native app bound to its own transport', async () => {
+  const { createHostCommitTracker } = await loadProtocol();
+  const firstCalls = [];
+  const secondCalls = [];
+  const firstApp = {
+    callLepusMethod(method) {
+      firstCalls.push(method);
+    },
+  };
+  const secondApp = {
+    callLepusMethod(method) {
+      secondCalls.push(method);
+    },
+  };
+  let currentApp = firstApp;
+  const arm = createHostCommitTracker(() => currentApp, () => 0);
+  arm().cancel();
+  currentApp = secondApp;
+  arm().cancel();
+
+  firstApp.callLepusMethod('ordinaryFirstAppCall');
+  secondApp.callLepusMethod('ordinarySecondAppCall');
+
+  assert.deepEqual(firstCalls, ['ordinaryFirstAppCall']);
+  assert.deepEqual(secondCalls, ['ordinarySecondAppCall']);
 });
 
 test('native operation reports the versioned two-frame payload', async () => {
@@ -71,14 +181,49 @@ test('native operation reports the versioned two-frame payload', async () => {
   assert.equal(reports.length, 1);
   assert.equal(reports[0].marker, '__NATIVE_BENCH_RESULT__');
   const payload = JSON.parse(reports[0].payload);
-  assert.equal(payload.protocol, 'lynx-native-bench-v2');
-  assert.equal(payload.boundary, 'native-input-handler-to-second-native-frame');
+  assert.equal(payload.protocol, 'lynx-native-bench-v3');
+  assert.equal(
+    payload.boundary,
+    'native-input-handler-through-host-commit-to-second-native-frame'
+  );
   assert.equal(payload.preState.rowCount, 0);
   assert.equal(payload.postState.rowCount, 1000);
   assert.equal(payload.renderEvidence.frames, 2);
-  assert.equal(payload.latencyMs, 32);
+  assert.equal(payload.commitAckMs, 107);
+  assert.equal(payload.latencyMs, 39);
   removeSnapshot();
   assert.equal(runtime.globalObject.__LYNX_BENCH_SNAPSHOT__, undefined);
+});
+
+test('native operation waits for the real framework host-commit callback', async () => {
+  const { createNativeBenchmarkProtocol } = await loadProtocol();
+  const { runtime, reports, acknowledgeHostCommit } = createRuntime({
+    hostCommits: 'manual',
+  });
+  const protocol = createNativeBenchmarkProtocol(runtime);
+  let rows = 0;
+  protocol.installSnapshot(() => state(rows));
+
+  protocol.measure('create', () => {
+    rows = 1000;
+  });
+  await flushTasks();
+  assert.equal(reports.length, 0);
+
+  acknowledgeHostCommit();
+  await flushTasks();
+  const payload = JSON.parse(reports[0].payload);
+  assert.equal(
+    payload.boundary,
+    'native-input-handler-through-host-commit-to-second-native-frame'
+  );
+  assert.deepEqual(payload.transportEvidence, {
+    kind: 'framework-host-commit-callback',
+    method: 'vuePatchUpdate',
+    acknowledged: true,
+    acknowledgedAtMs: 107,
+  });
+  assert.equal(payload.latencyMs, 39);
 });
 
 test('native storm proves one render barrier per completed tick', async () => {
@@ -103,8 +248,52 @@ test('native storm proves one render barrier per completed tick', async () => {
     expectedTicks: 3,
     completedTicks: 3,
     renderBarriers: 3,
+    hostCommitBarriers: 3,
+    transportEvidence: {
+      kind: 'per-tick-framework-host-commit-callbacks',
+      methods: ['vuePatchUpdate'],
+      acknowledged: true,
+      count: 3,
+      lastAcknowledgedAtMs: 156,
+    },
   });
-  assert.equal(payload.latencyMs, 83);
+  assert.deepEqual(
+    payload.transportEvidence,
+    payload.stormEvidence.transportEvidence
+  );
+  assert.equal(payload.commitAckMs, 156);
+  assert.equal(payload.latencyMs, 104);
+});
+
+test('native storm waits for every host-commit callback', async () => {
+  const { createNativeBenchmarkProtocol } = await loadProtocol();
+  const { runtime, reports, acknowledgeHostCommit } = createRuntime({
+    hostCommits: 'manual',
+  });
+  const protocol = createNativeBenchmarkProtocol(runtime);
+  let completed = 0;
+  protocol.installSnapshot(() => state(1000));
+
+  protocol.measure('selectStorm', () =>
+    protocol.runStorm(2, (tick) => {
+      completed = tick;
+    })
+  );
+  await flushTasks();
+  assert.equal(completed, 1);
+  assert.equal(reports.length, 0);
+
+  acknowledgeHostCommit('rLynxChange');
+  await flushTasks();
+  assert.equal(completed, 2);
+  assert.equal(reports.length, 0);
+
+  acknowledgeHostCommit('rLynxChange');
+  await flushTasks();
+  const payload = JSON.parse(reports[0].payload);
+  assert.equal(payload.stormEvidence.hostCommitBarriers, 2);
+  assert.deepEqual(payload.transportEvidence.methods, ['rLynxChange']);
+  assert.equal(payload.transportEvidence.count, 2);
 });
 
 test('startup receipt is published only after mount and two frames', async () => {
@@ -119,12 +308,39 @@ test('startup receipt is published only after mount and two frames', async () =>
 
   assert.equal(reports[0].marker, '__NATIVE_BENCH_STARTUP__');
   const payload = JSON.parse(reports[0].payload);
-  assert.equal(payload.protocol, 'lynx-native-startup-v1');
+  assert.equal(payload.protocol, 'lynx-native-startup-v2');
   assert.equal(payload.postState.rowCount, 1000);
-  assert.equal(payload.firstFrameMs, 116);
-  assert.equal(payload.secondFrameMs, 132);
+  assert.equal(payload.commitAckMs, 107);
+  assert.equal(payload.firstFrameMs, 123);
+  assert.equal(payload.secondFrameMs, 139);
   assert.deepEqual(runtime.globalObject.__LYNX_BENCH_STARTUP__, payload);
   assert.equal(NATIVE_STARTUP_TIMING_FLAG, 'lynx-native-bench-startup');
+});
+
+test('startup waits for the real framework host-commit callback', async () => {
+  const { createNativeBenchmarkProtocol } = await loadProtocol();
+  const { runtime, reports, acknowledgeHostCommit } = createRuntime({
+    hostCommits: 'manual',
+  });
+  const protocol = createNativeBenchmarkProtocol(runtime);
+  const startup = protocol.beginStartup();
+  protocol.installSnapshot(() => state(1000));
+  protocol.finishStartup(startup);
+  await flushTasks();
+  assert.equal(reports.length, 0);
+
+  acknowledgeHostCommit('rLynxChange');
+  await flushTasks();
+  const payload = JSON.parse(reports[0].payload);
+  assert.equal(payload.commitAckMs, 107);
+  assert.deepEqual(payload.transportEvidence, {
+    kind: 'framework-host-commit-callback',
+    method: 'rLynxChange',
+    acknowledged: true,
+    acknowledgedAtMs: 107,
+  });
+  assert.equal(payload.firstFrameMs, 123);
+  assert.equal(payload.secondFrameMs, 139);
 });
 
 test('producer failures emit an explicit runtime marker', async () => {
