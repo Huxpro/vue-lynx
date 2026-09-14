@@ -88,6 +88,25 @@ async function flushTasks(count = 20) {
   for (let i = 0; i < count; i++) await Promise.resolve();
 }
 
+test('main-thread module load does not require the background NativeApp API', async () => {
+  const originalMessageChannel = globalThis.MessageChannel;
+  const originalLynx = globalThis.lynx;
+  try {
+    globalThis.MessageChannel = undefined;
+    globalThis.lynx = {
+      requestAnimationFrame() {},
+      setTimeout() {},
+    };
+    const { nativeBenchmark } = await loadProtocol();
+    assert.equal(nativeBenchmark.isNative, false);
+    assert.equal(nativeBenchmark.beginStartup(), null);
+  } finally {
+    globalThis.MessageChannel = originalMessageChannel;
+    if (originalLynx === undefined) delete globalThis.lynx;
+    else globalThis.lynx = originalLynx;
+  }
+});
+
 const state = (rowCount) => ({
   rowCount,
   firstId: rowCount > 0 ? 1 : null,

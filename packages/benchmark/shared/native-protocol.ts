@@ -340,12 +340,16 @@ export function createHostCommitTracker(
 
 function defaultRuntime(): NativeBenchmarkRuntime {
   const now = () => Date.now();
-  const native =
+  const possibleNative =
     typeof MessageChannel !== 'function' &&
     (typeof __BACKGROUND__ === 'undefined' || __BACKGROUND__);
+  const nativeLynx = possibleNative
+    ? (lynx as unknown as NativeLynxLike)
+    : null;
+  const native =
+    nativeLynx !== null && typeof nativeLynx.getNativeApp === 'function';
   const armHostCommit = native
     ? (() => {
-        const nativeLynx = lynx as unknown as NativeLynxLike;
         return createHostCommitTracker(
           nativeLynx.getNativeApp.bind(nativeLynx),
           now,
