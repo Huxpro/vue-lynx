@@ -226,9 +226,11 @@ $brand-emerald: #34d399;
     backdrop-filter: blur(24px);
     color: var(--home-blog-btn-color);
     font-weight: 500;
-    line-height: 32px;
-    padding-left: 43px;
-    padding-right: 20px;
+    // content box = 36px − 2×1px border. Rspress sets `padding: .5rem 1rem`;
+    // longhand padding-left/right would leave that 8px top/bottom in place
+    // and push the label off-centre.
+    line-height: 34px;
+    padding: 0 20px 0 43px;
     transition: all 0.3s ease;
     cursor: pointer;
     user-select: none;
@@ -285,9 +287,9 @@ $brand-emerald: #34d399;
     .rp-home-hero__badge {
       font-size: 12px;
       height: 28px;
+      // content box = 28px − 2×1px border
       line-height: 26px;
-      padding-left: 38px;
-      padding-right: 16px;
+      padding: 0 16px 0 38px;
 
       &::before {
         width: 16px;
