@@ -351,3 +351,133 @@ describe('onTapOnce prop key (parseEventProp once support)', () => {
     expect(count.value).toBe(1);
   });
 });
+
+describe('merged listener arrays (component listener + fallthrough)', () => {
+  it('invokes both the root listener and the fallthrough listener', async () => {
+    const calls: string[] = [];
+
+    // No `emits` declaration: the parent's onTap falls through onto the
+    // child's root <view>, where Vue merges it with the child's own onTap
+    // into `[childFn, parentFn]` before patchProp.
+    const Child = defineComponent({
+      setup() {
+        return () =>
+          h('view', {
+            onTap: () => {
+              calls.push('child');
+            },
+          });
+      },
+    });
+
+    const Parent = defineComponent({
+      setup() {
+        return () =>
+          h(Child, {
+            onTap: () => {
+              calls.push('parent');
+            },
+          });
+      },
+    });
+
+    const { container } = render(Parent);
+    const viewEl = container.querySelector('view')!;
+
+    fireEvent.tap(viewEl);
+    await nextTick();
+    await nextTick();
+
+    expect(calls).toEqual(['child', 'parent']);
+  });
+
+  it('registers as catchEvent when any merged listener carries .stop', async () => {
+    const calls: string[] = [];
+
+    const Child = defineComponent({
+      setup() {
+        return () =>
+          h('view', {
+            onTap: withModifiers(() => {
+              calls.push('child');
+            }, ['stop']),
+          });
+      },
+    });
+
+    const Parent = defineComponent({
+      setup() {
+        return () =>
+          h(Child, {
+            onTap: () => {
+              calls.push('parent');
+            },
+          });
+      },
+    });
+
+    const { container } = render(Parent);
+    const viewEl = container.querySelector('view')!;
+    expect(viewEl.eventMap?.['catchEvent:tap']).toBeTypeOf('function');
+    expect(viewEl.eventMap?.['bindEvent:tap']).toBeUndefined();
+
+    fireEvent.tap(viewEl, { eventType: 'catchEvent' });
+    await nextTick();
+    await nextTick();
+
+    expect(calls).toEqual(['child', 'parent']);
+  });
+});
+
+describe('.stop (catchEvent) handler removal', () => {
+  it('removes a @tap.stop handler toggled to null on the Main Thread', async () => {
+    const count = ref(0);
+    const enabled = ref(true);
+
+    const Comp = defineComponent({
+      setup() {
+        const onTap = withModifiers(() => {
+          count.value++;
+        }, ['stop']);
+        return () => h('view', { onTap: enabled.value ? onTap : null });
+      },
+    });
+
+    const { container } = render(Comp);
+    const viewEl = container.querySelector('view')!;
+    expect(viewEl.eventMap?.['catchEvent:tap']).toBeTypeOf('function');
+
+    enabled.value = false;
+    await nextTick();
+    await nextTick();
+
+    // The REMOVE_EVENT op must target the catchEvent registration.
+    expect(viewEl.eventMap?.['catchEvent:tap']).toBeUndefined();
+
+    fireEvent.tap(viewEl, { eventType: 'catchEvent' });
+    await nextTick();
+    await nextTick();
+    expect(count.value).toBe(0);
+  });
+
+  it('removes a @tap.once.stop handler toggled to null on the Main Thread', async () => {
+    const enabled = ref(true);
+
+    const Comp = defineComponent({
+      setup() {
+        const onTap = withModifiers(() => {}, ['stop']);
+        return () => h('view', { onTapOnce: enabled.value ? onTap : null });
+      },
+    });
+
+    const { container } = render(Comp);
+    const viewEl = container.querySelector('view')!;
+    expect(viewEl.eventMap?.['catchEvent:tap']).toBeTypeOf('function');
+
+    enabled.value = false;
+    await nextTick();
+    await nextTick();
+
+    expect(viewEl.eventMap?.['catchEvent:tap']).toBeUndefined();
+  });
+});

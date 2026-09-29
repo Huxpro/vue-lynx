@@ -66,6 +66,32 @@ interface OnceWrapper {
 }
 const onceWrappers = new Map<string, OnceWrapper>();
 
+// Signs whose registration was promoted from the prop key's event type to
+// `catchEvent` because the handler carried `_lynxCatch` (`.stop` modifier).
+// REMOVE_EVENT must target the type actually registered on the Main Thread,
+// otherwise the catchEvent listener is never removed.
+const catchPromotedSigns = new Set<string>();
+
+type EventHandler = ((data: unknown) => void) & { _lynxCatch?: boolean };
+
+/**
+ * Vue merges a component's own listener with a fallthrough listener for the
+ * same event into an array (`[fn1, fn2]`). Collapse it into one callable so
+ * the event-registry contract (one function per sign) holds, and keep the
+ * `.stop` catch-event marker if any merged listener carries it.
+ */
+function normalizeHandler(value: unknown): EventHandler {
+  if (!Array.isArray(value)) return value as EventHandler;
+  const listeners = value.filter(
+    (fn): fn is EventHandler => typeof fn === 'function',
+  );
+  const merged: EventHandler = (data: unknown): void => {
+    for (const listener of listeners) listener(data);
+  };
+  if (listeners.some((fn) => fn._lynxCatch)) merged._lynxCatch = true;
+  return merged;
+}
+
 /**
  * Register / update / remove a Lynx event prop on an element.
  *
@@ -84,7 +110,7 @@ export function patchEventProp(
   const oldSign = signs?.get(key);
 
   if (nextValue != null) {
-    const handler = nextValue as (data: unknown) => void;
+    const handler = normalizeHandler(nextValue);
     if (event.once) {
       if (oldSign) {
         // Re-render of a once-event: update the inner handler so the
@@ -111,9 +137,8 @@ export function patchEventProp(
         // Respect _lynxCatch even on once-events (e.g. @tap.once.stop).
         // The Vue compiler emits onTapOnce: withModifiers(fn, ['stop']),
         // so _lynxCatch lives on the handler, not on the onceHandler wrapper.
-        const onceEventType = (handler as { _lynxCatch?: boolean })._lynxCatch
-          ? 'catchEvent'
-          : event.type;
+        const onceEventType = handler._lynxCatch ? 'catchEvent' : event.type;
+        if (onceEventType !== event.type) catchPromotedSigns.add(sign);
         pushOp(OP.SET_EVENT, el.uid, onceEventType, event.name, sign);
       }
     } else if (oldSign) {
@@ -124,10 +149,9 @@ export function patchEventProp(
       // First time this event is bound on this element.
       // If the handler is tagged _lynxCatch (from withModifiers '.stop'),
       // use catchEvent so native Lynx stops bubbling at this element.
-      const eventType = (handler as { _lynxCatch?: boolean })._lynxCatch
-        ? 'catchEvent'
-        : event.type;
+      const eventType = handler._lynxCatch ? 'catchEvent' : event.type;
       const sign = register(handler);
+      if (eventType !== event.type) catchPromotedSigns.add(sign);
       if (!signs) {
         signs = new Map<string, string>();
         el._eventPropSigns = signs;
@@ -138,10 +162,13 @@ export function patchEventProp(
   } else if (oldSign) {
     // Handler removed entirely.
     onceWrappers.delete(oldSign);
+    const registeredType = catchPromotedSigns.delete(oldSign)
+      ? 'catchEvent'
+      : event.type;
     unregister(oldSign);
     signs!.delete(key);
     if (signs!.size === 0) delete el._eventPropSigns;
-    pushOp(OP.REMOVE_EVENT, el.uid, event.type, event.name);
+    pushOp(OP.REMOVE_EVENT, el.uid, registeredType, event.name);
   }
 
   scheduleFlush();
@@ -154,6 +181,7 @@ export function releaseEventProps(el: ShadowElement): void {
   if (!signs) return;
   for (const sign of signs.values()) {
     onceWrappers.delete(sign);
+    catchPromotedSigns.delete(sign);
     unregister(sign);
   }
   delete el._eventPropSigns;
@@ -167,4 +195,5 @@ export function getOnceWrapperCountForTesting(): number {
 /** Reset module state – for testing only. */
 export function resetEventPropState(): void {
   onceWrappers.clear();
+  catchPromotedSigns.clear();
 }
