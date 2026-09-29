@@ -11,10 +11,16 @@ import NiceScrollbar from './NiceScrollbar.vue';
 const scrollbarRef = ref<InstanceType<typeof NiceScrollbar> | null>(null);
 const listRef = useTemplateRef<ShadowElement>('listRef');
 
-function onScroll(event: { detail?: { scrollTop?: number; scrollHeight?: number } }) {
+function onScroll(event: {
+  detail?: { scrollTop?: number; scrollHeight?: number; listHeight?: number };
+}) {
   const scrollTop = event.detail?.scrollTop ?? 0;
   const scrollHeight = event.detail?.scrollHeight ?? 0;
-  scrollbarRef.value?.adjustScrollbar(scrollTop, scrollHeight);
+  // `listHeight` is the list's own box. Native engines report it; Lynx for Web
+  // reports 0, and there the list fills the page, so the page height is the
+  // same number.
+  const listHeight = event.detail?.listHeight || SystemInfo.pixelHeight / SystemInfo.pixelRatio;
+  scrollbarRef.value?.adjustScrollbar(scrollTop, scrollHeight, listHeight);
 }
 
 onMounted(() => {

@@ -1,0 +1,1034 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		07B2FB684B8D385782138000 /* Pods_SparklingGoUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 9AD74935FFBD17E3B3D4E69A /* Pods_SparklingGoUITests.framework */; };
+		903208242ED9629900167236 /* LynxResources in Resources */ = {isa = PBXBuildFile; fileRef = 903208232ED9629900167236 /* LynxResources */; };
+		CEAB8C5202B26CF8F0BE5581 /* Pods_SparklingGo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4B00F0DF4C89E15C31BC93A3 /* Pods_SparklingGo.framework */; };
+		DE44680A8011EA315778F328 /* Pods_SparklingMethodTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 80857B85C0422883390B2606 /* Pods_SparklingMethodTests.framework */; };
+		E1EA18997313C777BCB28C73 /* Pods_SparklingGoTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 34294AA1E3153C7FF24DA29D /* Pods_SparklingGoTests.framework */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		44A4C3072E271D570011A613 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 44B59A7F2DE9041F00A05B89 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 44B59A862DE9041F00A05B89;
+			remoteInfo = SparklingGo;
+		};
+		44B59A992DE9042100A05B89 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 44B59A7F2DE9041F00A05B89 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 44B59A862DE9041F00A05B89;
+			remoteInfo = SparklingGo;
+		};
+		44B59AA32DE9042100A05B89 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 44B59A7F2DE9041F00A05B89 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 44B59A862DE9041F00A05B89;
+			remoteInfo = SparklingGo;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		105D1EA8BB03A87166570D75 /* Pods-SparklingGoTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SparklingGoTests.debug.xcconfig"; path = "Target Support Files/Pods-SparklingGoTests/Pods-SparklingGoTests.debug.xcconfig"; sourceTree = "<group>"; };
+		34294AA1E3153C7FF24DA29D /* Pods_SparklingGoTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SparklingGoTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		44A4C3032E271D570011A613 /* SparklingMethodTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SparklingMethodTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		44B59A872DE9041F00A05B89 /* SparklingGo.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SparklingGo.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		44B59A982DE9042100A05B89 /* SparklingGoTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SparklingGoTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		44B59AA22DE9042100A05B89 /* SparklingGoUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SparklingGoUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		4B00F0DF4C89E15C31BC93A3 /* Pods_SparklingGo.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SparklingGo.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		80857B85C0422883390B2606 /* Pods_SparklingMethodTests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SparklingMethodTests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		8C76000D4A2F6C5E1542B66F /* Pods-SparklingMethodTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SparklingMethodTests.debug.xcconfig"; path = "Target Support Files/Pods-SparklingMethodTests/Pods-SparklingMethodTests.debug.xcconfig"; sourceTree = "<group>"; };
+		8CA3C88BC922913EC94B79D5 /* Pods-SparklingGo.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SparklingGo.release.xcconfig"; path = "Target Support Files/Pods-SparklingGo/Pods-SparklingGo.release.xcconfig"; sourceTree = "<group>"; };
+		903208232ED9629900167236 /* LynxResources */ = {isa = PBXFileReference; lastKnownFileType = folder; path = LynxResources; sourceTree = "<group>"; };
+		9AD74935FFBD17E3B3D4E69A /* Pods_SparklingGoUITests.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_SparklingGoUITests.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		B5E42D779278857A5AAB06BF /* Pods-SparklingGoUITests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SparklingGoUITests.debug.xcconfig"; path = "Target Support Files/Pods-SparklingGoUITests/Pods-SparklingGoUITests.debug.xcconfig"; sourceTree = "<group>"; };
+		BEB0A8939FDC0E69DE1ACBE1 /* Pods-SparklingGoUITests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SparklingGoUITests.release.xcconfig"; path = "Target Support Files/Pods-SparklingGoUITests/Pods-SparklingGoUITests.release.xcconfig"; sourceTree = "<group>"; };
+		C50586CC4ECBC63F4329F466 /* Pods-SparklingMethodTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SparklingMethodTests.release.xcconfig"; path = "Target Support Files/Pods-SparklingMethodTests/Pods-SparklingMethodTests.release.xcconfig"; sourceTree = "<group>"; };
+		E28DB50001F3EFBF06162E18 /* Pods-SparklingGo.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SparklingGo.debug.xcconfig"; path = "Target Support Files/Pods-SparklingGo/Pods-SparklingGo.debug.xcconfig"; sourceTree = "<group>"; };
+		FC9A690424F49FA47736FA61 /* Pods-SparklingGoTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-SparklingGoTests.release.xcconfig"; path = "Target Support Files/Pods-SparklingGoTests/Pods-SparklingGoTests.release.xcconfig"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		44A4C3042E271D570011A613 /* SparklingMethodTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = SparklingMethodTests;
+			sourceTree = "<group>";
+		};
+		44B59A892DE9041F00A05B89 /* SparklingGo */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = SparklingGo;
+			sourceTree = "<group>";
+		};
+		44B59A9B2DE9042100A05B89 /* SparklingGoTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = SparklingGoTests;
+			sourceTree = "<group>";
+		};
+		44B59AA52DE9042100A05B89 /* SparklingGoUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
+			path = SparklingGoUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		44A4C3002E271D570011A613 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DE44680A8011EA315778F328 /* Pods_SparklingMethodTests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		44B59A842DE9041F00A05B89 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CEAB8C5202B26CF8F0BE5581 /* Pods_SparklingGo.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		44B59A952DE9042100A05B89 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E1EA18997313C777BCB28C73 /* Pods_SparklingGoTests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		44B59A9F2DE9042100A05B89 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				07B2FB684B8D385782138000 /* Pods_SparklingGoUITests.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2C26194B87B073C85741772F /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				4B00F0DF4C89E15C31BC93A3 /* Pods_SparklingGo.framework */,
+				34294AA1E3153C7FF24DA29D /* Pods_SparklingGoTests.framework */,
+				9AD74935FFBD17E3B3D4E69A /* Pods_SparklingGoUITests.framework */,
+				80857B85C0422883390B2606 /* Pods_SparklingMethodTests.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		44B59A7E2DE9041F00A05B89 = {
+			isa = PBXGroup;
+			children = (
+				903208232ED9629900167236 /* LynxResources */,
+				44B59A892DE9041F00A05B89 /* SparklingGo */,
+				44B59A9B2DE9042100A05B89 /* SparklingGoTests */,
+				44B59AA52DE9042100A05B89 /* SparklingGoUITests */,
+				44A4C3042E271D570011A613 /* SparklingMethodTests */,
+				44B59A882DE9041F00A05B89 /* Products */,
+				ADC955934F105445573B90AE /* Pods */,
+				2C26194B87B073C85741772F /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		44B59A882DE9041F00A05B89 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				44B59A872DE9041F00A05B89 /* SparklingGo.app */,
+				44B59A982DE9042100A05B89 /* SparklingGoTests.xctest */,
+				44B59AA22DE9042100A05B89 /* SparklingGoUITests.xctest */,
+				44A4C3032E271D570011A613 /* SparklingMethodTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		ADC955934F105445573B90AE /* Pods */ = {
+			isa = PBXGroup;
+			children = (
+				E28DB50001F3EFBF06162E18 /* Pods-SparklingGo.debug.xcconfig */,
+				8CA3C88BC922913EC94B79D5 /* Pods-SparklingGo.release.xcconfig */,
+				105D1EA8BB03A87166570D75 /* Pods-SparklingGoTests.debug.xcconfig */,
+				FC9A690424F49FA47736FA61 /* Pods-SparklingGoTests.release.xcconfig */,
+				B5E42D779278857A5AAB06BF /* Pods-SparklingGoUITests.debug.xcconfig */,
+				BEB0A8939FDC0E69DE1ACBE1 /* Pods-SparklingGoUITests.release.xcconfig */,
+				8C76000D4A2F6C5E1542B66F /* Pods-SparklingMethodTests.debug.xcconfig */,
+				C50586CC4ECBC63F4329F466 /* Pods-SparklingMethodTests.release.xcconfig */,
+			);
+			path = Pods;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		44A4C3022E271D570011A613 /* SparklingMethodTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 44A4C30B2E271D570011A613 /* Build configuration list for PBXNativeTarget "SparklingMethodTests" */;
+			buildPhases = (
+				15E2251E3528E6A032E43097 /* [CP] Check Pods Manifest.lock */,
+				44A4C2FF2E271D570011A613 /* Sources */,
+				44A4C3002E271D570011A613 /* Frameworks */,
+				44A4C3012E271D570011A613 /* Resources */,
+				D8B9D87ED24102E5E029ED28 /* [CP] Embed Pods Frameworks */,
+				5176B93C034B550279DEAD8A /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				44A4C3082E271D570011A613 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				44A4C3042E271D570011A613 /* SparklingMethodTests */,
+				44B59A892DE9041F00A05B89 /* SparklingGo */,
+			);
+			name = SparklingMethodTests;
+			productName = SparklingMethodTests;
+			productReference = 44A4C3032E271D570011A613 /* SparklingMethodTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		44B59A862DE9041F00A05B89 /* SparklingGo */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 44B59AAC2DE9042100A05B89 /* Build configuration list for PBXNativeTarget "SparklingGo" */;
+			buildPhases = (
+				9C984960EF9A3261DC49D691 /* [CP] Check Pods Manifest.lock */,
+				44B59A832DE9041F00A05B89 /* Sources */,
+				44B59A842DE9041F00A05B89 /* Frameworks */,
+				44B59A852DE9041F00A05B89 /* Resources */,
+				51F49D3A4032A6DD15914B92 /* [CP] Embed Pods Frameworks */,
+				315282037A282E86F2DC3142 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				44B59A892DE9041F00A05B89 /* SparklingGo */,
+			);
+			name = SparklingGo;
+			productName = SparklingGo;
+			productReference = 44B59A872DE9041F00A05B89 /* SparklingGo.app */;
+			productType = "com.apple.product-type.application";
+		};
+		44B59A972DE9042100A05B89 /* SparklingGoTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 44B59AAF2DE9042100A05B89 /* Build configuration list for PBXNativeTarget "SparklingGoTests" */;
+			buildPhases = (
+				912D5F4C591FEE53AE2B078A /* [CP] Check Pods Manifest.lock */,
+				44B59A942DE9042100A05B89 /* Sources */,
+				44B59A952DE9042100A05B89 /* Frameworks */,
+				44B59A962DE9042100A05B89 /* Resources */,
+				2CE636BDEA6EB413D84DBE48 /* [CP] Embed Pods Frameworks */,
+				E74EF213CF315A781DF57CB4 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				44B59A9A2DE9042100A05B89 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				44B59A9B2DE9042100A05B89 /* SparklingGoTests */,
+			);
+			name = SparklingGoTests;
+			productName = SparklingGoTests;
+			productReference = 44B59A982DE9042100A05B89 /* SparklingGoTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		44B59AA12DE9042100A05B89 /* SparklingGoUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 44B59AB22DE9042100A05B89 /* Build configuration list for PBXNativeTarget "SparklingGoUITests" */;
+			buildPhases = (
+				5F3A6C570D27881AD0B9D61E /* [CP] Check Pods Manifest.lock */,
+				44B59A9E2DE9042100A05B89 /* Sources */,
+				44B59A9F2DE9042100A05B89 /* Frameworks */,
+				44B59AA02DE9042100A05B89 /* Resources */,
+				10EDD5AE55F2E68755A1F4D3 /* [CP] Embed Pods Frameworks */,
+				4E35BF6277D086AE0B6C0FB7 /* [CP] Copy Pods Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				44B59AA42DE9042100A05B89 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				44B59AA52DE9042100A05B89 /* SparklingGoUITests */,
+			);
+			name = SparklingGoUITests;
+			productName = SparklingGoUITests;
+			productReference = 44B59AA22DE9042100A05B89 /* SparklingGoUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		44B59A7F2DE9041F00A05B89 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1610;
+				LastUpgradeCheck = 1610;
+				TargetAttributes = {
+					44A4C3022E271D570011A613 = {
+						CreatedOnToolsVersion = 16.1;
+						LastSwiftMigration = 1610;
+					};
+					44B59A862DE9041F00A05B89 = {
+						CreatedOnToolsVersion = 16.1;
+					};
+					44B59A972DE9042100A05B89 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 44B59A862DE9041F00A05B89;
+					};
+					44B59AA12DE9042100A05B89 = {
+						CreatedOnToolsVersion = 16.1;
+						TestTargetID = 44B59A862DE9041F00A05B89;
+					};
+				};
+			};
+			buildConfigurationList = 44B59A822DE9041F00A05B89 /* Build configuration list for PBXProject "SparklingGo" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = 44B59A7E2DE9041F00A05B89;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 44B59A882DE9041F00A05B89 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				44B59A862DE9041F00A05B89 /* SparklingGo */,
+				44B59A972DE9042100A05B89 /* SparklingGoTests */,
+				44B59AA12DE9042100A05B89 /* SparklingGoUITests */,
+				44A4C3022E271D570011A613 /* SparklingMethodTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		44A4C3012E271D570011A613 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		44B59A852DE9041F00A05B89 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				903208242ED9629900167236 /* LynxResources in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		44B59A962DE9042100A05B89 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		44B59AA02DE9042100A05B89 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		10EDD5AE55F2E68755A1F4D3 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGoUITests/Pods-SparklingGoUITests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGoUITests/Pods-SparklingGoUITests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SparklingGoUITests/Pods-SparklingGoUITests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		15E2251E3528E6A032E43097 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SparklingMethodTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		2CE636BDEA6EB413D84DBE48 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGoTests/Pods-SparklingGoTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGoTests/Pods-SparklingGoTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SparklingGoTests/Pods-SparklingGoTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		315282037A282E86F2DC3142 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGo/Pods-SparklingGo-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGo/Pods-SparklingGo-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SparklingGo/Pods-SparklingGo-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		4E35BF6277D086AE0B6C0FB7 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGoUITests/Pods-SparklingGoUITests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGoUITests/Pods-SparklingGoUITests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SparklingGoUITests/Pods-SparklingGoUITests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		5176B93C034B550279DEAD8A /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingMethodTests/Pods-SparklingMethodTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingMethodTests/Pods-SparklingMethodTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SparklingMethodTests/Pods-SparklingMethodTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		51F49D3A4032A6DD15914B92 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGo/Pods-SparklingGo-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGo/Pods-SparklingGo-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SparklingGo/Pods-SparklingGo-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		5F3A6C570D27881AD0B9D61E /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SparklingGoUITests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		912D5F4C591FEE53AE2B078A /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SparklingGoTests-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		9C984960EF9A3261DC49D691 /* [CP] Check Pods Manifest.lock */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"${PODS_PODFILE_DIR_PATH}/Podfile.lock",
+				"${PODS_ROOT}/Manifest.lock",
+			);
+			name = "[CP] Check Pods Manifest.lock";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/Pods-SparklingGo-checkManifestLockResult.txt",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		D8B9D87ED24102E5E029ED28 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingMethodTests/Pods-SparklingMethodTests-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingMethodTests/Pods-SparklingMethodTests-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SparklingMethodTests/Pods-SparklingMethodTests-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		E74EF213CF315A781DF57CB4 /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGoTests/Pods-SparklingGoTests-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-SparklingGoTests/Pods-SparklingGoTests-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-SparklingGoTests/Pods-SparklingGoTests-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		44A4C2FF2E271D570011A613 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		44B59A832DE9041F00A05B89 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		44B59A942DE9042100A05B89 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		44B59A9E2DE9042100A05B89 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		44A4C3082E271D570011A613 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 44B59A862DE9041F00A05B89 /* SparklingGo */;
+			targetProxy = 44A4C3072E271D570011A613 /* PBXContainerItemProxy */;
+		};
+		44B59A9A2DE9042100A05B89 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 44B59A862DE9041F00A05B89 /* SparklingGo */;
+			targetProxy = 44B59A992DE9042100A05B89 /* PBXContainerItemProxy */;
+		};
+		44B59AA42DE9042100A05B89 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 44B59A862DE9041F00A05B89 /* SparklingGo */;
+			targetProxy = 44B59AA32DE9042100A05B89 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		44A4C3092E271D570011A613 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8C76000D4A2F6C5E1542B66F /* Pods-SparklingMethodTests.debug.xcconfig */;
+			buildSettings = {
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sparkling.app.SparklingMethodTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SparklingGo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SparklingGo";
+			};
+			name = Debug;
+		};
+		44A4C30A2E271D570011A613 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = C50586CC4ECBC63F4329F466 /* Pods-SparklingMethodTests.release.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CLANG_ENABLE_MODULES = YES;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sparkling.app.SparklingMethodTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		44B59AAA2DE9042100A05B89 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/SparklingGo/SparklingGo/Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		44B59AAB2DE9042100A05B89 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/SparklingGo/SparklingGo/Bridging-Header.h";
+			};
+			name = Release;
+		};
+		44B59AAD2DE9042100A05B89 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = E28DB50001F3EFBF06162E18 /* Pods-SparklingGo.debug.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RL87M95CBB;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "{{appNameCamel}}";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to the photo library to save downloaded images.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sparkling.app.SparklingGo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/SparklingGo/SparklingGo/Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 2.1;
+			};
+			name = Debug;
+		};
+		44B59AAE2DE9042100A05B89 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 8CA3C88BC922913EC94B79D5 /* Pods-SparklingGo.release.xcconfig */;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = "";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = RL87M95CBB;
+				ENABLE_PREVIEWS = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = "Info.plist";
+				INFOPLIST_KEY_CFBundleDisplayName = "{{appNameCamel}}";
+				INFOPLIST_KEY_NSPhotoLibraryUsageDescription = "This app needs access to the photo library to save downloaded images.";
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphoneos*]" = YES;
+				"INFOPLIST_KEY_UILaunchScreen_Generation[sdk=iphonesimulator*]" = YES;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphoneos*]" = UIStatusBarStyleDefault;
+				"INFOPLIST_KEY_UIStatusBarStyle[sdk=iphonesimulator*]" = UIStatusBarStyleDefault;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				IPHONEOS_DEPLOYMENT_TARGET = 15.6;
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/Frameworks";
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = "@executable_path/../Frameworks";
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sparkling.app.SparklingGo;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_OBJC_BRIDGING_HEADER = "$(SRCROOT)/SparklingGo/SparklingGo/Bridging-Header.h";
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				XROS_DEPLOYMENT_TARGET = 2.1;
+			};
+			name = Release;
+		};
+		44B59AB02DE9042100A05B89 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 105D1EA8BB03A87166570D75 /* Pods-SparklingGoTests.debug.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sparkling.app.SparklingGoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SparklingGo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SparklingGo";
+				XROS_DEPLOYMENT_TARGET = 2.1;
+			};
+			name = Debug;
+		};
+		44B59AB12DE9042100A05B89 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = FC9A690424F49FA47736FA61 /* Pods-SparklingGoTests.release.xcconfig */;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "Apple Development";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sparkling.app.SparklingGoTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SparklingGo.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SparklingGo";
+				XROS_DEPLOYMENT_TARGET = 2.1;
+			};
+			name = Release;
+		};
+		44B59AB32DE9042100A05B89 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = B5E42D779278857A5AAB06BF /* Pods-SparklingGoUITests.debug.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sparkling.app.SparklingGoUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_TARGET_NAME = SparklingGo;
+				XROS_DEPLOYMENT_TARGET = 2.1;
+			};
+			name = Debug;
+		};
+		44B59AB42DE9042100A05B89 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = BEB0A8939FDC0E69DE1ACBE1 /* Pods-SparklingGoUITests.release.xcconfig */;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.1;
+				MACOSX_DEPLOYMENT_TARGET = 14.6;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.sparkling.app.SparklingGoUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator macosx xros xrsimulator";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2,7";
+				TEST_TARGET_NAME = SparklingGo;
+				XROS_DEPLOYMENT_TARGET = 2.1;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		44A4C30B2E271D570011A613 /* Build configuration list for PBXNativeTarget "SparklingMethodTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44A4C3092E271D570011A613 /* Debug */,
+				44A4C30A2E271D570011A613 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		44B59A822DE9041F00A05B89 /* Build configuration list for PBXProject "SparklingGo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44B59AAA2DE9042100A05B89 /* Debug */,
+				44B59AAB2DE9042100A05B89 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		44B59AAC2DE9042100A05B89 /* Build configuration list for PBXNativeTarget "SparklingGo" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44B59AAD2DE9042100A05B89 /* Debug */,
+				44B59AAE2DE9042100A05B89 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		44B59AAF2DE9042100A05B89 /* Build configuration list for PBXNativeTarget "SparklingGoTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44B59AB02DE9042100A05B89 /* Debug */,
+				44B59AB12DE9042100A05B89 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		44B59AB22DE9042100A05B89 /* Build configuration list for PBXNativeTarget "SparklingGoUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				44B59AB32DE9042100A05B89 /* Debug */,
+				44B59AB42DE9042100A05B89 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 44B59A7F2DE9041F00A05B89 /* Project object */;
+}

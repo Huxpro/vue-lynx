@@ -1,0 +1,47 @@
+[versions]
+agp = "7.4.2"
+kotlin = "1.8.10"
+coreKtx = "1.10.1"
+junit = "4.13.2"
+junitVersion = "1.1.5"
+espressoCore = "3.5.1"
+appcompat = "1.6.1"
+activity = "1.8.0"
+
+fragmentKtx = "1.5.6"
+lynxSdk="3.6.0"
+primjs="3.6.1"
+coroutines="1.5.6"
+fresco = "2.3.0"
+
+
+[libraries]
+androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+androidx-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
+androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
+androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }
+
+lynx = { group = "org.lynxsdk.lynx", name = "lynx", version.ref = "lynxSdk" }
+lynx-devtool = { module = "org.lynxsdk.lynx:lynx-devtool", version.ref = "lynxSdk" }
+lynx-jssdk = { group = "org.lynxsdk.lynx", name = "lynx-jssdk", version.ref = "lynxSdk" }
+lynx-trace = { group = "org.lynxsdk.lynx", name = "lynx-trace", version.ref = "lynxSdk" }
+primjs = { group = "org.lynxsdk.lynx", name = "primjs", version.ref = "primjs" }
+lynx-service-image = { group = "org.lynxsdk.lynx", name = "lynx-service-image", version.ref = "lynxSdk" }
+lynx-service-log = { group = "org.lynxsdk.lynx", name = "lynx-service-log", version.ref = "lynxSdk" }
+lynx-service-http = { group = "org.lynxsdk.lynx", name = "lynx-service-http", version.ref = "lynxSdk" }
+lynx-service-devtool = { group = "org.lynxsdk.lynx", name = "lynx-service-devtool", version.ref = "lynxSdk" }
+lynx-processor = { group = "org.lynxsdk.lynx", name = "lynx-processor", version.ref = "lynxSdk" }
+
+fresco = { group = "com.facebook.fresco", name = "fresco", version.ref = "fresco" }
+fresco-animated-gif = { group = "com.facebook.fresco", name = "animated-gif", version.ref = "fresco" }
+fresco-animated-webp = { group = "com.facebook.fresco", name = "animated-webp", version.ref = "fresco" }
+fresco-webp-support = { group = "com.facebook.fresco", name = "webpsupport", version.ref = "fresco" }
+fresco-animated-base = { group = "com.facebook.fresco", name = "animated-base", version.ref = "fresco" }
+
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+kotlin-kapt = { id = "org.jetbrains.kotlin.kapt", version.ref = "kotlin" }
+android-library = { id = "com.android.library", version.ref = "agp" }

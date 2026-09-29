@@ -2,11 +2,19 @@
 
 A black stage, a glowing green orb, and your finger. Poke it, drag it, flick it — it reacts like a cat toy:
 
-- **The orb chases your finger** with a damped spring, squashing & stretching along its velocity vector. Flick and release, and it wobbles back home.
+- **The orb chases your finger** with a damped spring, squashing & stretching along its velocity vector. Let go and it wobbles to a stop right where you left it.
 - **Water ripples** pulse continuously under your finger for the *entire* drag — a fresh ring every ~150 ms, endlessly re-triggerable.
 - **Firework sparks** burst on touch-down and release, and an ember trail follows every move. Multi-touch works too: each extra finger splashes on its own.
 
 <Go example="touch-fx" defaultFile="src/App.vue" />
+
+:::details There is a switch hidden on this page
+The hint line under the orb is a button. Press it and the orb starts springing back to the centre when you let go, instead of staying where you dropped it — and the label changes from `TOUCH·DRAG·DROP` to `TOUCH·DRAG·FLICK`. Press it again to put it back.
+
+It needs no gesture recognition and no timers, which is the point: the label carries its own `main-thread-bindtouchstart/end`, and those run *before* the stage's handlers because touch events bubble. The label raises a flag, the stage sees it and stands down for the rest of the gesture — so pressing the switch never grabs the orb, never splashes, never fires the goodbye firework.
+
+Both labels are rendered once by the Background Thread and stacked in the same spot; flipping the mode just crossfades their `opacity` from the Main Thread. Changing what the UI *says* costs two style writes and never crosses a thread boundary.
+:::
 
 :::tip Test it on your phone
 This demo is all about touch latency, so it feels best on a real device. Switch the preview above to the **QR code** tab and scan it with [LynxExplorer](https://lynxjs.org/guide/start/quick-start.html) — the native `main.lynx.bundle` is served right from this site. On desktop, the Web preview responds to touch only; enable touch emulation in your browser devtools (or open this page on your phone's browser).
@@ -19,6 +27,7 @@ Every animated thing on this page — the spring physics, the ripple rings, the 
 - Touch handlers (`main-thread-bindtouchstart/move/end`) run on the Main Thread, so there is **zero cross-thread round-trip** between your finger and the pixels.
 - Element pools are pre-rendered once by the Background Thread; each pooled element is bound to a [`MainThreadRef`](/guide/api/vue-lynx/Function.useMainThreadRef), and the engine recycles them with direct `setStyleProperty` writes (only `transform` and `opacity` — cheap to composite).
 - The engine state lives in a value-only `MainThreadRef`; the rAF loop **parks itself** when the orb settles and every particle has died, and wakes on the next touch.
+- Even the UI state — which release mode is active, which label is showing — stays on the Main Thread. Nothing here round-trips to the Background Thread after the first render.
 
 The continuous ripple feed is the part to steal for your own apps: on every frame while a finger is down, the loop spawns trail sparks and re-arms a ripple every 9 frames — which is why the effects never stop mid-drag, no matter how long or fast you scribble.
 
@@ -29,5 +38,6 @@ The example ships with a Lynx-for-Web harness (`examples/touch-fx/harness/`) tha
 ```bash
 cd examples/touch-fx
 pnpm build
-pnpm web:verify   # 7/7 checks: boot, splash, continuity, energy, firework, settle, stress
+pnpm web:verify   # 10/10 checks: boot, splash, continuity, energy, firework,
+                  # settle-where-dropped, stress, and the switch both ways
 ```

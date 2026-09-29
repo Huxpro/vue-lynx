@@ -24,7 +24,8 @@
  *        - identical batch        → skipped (already applied during IFR)
  *        - value-level mismatch   → the background value is patched in place
  *        - structural mismatch    → the IFR tree is torn down and the
- *                                   background batch applied from scratch
+ *                                   complete background history replayed
+ *                                   onto the clean page
  *      Either way the background thread ends up owning the tree, and all
  *      subsequent updates flow through the normal ops pipeline.
  *
@@ -50,6 +51,7 @@ import {
 } from 'vue-lynx/internal/ops';
 
 import { elements } from './element-registry.js';
+import { resetListState } from './list-apply.js';
 import { applyOps } from './ops-apply.js';
 
 // Widened view: op codes read off the wire are plain numbers and may be
@@ -61,6 +63,14 @@ type Phase = 'inactive' | 'enabled' | 'rendered' | 'hydrated';
 let phase: Phase = 'inactive';
 let recordedBatches: unknown[][] = [];
 let batchCursor = 0;
+
+/**
+ * Background batches consumed by hydration so far (skipped or value-patched).
+ * They are the authoritative description of the background tree, so a
+ * structural mismatch in a *later* batch can replay them onto the clean page
+ * instead of dropping the elements they described.
+ */
+let backgroundHistory: unknown[][] = [];
 
 /**
  * How a mismatch in the *last* argument of an op is handled during
@@ -182,6 +192,7 @@ export function runIfrRender(): void {
   // start every render from a clean slate.
   recordedBatches = [];
   batchCursor = 0;
+  backgroundHistory = [];
   phase = 'enabled';
 
   const trigger = (globalThis as Record<string, unknown>)[
@@ -236,13 +247,14 @@ export function interceptPatchUpdate(data: string): boolean {
   const patchOps = reconcileBatch(recorded, incoming);
   if (patchOps) {
     if (patchOps.length > 0) applyOps(patchOps);
+    backgroundHistory.push(incoming);
     advanceCursor();
     return true;
   }
 
   // Structural mismatch — the renders diverged (non-deterministic render or
-  // thread-dependent branching).  Remove the IFR tree and apply the
-  // background batch onto the clean page.
+  // thread-dependent branching).  Remove the IFR tree and replay the whole
+  // background render onto the clean page.
   if (__DEV__) {
     console.warn(
       '[vue-lynx] IFR hydration mismatch: the background render differs '
@@ -251,8 +263,14 @@ export function interceptPatchUpdate(data: string): boolean {
         + 'deterministic and thread-agnostic.',
     );
   }
+  // Batches consumed before the mismatch were only ever painted as the
+  // main-thread render — teardown removes those elements, so replaying the
+  // background history is what puts them back. Capture it before teardown
+  // clears the recorded state.
+  const history = backgroundHistory;
   teardownIfrTree();
   phase = 'hydrated';
+  for (const batch of history) applyOps(batch);
   applyOps(incoming);
   return true;
 }
@@ -265,6 +283,7 @@ function advanceCursor(): void {
     // (it pins every type/class/style payload of the first screen otherwise).
     recordedBatches = [];
     batchCursor = 0;
+    backgroundHistory = [];
   }
 }
 
@@ -381,8 +400,20 @@ function teardownIfrTree(): void {
   }
   for (const id of createdIds) elements.delete(id);
 
+  // Native <list> elements are not owned by the element tree: the rows live in
+  // list-apply's registries and reach native only through the callbacks
+  // __CreateList closed over. Removing the list element therefore leaves those
+  // registries pointing at the abandoned main-thread stream — a later
+  // background INSERT whose parent id was a <list> in the discarded render
+  // would be routed into a dead list instead of the element tree, and
+  // update-list-info would be committed onto whatever element reused the id.
+  // Clearing them makes the abandoned list's callbacks inert (they resolve
+  // nothing) and lets the replay rebuild every list from scratch.
+  resetListState();
+
   recordedBatches = [];
   batchCursor = 0;
+  backgroundHistory = [];
 }
 
 // ---------------------------------------------------------------------------
@@ -394,6 +425,7 @@ export function resetIfrForTesting(): void {
   phase = 'inactive';
   recordedBatches = [];
   batchCursor = 0;
+  backgroundHistory = [];
   warnedPostHydrationOps = false;
   const g = globalThis as Record<string, unknown>;
   delete g[IFR_MT_FLAG_GLOBAL];

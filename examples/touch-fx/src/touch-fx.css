@@ -157,16 +157,42 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Hint
+ * Hint — a tracked-out micro label. Uppercase at 11px with 0.18em of tracking,
+ * and no literal spaces around the middots: the tracking alone separates the
+ * words, so the line keeps one even rhythm instead of opening two holes in the
+ * middle. An explicit sans stack keeps it off the browser's serif default in
+ * the web preview.
+ *
+ * Two lines share this spot (one per release mode); the Main Thread crossfades
+ * their opacity.
  * ------------------------------------------------------------------------- */
 
 .hint {
   position: absolute;
-  left: 0;
-  bottom: 56px;
-  width: 100%;
+  left: 25%;
+  bottom: 52px;
+  width: 50%;
+  height: 20px;
+  line-height: 20px;
   text-align: center;
-  font-size: 14px;
-  letter-spacing: 4px;
-  color: rgba(170, 255, 120, 0.38);
+  font-family: -apple-system, "Helvetica Neue", Roboto, "Segoe UI", sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  color: rgba(170, 255, 120, 1);
+  /* Doubles as the hidden mode switch, so the box is a touch target: half the
+   * stage wide and 20px tall — big enough to aim at, small enough to stay out
+   * of the way of playing. Opacity (not the colour alpha) carries both the
+   * press feedback and the crossfade; keep .42 in sync with HINT_IDLE. */
+  transition: opacity 160ms ease;
+}
+
+/* Free is the default mode, so its label is the one showing at startup. */
+.hint-free {
+  opacity: 0.42;
+}
+
+/* The easter-egg line waits, hidden, in the same spot. */
+.hint-homing {
+  opacity: 0;
 }

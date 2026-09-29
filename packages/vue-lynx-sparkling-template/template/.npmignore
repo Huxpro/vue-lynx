@@ -1,0 +1,23 @@
+# Build outputs
+dist/
+coverage/
+*.tsbuildinfo
+
+# Native build artifacts
+android/app/build/
+android/.gradle/
+ios/build/
+ios/DerivedData/
+ios/Pods/
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
+*.log.*
+
+# OS files
+.DS_Store
+Thumbs.db

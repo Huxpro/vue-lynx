@@ -11,12 +11,17 @@ const RIPPLE_POOL = 10;
 const SPARK_POOL = 64;
 const RIPPLE_SIZE = 120; // px, matches .ripple in CSS
 const ORB_SIZE = 200; // px, matches .orb in CSS
+const HINT_IDLE = '0.42'; // resting opacity of the hint label, matches .hint
+const HINT_PRESSED = '0.85'; // ...and while a finger is on it
 
 // One MainThreadRef per animated element — hydrated to PAPI element handles
 // inside the worklets. Plus one ref holding the whole engine state on MT.
 const orbRef = useMainThreadRef<unknown>(null);
 const flareRef = useMainThreadRef<unknown>(null);
 const engRef = useMainThreadRef<Record<string, unknown> | null>(null);
+// The two hint lines — one per release mode, crossfaded from the Main Thread.
+const hintHomingRef = useMainThreadRef<unknown>(null);
+const hintFreeRef = useMainThreadRef<unknown>(null);
 const rippleRefs = Array.from({ length: RIPPLE_POOL }, () => useMainThreadRef<unknown>(null));
 const sparkRefs = Array.from({ length: SPARK_POOL }, () => useMainThreadRef<unknown>(null));
 
@@ -80,11 +85,23 @@ const getEngine = () => {
     homeX,
     homeY,
     grabbed: false,
+    // Release mode (see `setFree` below). Free is the default; homing is the
+    // easter egg. `restX/Y` is where the orb settles once you let go — the
+    // drop point, or home.
+    free: true,
+    restX: homeX,
+    restY: homeY,
     // Finger tracking (for velocity-biased spark trails).
     fx: 0,
     fy: 0,
     pfx: 0,
     pfy: 0,
+    // Hidden switch: a finger is down on the hint label, where it landed, and
+    // a one-shot marker telling the stage to swallow the matching touchend.
+    hintDown: false,
+    hintFired: false,
+    hx: 0,
+    hy: 0,
     // Pools. `t` counts frames since spawn; a huge value means inactive.
     ripples: [] as Record<string, any>[],
     sparks: [] as Record<string, any>[],
@@ -146,6 +163,46 @@ const getEngine = () => {
   const flareEl = () => el(flareRef);
   const halfOrb = ORB_SIZE / 2;
   const halfRipple = RIPPLE_SIZE / 2;
+
+  // A perfectly regular ring of sparks — deliberately geometric, so it reads
+  // as "something was toggled" rather than as another random firework.
+  st.flourish = (x: number, y: number) => {
+    st.spawnRipple(x, y, true);
+    for (let i = 0; i < 18; i++) {
+      const a = i * 20 * (Math.PI / 180);
+      st.spawnSpark(x + Math.cos(a) * 44, y + Math.sin(a) * 44, Math.cos(a) * 3.2, Math.sin(a) * 3.2, 46, 0.95);
+    }
+  };
+
+  // ------------------------------------------------------------------------
+  // The release mode.
+  //
+  //   free = true (default) — let go and the orb stays where you dropped it.
+  //   free = false          — let go and the orb springs back to the centre.
+  //
+  // Both hint lines are rendered by the Background Thread once; switching
+  // modes only crossfades their opacity from here, so the flip costs nothing
+  // but two style writes and never leaves the Main Thread.
+  // ------------------------------------------------------------------------
+  st.paintHints = (pressed: boolean) => {
+    const on = pressed ? HINT_PRESSED : HINT_IDLE;
+    const freeHint = el(hintFreeRef);
+    const homingHint = el(hintHomingRef);
+    if (freeHint) freeHint.setStyleProperty('opacity', st.free ? on : '0');
+    if (homingHint) homingHint.setStyleProperty('opacity', st.free ? '0' : on);
+  };
+
+  st.setFree = (free: boolean) => {
+    st.free = free;
+    // The switch never grabs the orb, so "where it rests now" is simply where
+    // it is: freeze it in place, or send it home.
+    st.restX = free ? st.ox : st.homeX;
+    st.restY = free ? st.oy : st.homeY;
+    st.tx = st.restX;
+    st.ty = st.restY;
+    st.paintHints(false);
+    st.flourish(st.ox, st.oy);
+  };
 
   const step = () => {
     st.frame++;
@@ -240,14 +297,16 @@ const getEngine = () => {
       requestAnimationFrame(step);
     } else {
       st.running = false;
-      st.ox = st.homeX;
-      st.oy = st.homeY;
+      // Snap off the last sub-pixel of spring drift. `restX/restY` is home in
+      // the default mode, and the drop point once the easter egg is on.
+      st.ox = st.restX;
+      st.oy = st.restY;
       st.vx = 0;
       st.vy = 0;
       if (orb) {
         orb.setStyleProperty(
           'transform',
-          `translate(${st.homeX - halfOrb}px, ${st.homeY - halfOrb}px)`,
+          `translate(${st.restX - halfOrb}px, ${st.restY - halfOrb}px)`,
         );
       }
       if (flare) flare.setStyleProperty('opacity', '0.25');
@@ -264,11 +323,57 @@ const getEngine = () => {
   return st;
 };
 
+// ---------------------------------------------------------------------------
+// The hidden switch.
+//
+// The hint label doubles as the mode toggle. Its own handlers run before the
+// stage's (touch events bubble up to it), so raising `hintDown` here makes the
+// stage stand down for the rest of the gesture: pressing the label never grabs
+// the orb, never splashes, and never fires the goodbye firework.
+//
+// No timers, no gesture heuristics — the platform already tells us which
+// element the finger landed on, which is the whole trick.
+// ---------------------------------------------------------------------------
+
+const onHintDown = (e: LynxTouchEvent) => {
+  'main thread';
+  const st = getEngine() as Record<string, any>;
+  const touches = e.touches ?? [];
+  if (touches.length === 0) return;
+  st.hintDown = true;
+  st.hx = touchX(touches[0]);
+  st.hy = touchY(touches[0]);
+  st.paintHints(true);
+};
+
+const onHintUp = (e: LynxTouchEvent) => {
+  'main thread';
+  const st = getEngine() as Record<string, any>;
+  if (!st.hintDown) return;
+  // Hand the gesture off to the stage's touchend, which swallows it. Clearing
+  // `hintDown` here rather than there keeps the stage alive even on a platform
+  // that never bubbles this touch up to it.
+  st.hintDown = false;
+  st.hintFired = true;
+  // Slide off the label before letting go and the press is cancelled, the way
+  // a button behaves everywhere else.
+  const last = (e.changedTouches ?? [])[0];
+  const dx = last ? touchX(last) - st.hx : 0;
+  const dy = last ? touchY(last) - st.hy : 0;
+  if (Math.sqrt(dx * dx + dy * dy) > 28) {
+    st.paintHints(false);
+    return;
+  }
+  st.setFree(!st.free);
+  st.wake();
+};
+
 const onTouchStart = (e: LynxTouchEvent) => {
   'main thread';
   const st = getEngine() as Record<string, any>;
   const touches = e.touches ?? [];
   if (touches.length === 0) return;
+  if (st.hintDown) return;
   const x = touchX(touches[0]);
   const y = touchY(touches[0]);
   st.grabbed = true;
@@ -293,6 +398,7 @@ const onTouchMove = (e: LynxTouchEvent) => {
   const st = getEngine() as Record<string, any>;
   const touches = e.touches ?? [];
   if (touches.length === 0) return;
+  if (st.hintDown) return;
   st.fx = touchX(touches[0]);
   st.fy = touchY(touches[0]);
   st.tx = st.fx;
@@ -314,6 +420,13 @@ const onTouchMove = (e: LynxTouchEvent) => {
 const onTouchEnd = (e: LynxTouchEvent) => {
   'main thread';
   const st = getEngine() as Record<string, any>;
+  // The switch swallows the whole gesture — see onHintDown. `hintDown` is
+  // still set when the press was interrupted (a cancel) rather than released.
+  if (st.hintFired || st.hintDown) {
+    st.hintFired = false;
+    st.hintDown = false;
+    return;
+  }
   // Platform discrepancy: on the Web, `touches` already excludes the lifted
   // finger at touchend; on native Lynx it can still contain it. Subtract
   // `changedTouches` (the lifted fingers) by identifier — correct under both
@@ -341,13 +454,22 @@ const onTouchEnd = (e: LynxTouchEvent) => {
     st.ty = st.fy;
     return;
   }
+  // A touchcancel can follow the touchend that already released the gesture;
+  // only the first one counts, or the goodbye firework fires twice.
+  if (!st.grabbed) return;
   st.grabbed = false;
-  st.tx = st.homeX;
-  st.ty = st.homeY;
-  // Goodbye firework at the release point.
-  const last = (e.changedTouches ?? [])[0];
+  const last = ended[0];
   const x = last ? touchX(last) : st.fx;
   const y = last ? touchY(last) : st.fy;
+
+  // Where the orb comes to rest: the drop point in free mode, home otherwise.
+  if (st.free) {
+    st.restX = x;
+    st.restY = y;
+  }
+  st.tx = st.restX;
+  st.ty = st.restY;
+  // Goodbye firework at the release point.
   st.spawnRipple(x, y, true);
   st.burst(x, y, 20, 7.5);
   st.wake();
@@ -390,6 +512,23 @@ const onTouchEnd = (e: LynxTouchEvent) => {
       <view class="orb-core" />
     </view>
 
-    <text class="hint">touch · drag · flick</text>
+    <!--
+      Two hint lines stacked in the same spot; the Main Thread crossfades them
+      when the release mode flips. Rendered once by the Background Thread — no
+      round-trip needed to change what the label says. The label is also the
+      hidden switch, so both copies carry the toggle handlers.
+    -->
+    <text
+      class="hint hint-homing"
+      :main-thread-ref="hintHomingRef"
+      :main-thread-bindtouchstart="onHintDown"
+      :main-thread-bindtouchend="onHintUp"
+    >TOUCH·DRAG·FLICK</text>
+    <text
+      class="hint hint-free"
+      :main-thread-ref="hintFreeRef"
+      :main-thread-bindtouchstart="onHintDown"
+      :main-thread-bindtouchend="onHintUp"
+    >TOUCH·DRAG·DROP</text>
   </view>
 </template>
