@@ -351,3 +351,80 @@ describe('onTapOnce prop key (parseEventProp once support)', () => {
     expect(count.value).toBe(1);
   });
 });
+
+describe('merged listener arrays (component listener + fallthrough)', () => {
+  it('invokes both the root listener and the fallthrough listener', async () => {
+    const calls: string[] = [];
+
+    // No `emits` declaration: the parent's onTap falls through onto the
+    // child's root <view>, where Vue merges it with the child's own onTap
+    // into `[childFn, parentFn]` before patchProp.
+    const Child = defineComponent({
+      setup() {
+        return () =>
+          h('view', {
+            onTap: () => {
+              calls.push('child');
+            },
+          });
+      },
+    });
+
+    const Parent = defineComponent({
+      setup() {
+        return () =>
+          h(Child, {
+            onTap: () => {
+              calls.push('parent');
+            },
+          });
+      },
+    });
+
+    const { container } = render(Parent);
+    const viewEl = container.querySelector('view')!;
+
+    fireEvent.tap(viewEl);
+    await nextTick();
+    await nextTick();
+
+    expect(calls).toEqual(['child', 'parent']);
+  });
+
+  it('registers as catchEvent when any merged listener carries .stop', async () => {
+    const calls: string[] = [];
+
+    const Child = defineComponent({
+      setup() {
+        return () =>
+          h('view', {
+            onTap: withModifiers(() => {
+              calls.push('child');
+            }, ['stop']),
+          });
+      },
+    });
+
+    const Parent = defineComponent({
+      setup() {
+        return () =>
+          h(Child, {
+            onTap: () => {
+              calls.push('parent');
+            },
+          });
+      },
+    });
+
+    const { container } = render(Parent);
+    const viewEl = container.querySelector('view')!;
+    expect(viewEl.eventMap?.['catchEvent:tap']).toBeTypeOf('function');
+    expect(viewEl.eventMap?.['bindEvent:tap']).toBeUndefined();
+
+    fireEvent.tap(viewEl, { eventType: 'catchEvent' });
+    await nextTick();
+    await nextTick();
+
+    expect(calls).toEqual(['child', 'parent']);
+  });
+});
