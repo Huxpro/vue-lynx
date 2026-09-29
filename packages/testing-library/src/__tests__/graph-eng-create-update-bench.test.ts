@@ -16,7 +16,8 @@
  * environment) and are labeled `engineFamily: 'mock'` — treat their timing
  * as protocol overhead, not an engine win.
  *
- * Output: packages/ifr-bench/results/graph-eng-create-update.json
+ * Output (with VUE_LYNX_WRITE_BENCH_RESULTS=1):
+ * packages/ifr-bench/results/graph-eng-create-update.json
  * (per-cell table + per-factor marginal deltas, consumed by
  * GRAPH-ENG-REPORT.md).
  */
@@ -385,12 +386,16 @@ describe('graph-eng create/update factorial (#325)', () => {
       },
     };
 
-    const outDir = path.resolve(_dirname, '../../../ifr-bench/results');
-    fs.mkdirSync(outDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(outDir, 'graph-eng-create-update.json'),
-      `${JSON.stringify(report, null, 2)}\n`,
-    );
+    // Committed results are only regenerated on request, so a plain
+    // `pnpm test` leaves the working tree clean.
+    if (process.env.VUE_LYNX_WRITE_BENCH_RESULTS === '1') {
+      const outDir = path.resolve(_dirname, '../../../ifr-bench/results');
+      fs.mkdirSync(outDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(outDir, 'graph-eng-create-update.json'),
+        `${JSON.stringify(report, null, 2)}\n`,
+      );
+    }
 
     console.log(
       `[graph-eng] create mtNamed dense=${base.create.mtNamed} `

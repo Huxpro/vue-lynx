@@ -139,7 +139,7 @@ Do not equate microbench % with FCP.
 ### Microbench command
 
 ```bash
-pnpm --filter vue-lynx-testing-library exec vitest run src/__tests__/graph-eng-sparse-microbench.test.ts
+VUE_LYNX_WRITE_BENCH_RESULTS=1 pnpm --filter vue-lynx-testing-library exec vitest run src/__tests__/graph-eng-sparse-microbench.test.ts
 # → packages/ifr-bench/results/graph-eng-sparse-microbench.json
 ```
 

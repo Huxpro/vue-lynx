@@ -1017,6 +1017,8 @@ importers:
         specifier: ^5.0.0
         version: 5.9.3
 
+  packages/vue-lynx-sparkling-template: {}
+
   website:
     dependencies:
       '@douyinfe/semi-icons':
