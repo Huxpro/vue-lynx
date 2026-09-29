@@ -66,6 +66,12 @@ interface OnceWrapper {
 }
 const onceWrappers = new Map<string, OnceWrapper>();
 
+// Signs whose registration was promoted from the prop key's event type to
+// `catchEvent` because the handler carried `_lynxCatch` (`.stop` modifier).
+// REMOVE_EVENT must target the type actually registered on the Main Thread,
+// otherwise the catchEvent listener is never removed.
+const catchPromotedSigns = new Set<string>();
+
 type EventHandler = ((data: unknown) => void) & { _lynxCatch?: boolean };
 
 /**
@@ -132,6 +138,7 @@ export function patchEventProp(
         // The Vue compiler emits onTapOnce: withModifiers(fn, ['stop']),
         // so _lynxCatch lives on the handler, not on the onceHandler wrapper.
         const onceEventType = handler._lynxCatch ? 'catchEvent' : event.type;
+        if (onceEventType !== event.type) catchPromotedSigns.add(sign);
         pushOp(OP.SET_EVENT, el.uid, onceEventType, event.name, sign);
       }
     } else if (oldSign) {
@@ -144,6 +151,7 @@ export function patchEventProp(
       // use catchEvent so native Lynx stops bubbling at this element.
       const eventType = handler._lynxCatch ? 'catchEvent' : event.type;
       const sign = register(handler);
+      if (eventType !== event.type) catchPromotedSigns.add(sign);
       if (!signs) {
         signs = new Map<string, string>();
         el._eventPropSigns = signs;
@@ -154,10 +162,13 @@ export function patchEventProp(
   } else if (oldSign) {
     // Handler removed entirely.
     onceWrappers.delete(oldSign);
+    const registeredType = catchPromotedSigns.delete(oldSign)
+      ? 'catchEvent'
+      : event.type;
     unregister(oldSign);
     signs!.delete(key);
     if (signs!.size === 0) delete el._eventPropSigns;
-    pushOp(OP.REMOVE_EVENT, el.uid, event.type, event.name);
+    pushOp(OP.REMOVE_EVENT, el.uid, registeredType, event.name);
   }
 
   scheduleFlush();
@@ -170,6 +181,7 @@ export function releaseEventProps(el: ShadowElement): void {
   if (!signs) return;
   for (const sign of signs.values()) {
     onceWrappers.delete(sign);
+    catchPromotedSigns.delete(sign);
     unregister(sign);
   }
   delete el._eventPropSigns;
@@ -183,4 +195,5 @@ export function getOnceWrapperCountForTesting(): number {
 /** Reset module state – for testing only. */
 export function resetEventPropState(): void {
   onceWrappers.clear();
+  catchPromotedSigns.clear();
 }

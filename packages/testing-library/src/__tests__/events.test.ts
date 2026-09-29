@@ -428,3 +428,56 @@ describe('merged listener arrays (component listener + fallthrough)', () => {
     expect(calls).toEqual(['child', 'parent']);
   });
 });
+
+describe('.stop (catchEvent) handler removal', () => {
+  it('removes a @tap.stop handler toggled to null on the Main Thread', async () => {
+    const count = ref(0);
+    const enabled = ref(true);
+
+    const Comp = defineComponent({
+      setup() {
+        const onTap = withModifiers(() => {
+          count.value++;
+        }, ['stop']);
+        return () => h('view', { onTap: enabled.value ? onTap : null });
+      },
+    });
+
+    const { container } = render(Comp);
+    const viewEl = container.querySelector('view')!;
+    expect(viewEl.eventMap?.['catchEvent:tap']).toBeTypeOf('function');
+
+    enabled.value = false;
+    await nextTick();
+    await nextTick();
+
+    // The REMOVE_EVENT op must target the catchEvent registration.
+    expect(viewEl.eventMap?.['catchEvent:tap']).toBeUndefined();
+
+    fireEvent.tap(viewEl, { eventType: 'catchEvent' });
+    await nextTick();
+    await nextTick();
+    expect(count.value).toBe(0);
+  });
+
+  it('removes a @tap.once.stop handler toggled to null on the Main Thread', async () => {
+    const enabled = ref(true);
+
+    const Comp = defineComponent({
+      setup() {
+        const onTap = withModifiers(() => {}, ['stop']);
+        return () => h('view', { onTapOnce: enabled.value ? onTap : null });
+      },
+    });
+
+    const { container } = render(Comp);
+    const viewEl = container.querySelector('view')!;
+    expect(viewEl.eventMap?.['catchEvent:tap']).toBeTypeOf('function');
+
+    enabled.value = false;
+    await nextTick();
+    await nextTick();
+
+    expect(viewEl.eventMap?.['catchEvent:tap']).toBeUndefined();
+  });
+});
