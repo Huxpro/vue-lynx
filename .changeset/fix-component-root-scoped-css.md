@@ -1,5 +1,10 @@
 ---
-"vue-lynx": patch
+"vue-lynx": minor
 ---
 
-Fix `<style scoped>` rules not applying to a component's own root element. Vue applies several scope ids to a component root (its own, then those of the ancestor components whose subtree root it is); on the web these coexist as separate `data-v-*` attributes, but Lynx associates an element with exactly one CSS fragment, so the last `__SetCSSId` won and moved the root into the *parent's* fragment. `nodeOps.setScopeId` now keeps the first scope an element is given — the one of the component that authored it — so static `class`/`style` on a component root works natively without the extra wrapper element workaround.
+Scoped CSS now composes like it does on the web. `<style scoped>` selectors are compiled to class selectors (`[data-v-xxx]` → `.data-v-xxx`), and every scope id Vue assigns becomes a class on the element. Previously each element got a single native CSS id.
+
+- A component root carries its own scope and those of the ancestors whose subtree root it is. A component's own scoped rules and a parent's rules targeting the child's root both apply, without extra wrapper elements.
+- `:deep()`, `:slotted()` and `:global()` compile to selectors that match structurally, the same as on the web.
+
+Scoped selectors now carry the scope's extra class-level specificity, as they do on the web; the previous release stripped the scope attribute. If a scoped rule now wins over an unscoped rule it used to lose to, raise the unscoped rule's specificity.

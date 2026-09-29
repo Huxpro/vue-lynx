@@ -142,12 +142,16 @@ describe('graph-eng sparse A2 microbench (#301)', () => {
       },
     };
 
-    const outDir = path.resolve(_dirname, '../../../ifr-bench/results');
-    fs.mkdirSync(outDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(outDir, 'graph-eng-sparse-microbench.json'),
-      `${JSON.stringify(report, null, 2)}\n`,
-    );
+    // Committed results are only regenerated on request, so a plain
+    // `pnpm test` leaves the working tree clean.
+    if (process.env.VUE_LYNX_WRITE_BENCH_RESULTS === '1') {
+      const outDir = path.resolve(_dirname, '../../../ifr-bench/results');
+      fs.mkdirSync(outDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(outDir, 'graph-eng-sparse-microbench.json'),
+        `${JSON.stringify(report, null, 2)}\n`,
+      );
+    }
 
     // eslint-disable-next-line no-console
     console.log(
