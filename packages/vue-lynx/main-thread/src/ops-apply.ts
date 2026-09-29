@@ -33,7 +33,7 @@ import {
   registerCodeTemplate,
   resetCodeTemplatesForTesting,
 } from './code-template.js';
-import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots } from './element-templates.js';
+import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotId, getTemplateSlotParent, resetTemplateInstanceSlots } from './element-templates.js';
 import { codePaintRequested, engineStagingRequested } from './flags.js';
 import {
   bindVaporTemplateId,
@@ -636,9 +636,10 @@ export function applyOps(ops: unknown[], flush = true): void {
         const child = elements.get(childId);
         if (parent && child) {
           removedRoots.delete(childId);
-          // Parent uid for trackInsert is the slot FiberElement's registry
-          // id (rootId + holeOffset); use child tracking only — the slot
-          // parent is already part of the template instance.
+          // Track under the slot hole's registry id (tracked under the
+          // template root on INSTANTIATE_TEMPLATE) so releasing the root
+          // reaches slot content too.
+          trackInsert(getTemplateSlotId(rootId, slotIndex)!, childId);
           if (anchorId === -1) {
             __AppendElement(parent, child);
           } else {
@@ -907,6 +908,8 @@ export function applyOps(ops: unknown[], flush = true): void {
         installSelectorAttribute(rootId, root);
         for (let k = 1; k <= holeCount; k++) {
           elements.set(rootId + k, handles[k] ?? root);
+          // Holes share the root's lifetime: releasing the root drops them.
+          trackInsert(rootId, rootId + k);
         }
         // Bind element-slot handles for slot-index INSERT/REMOVE.
         bindTemplateInstanceSlots(rootId, handles, entry);

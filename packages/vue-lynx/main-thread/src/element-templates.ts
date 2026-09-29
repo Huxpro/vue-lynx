@@ -40,8 +40,15 @@ interface TemplateEntry {
 
 const templates = new Map<string, TemplateEntry>();
 
-/** template rootId → element-slot handles in slot-index order */
-const instanceSlots = new Map<number, LynxElement[]>();
+interface InstanceSlots {
+  /** element-slot handles in slot-index order */
+  handles: LynxElement[];
+  /** registry ids of those handles (rootId + 1 + hole offset) */
+  ids: number[];
+}
+
+/** template rootId → element-slot handles/ids in slot-index order */
+const instanceSlots = new Map<number, InstanceSlots>();
 
 function slotOffsetsFor(holes: string[]): number[] {
   const offsets: number[] = [];
@@ -83,18 +90,28 @@ export function bindTemplateInstanceSlots(
     return;
   }
   const slots: LynxElement[] = [];
+  const ids: number[] = [];
   for (const offset of entry.slotHoleOffsets) {
     // handles = [root, hole0, hole1, …]; hole at holes[offset] → handles[offset+1]
     slots.push(handles[offset + 1] ?? handles[0]!);
+    ids.push(rootId + offset + 1);
   }
-  instanceSlots.set(rootId, slots);
+  instanceSlots.set(rootId, { handles: slots, ids });
 }
 
 export function getTemplateSlotParent(
   rootId: number,
   slotIndex: number,
 ): LynxElement | undefined {
-  return instanceSlots.get(rootId)?.[slotIndex];
+  return instanceSlots.get(rootId)?.handles[slotIndex];
+}
+
+/** Registry id of the slotIndex-th element slot (for tree bookkeeping). */
+export function getTemplateSlotId(
+  rootId: number,
+  slotIndex: number,
+): number | undefined {
+  return instanceSlots.get(rootId)?.ids[slotIndex];
 }
 
 /**
@@ -109,4 +126,9 @@ export function unbindTemplateInstanceSlots(rootId: number): void {
 /** Test helper — clear per-instance slot bindings (not the create registry). */
 export function resetTemplateInstanceSlots(): void {
   instanceSlots.clear();
+}
+
+/** Test helper — number of live per-instance slot bindings. */
+export function templateInstanceSlotCountForTest(): number {
+  return instanceSlots.size;
 }

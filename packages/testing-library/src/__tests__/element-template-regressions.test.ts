@@ -15,6 +15,8 @@ import { KeepAlive, defineComponent, h, nextTick, ref } from 'vue-lynx';
 import * as VueLynx from 'vue-lynx';
 import type { Component } from 'vue-lynx';
 import { elementTemplateTransform } from '../../../vue-lynx/plugin/src/compiler/element-template-transform.js';
+import { elements } from '../../../vue-lynx/main-thread/src/element-registry.js';
+import { templateInstanceSlotCountForTest } from '../../../vue-lynx/main-thread/src/element-templates.js';
 import { render } from '../index.js';
 
 function compileToComponent(
@@ -124,4 +126,51 @@ describe('element templates: scoped CSS', () => {
     )!;
     expect(tail.parentElement!.getAttribute('class')).toBe(SCOPE);
   });
+});
+
+describe('element templates: main-thread registry release', () => {
+  // Row: lowered shell with a dynamic class hole, a #text hole, and an
+  // element slot (v-if) whose content is itself a lowered template.
+  const ROW = `
+<view class="row">
+  <text :class="c">{{ msg }}</text>
+  <view>
+    <text>x</text>
+    <view v-if="on"><view class="nested"><text>in slot</text></view></view>
+  </view>
+</view>`.trim();
+
+  for (const lowered of [false, true]) {
+    it(`returns to baseline after clearing a list (lowered=${lowered})`, async () => {
+      const Row = compileToComponent(ROW, { c: 'a', msg: 'm', on: true }, {
+        lowered,
+      });
+      if (lowered) expect(Row.code).toContain('__vlx-tpl:');
+      const on = ref(false);
+      const Root = defineComponent({
+        setup: () => () =>
+          h(
+            'view',
+            { class: 'list' },
+            on.value
+              ? Array.from({ length: 50 }, () => h(Row.component))
+              : [],
+          ),
+      });
+
+      render(Root);
+      await nextTick();
+      const baseline = elements.size;
+      const slotBaseline = templateInstanceSlotCountForTest();
+
+      on.value = true;
+      await nextTick();
+      expect(elements.size).toBeGreaterThan(baseline);
+
+      on.value = false;
+      await nextTick();
+      expect(elements.size).toBe(baseline);
+      expect(templateInstanceSlotCountForTest()).toBe(slotBaseline);
+    });
+  }
 });
