@@ -2,9 +2,9 @@ name: CI
 
 on:
   push:
-    branches: [main, research/vue-lynx]
+    branches: [main, vapor, research/vue-lynx]
   pull_request:
-    branches: [main, research/vue-lynx]
+    branches: [main, vapor, research/vue-lynx]
 
 jobs:
   build:
