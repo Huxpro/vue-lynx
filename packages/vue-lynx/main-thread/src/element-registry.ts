@@ -2,6 +2,8 @@
 // Licensed under the Apache License Version 2.0 that can be found in the
 // LICENSE file in the root directory of this source tree.
 
+import { unbindTemplateInstanceSlots } from './element-templates.js';
+
 /** Map from BG-thread ShadowElement id to Lynx Main Thread element handle */
 export const elements = new Map<number, LynxElement>();
 
@@ -46,6 +48,8 @@ export function releaseSubtree(childId: number): void {
     const id = stack.pop()!;
     elements.delete(id);
     parentOf.delete(id);
+    // Element-template roots also own a slot-index table.
+    unbindTemplateInstanceSlots(id);
     const kids = childrenOf.get(id);
     if (kids) {
       childrenOf.delete(id);

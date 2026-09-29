@@ -33,7 +33,7 @@ import {
   registerCodeTemplate,
   resetCodeTemplatesForTesting,
 } from './code-template.js';
-import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots, unbindTemplateInstanceSlots } from './element-templates.js';
+import { getTemplate, bindTemplateInstanceSlots, getTemplateSlotParent, resetTemplateInstanceSlots } from './element-templates.js';
 import { codePaintRequested, engineStagingRequested } from './flags.js';
 import {
   bindVaporTemplateId,
@@ -664,10 +664,9 @@ export function applyOps(ops: unknown[], flush = true): void {
           __RemoveElement(parent, child);
           removedRoots.add(childId);
         }
-        // Best-effort: if this REMOVE tears down a template root, drop its
-        // slot-index table (holes share the contiguous id range and are not
-        // individually removed).
-        unbindTemplateInstanceSlots(childId);
+        // A removed template root's slot-index table is dropped with its
+        // registry subtree at batch end (releaseSubtree), so a move
+        // (REMOVE + INSERT in one batch) keeps its element slots bound.
         break;
       }
 

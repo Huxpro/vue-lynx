@@ -97,7 +97,11 @@ export function getTemplateSlotParent(
   return instanceSlots.get(rootId)?.[slotIndex];
 }
 
-/** Drop slot bindings for removed template instances (best-effort GC). */
+/**
+ * Drop slot bindings for a released template instance. Called per id from
+ * the registry's subtree release (batch end), never on REMOVE itself — a
+ * KeepAlive/Teleport move re-inserts the root later in the same batch.
+ */
 export function unbindTemplateInstanceSlots(rootId: number): void {
   instanceSlots.delete(rootId);
 }
