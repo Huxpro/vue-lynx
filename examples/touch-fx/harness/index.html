@@ -10,7 +10,10 @@
     #phone {
       width: 390px;
       height: 844px;
-      margin: 0 auto;
+      /* Deliberately off the page origin, both axes: the verifier asserts that
+         effects land under the finger, which catches window-relative
+         coordinates the way the website's embedded <Go> preview would. */
+      margin: 72px auto 0;
       background: #000;
       position: relative;
       overflow: hidden;

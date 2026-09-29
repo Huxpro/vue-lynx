@@ -3,7 +3,8 @@
 A black stage, a glowing green orb, and a finger.
 
 - **The orb chases your finger** with a damped spring, squashing and
-  stretching along its velocity vector — poke it, drag it, flick it.
+  stretching along its velocity vector — poke it, drag it, flick it. Even a
+  stationary tap lands: it recoils and flares under your finger.
 - **Water ripples** pulse continuously under your finger for the entire
   drag (a fresh ring every ~150 ms, endlessly re-triggerable).
 - **Firework sparks** burst on touch-down and release, and an ember trail
@@ -34,6 +35,11 @@ element pools once at startup.
   stage stand down for that gesture. Both mode labels are rendered up front
   by the Background Thread and crossfaded by opacity, so flipping the mode
   costs two style writes and never leaves the Main Thread.
+- Touch coordinates come from `detail` (the primary touch, already normalised
+  to this LynxView) falling back to the touch's own `x`/`y`. Not `clientX` or
+  `pageX`: those are window-relative, and agree with the view only when the
+  view starts at the page origin — which is never true in the website's
+  embedded preview.
 - `src/touch-fx.css` — the look: layered radial gradients for the orb,
   a CSS `breathe` keyframe for the idle glow (independent of the MT
   transform, which lives on a different element).
@@ -59,6 +65,11 @@ green effect pixels track the finger at **every** sample along the way
 system settles back down, that a rapid zigzag still spawns effects
 (particle pool recycling), and that the hidden switch flips the release
 mode both ways. Screenshots land in `harness/shots/`.
+
+The LynxView is deliberately **not** at the page origin (see `#phone` in
+`harness/index.html`), and two checks depend on that: effects have to land
+under the finger, and a tap has to recoil the orb. Both fail if the app
+reads window-relative touch coordinates instead of view-relative ones.
 
 The settle check is the one that pins the default down: after a drag into a
 corner, the orb has to be *there* and not at the centre.
