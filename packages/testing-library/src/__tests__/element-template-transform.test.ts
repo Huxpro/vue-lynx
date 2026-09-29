@@ -350,7 +350,10 @@ describe('element-template transform', () => {
       scopeId: 'data-v-1a2b3c4d',
     });
     expect(code).toContain('__SetCSSId([e1], 0)');
-    expect(code).toContain('__SetClasses(e1, "data-v-1a2b3c4d")');
+    // Static class and scope token are baked in ONE write (a separate
+    // scope-only write would be overwritten by the static class).
+    expect(code).toContain('__SetClasses(e1, "card data-v-1a2b3c4d")');
+    expect(code).not.toContain('__SetClasses(e1, "card")');
   });
 
   it('routes all scope emission through the scope adapter seam', () => {

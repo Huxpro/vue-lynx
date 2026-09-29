@@ -54,6 +54,7 @@ import {
   ConstantTypes,
   ElementTypes,
   NodeTypes,
+  createCompoundExpression,
   createFunctionExpression,
   createObjectExpression,
   createObjectProperty,
@@ -190,6 +191,26 @@ function printBakedValue(
     : (value.content ?? 'undefined');
 }
 
+/** Static `class` attribute of an interior element (baked with scope). */
+function staticClassOf(vnodeCall: VNodeCall): string | null {
+  const props = vnodeCall.props;
+  if (props == null || props.type !== NodeTypes.JS_OBJECT_EXPRESSION) {
+    return null;
+  }
+  for (const prop of (props as ObjectExpression).properties) {
+    const key = prop.key as { type: number; isStatic?: boolean; content?: string };
+    const value = prop.value as { type: number; isStatic?: boolean; content?: string };
+    if (
+      key.type === NodeTypes.SIMPLE_EXPRESSION && key.isStatic === true
+      && key.content === 'class'
+      && value.type === NodeTypes.SIMPLE_EXPRESSION && value.isStatic === true
+    ) {
+      return value.content ?? null;
+    }
+  }
+  return null;
+}
+
 /** Emit a wrapper placeholder for an element-slot and register the hole. */
 function emitElementSlot(
   lines: string[],
@@ -232,6 +253,18 @@ function analyzeSubtree(
   const nextVar = { n: 0 };
 
   const scopeId = context.scopeId ?? null;
+  const scopeTokens = scopeId != null
+    ? (scope.scopeClassTokens?.(scopeId) ?? [])
+    : [];
+
+  /** Scope association + the element's one baked class write. */
+  const emitScope = (varName: string, staticClass: string | null): void => {
+    lines.push(...scope.elementScopeStatements(varName, scopeId));
+    const classes = staticClass ? [staticClass, ...scopeTokens] : scopeTokens;
+    if (classes.length > 0) {
+      lines.push(`__SetClasses(${varName}, ${JSON.stringify(classes.join(' '))});`);
+    }
+  };
 
   const emitElement = (el: ElementNode, isRoot: boolean): string => {
     if (el.type !== NodeTypes.ELEMENT) throw INELIGIBLE;
@@ -249,7 +282,7 @@ function analyzeSubtree(
         ? `const ${v} = ${createFn}(P);`
         : `const ${v} = __CreateElement(${JSON.stringify(el.tag)}, P);`,
     );
-    lines.push(...scope.elementScopeStatements(v, scopeId));
+    emitScope(v, isRoot ? null : staticClassOf(vnodeCall));
 
     if (!isRoot) {
       // Interior nodes must be fully expressible as skeleton + holes.
@@ -287,18 +320,31 @@ function analyzeSubtree(
             content?: string;
           };
           const bakeable = !key.startsWith('on') && isBakeableValue(value)
-            && (key !== 'style' || isBakeableStyle(value.content));
+            && (key !== 'style' || isBakeableStyle(value.content))
+            && (key !== 'class' || value.isStatic === true);
           if (bakeable) {
+            // A static `class` is baked by emitScope with the scope tokens.
             const printed = printBakedValue(value);
-            if (key === 'class') {
-              lines.push(`__SetClasses(${v}, ${printed});`);
-            } else if (key === 'style') {
+            if (key === 'style') {
               lines.push(`__SetInlineStyles(${v}, ${printed});`);
-            } else {
+            } else if (key !== 'class') {
               lines.push(
                 `__SetAttribute(${v}, ${JSON.stringify(key)}, ${printed});`,
               );
             }
+          } else if (key === 'class' && scopeTokens.length > 0) {
+            // The hole's SET_CLASS replaces the whole class list; keep the
+            // scope tokens baked above.
+            holes.push({
+              key,
+              value: createCompoundExpression([
+                '(',
+                // biome-ignore lint/suspicious/noExplicitAny: compiled expression node
+                prop.value as any,
+                ` + ${JSON.stringify(` ${scopeTokens.join(' ')}`)}).trim()`,
+              ]),
+            });
+            holeVars.push(v);
           } else {
             holes.push({ key, value: prop.value });
             holeVars.push(v);
@@ -363,7 +409,7 @@ function analyzeSubtree(
         } else if (child.type === NodeTypes.TEXT) {
           const tv = `e${nextVar.n++}`;
           lines.push(`const ${tv} = __CreateText(P);`);
-          lines.push(...scope.elementScopeStatements(tv, scopeId));
+          emitScope(tv, null);
           lines.push(
             `__SetAttribute(${tv}, 'text', ${JSON.stringify(child.content)});`,
           );
@@ -374,7 +420,7 @@ function analyzeSubtree(
           if (content.type !== NodeTypes.TEXT) throw INELIGIBLE;
           const tv = `e${nextVar.n++}`;
           lines.push(`const ${tv} = __CreateText(P);`);
-          lines.push(...scope.elementScopeStatements(tv, scopeId));
+          emitScope(tv, null);
           lines.push(
             `__SetAttribute(${tv}, 'text', ${
               JSON.stringify(content.content)

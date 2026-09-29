@@ -21,18 +21,25 @@ export interface TemplateScopeAdapter {
  *   association too when their scope model needs one (cssId 0 here).
    */
   elementScopeStatements(varName: string, scopeId: string | null): string[];
+
+  /**
+   * Class tokens that carry the component's CSS scope on every element of
+   * the template. The transform owns all class writes: it bakes these tokens
+   * together with an element's static class in ONE `__SetClasses` (a
+   * separate write would overwrite the other), and appends them to dynamic
+   * `class` hole values (a hole's SET_CLASS replaces the whole class list).
+   * Optional — adapters whose scope model does not use classes omit it.
+   */
+  scopeClassTokens?(scopeId: string): string[];
 }
 
 /** Default adapter: common cssId plus Vue scope class token. */
 export const classTokenScopeAdapter: TemplateScopeAdapter = {
-  elementScopeStatements(varName, scopeId) {
-    // Later baked static class writes can overwrite this token; that transform
-    // ordering remains an accepted limitation until class merging is revisited.
-    const stmts = [`__SetCSSId([${varName}], 0);`];
-    if (scopeId != null) {
-      stmts.push(`__SetClasses(${varName}, ${JSON.stringify(scopeId)});`);
-    }
-    return stmts;
+  elementScopeStatements(varName) {
+    return [`__SetCSSId([${varName}], 0);`];
+  },
+  scopeClassTokens(scopeId) {
+    return [scopeId];
   },
 };
 

@@ -45,6 +45,11 @@ function compileToComponent(
   return { component, code };
 }
 
+/** Strip vue-ref bookkeeping attrs (lowered interiors don't carry them). */
+function normalized(container: Element): string {
+  return container.innerHTML.replace(/ vue-ref-\d+="[^"]*"/g, '');
+}
+
 describe('element templates: KeepAlive moves', () => {
   it('keeps element-slot bindings when a cached template root is moved', async () => {
     const show = ref(false);
@@ -76,5 +81,47 @@ describe('element templates: KeepAlive moves', () => {
     show.value = true; // slot insert must still resolve its wrapper parent
     await nextTick();
     expect(container.textContent).toBe('headSHOWN');
+  });
+});
+
+describe('element templates: scoped CSS', () => {
+  const SCOPE = 'data-v-1a2b3c4d';
+  const TEMPLATE = `
+<view class="card">
+  <text class="title">Title</text>
+  <view :class="badge"><text>tail</text></view>
+  <text>plain</text>
+</view>`.trim();
+
+  it('keeps the scope token on interior elements with static and dynamic classes', async () => {
+    const baseBadge = ref('badge a');
+    const base = compileToComponent(TEMPLATE, { badge: baseBadge }, {
+      lowered: false,
+      scopeId: SCOPE,
+    });
+    const { container: c1 } = render(base.component);
+    const baseHtml = normalized(c1);
+
+    const badge = ref('badge a');
+    const low = compileToComponent(TEMPLATE, { badge }, { scopeId: SCOPE });
+    expect(low.code).toContain('__vlx-tpl:');
+    const { container } = render(low.component);
+
+    // Lowered output must match the normal path exactly.
+    expect(normalized(container)).toBe(baseHtml);
+    expect(container.querySelector(`.title.${SCOPE}`)).not.toBeNull();
+    expect(container.querySelector(`.badge.a.${SCOPE}`)).not.toBeNull();
+
+    badge.value = 'badge b';
+    await nextTick();
+    expect(container.querySelector(`.badge.b.${SCOPE}`)).not.toBeNull();
+    expect(container.querySelector('.badge.a')).toBeNull();
+
+    badge.value = '';
+    await nextTick();
+    const tail = [...container.querySelectorAll('text')].find(
+      (n) => n.textContent === 'tail',
+    )!;
+    expect(tail.parentElement!.getAttribute('class')).toBe(SCOPE);
   });
 });
