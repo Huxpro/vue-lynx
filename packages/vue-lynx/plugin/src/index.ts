@@ -49,7 +49,6 @@ import {
 import { applyEntry } from './entry.js';
 import { LAYERS } from './layers.js';
 import { VueLynxVaporTemplatePlugin } from './plugins/vapor-template-plugin.js';
-import { resolveVueAlias } from './vue-alias.js';
 
 const require = createRequire(import.meta.url);
 
@@ -545,14 +544,15 @@ export function pluginVueLynx(
         });
 
         api.modifyBundlerChain((chain) => {
-          // "vue" → vue-lynx runtime ensures template compiler output
+          // "vue" → "vue-lynx" ensures template compiler output
           // imports from the same module instance (singleton shared state).
           // With vapor enabled, "vue" resolves to the pure Vapor entry
           // instead, which carries the helper surface compiled vapor
-          // components import (and none of the vdom renderer). The alias is
-          // an absolute path so it resolves under pnpm strict layouts where
-          // "vue-lynx" is not reachable from the importer's node_modules.
-          chain.resolve.alias.set('vue', resolveVueAlias(vapor));
+          // components import (and none of the vdom renderer).
+          chain.resolve.alias.set(
+            'vue',
+            vapor ? 'vue-lynx/vapor' : 'vue-lynx',
+          );
 
           if (vapor) {
             // rspack-vue-loader's templateLoader predates Vapor: swap in the
