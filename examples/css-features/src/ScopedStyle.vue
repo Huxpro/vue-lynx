@@ -10,7 +10,7 @@ import ScopedNestedChild from './ScopedNestedChild.vue'
 
 <template>
   <view class="scoped-card">
-    <text class="scoped-title">&lt;style scoped&gt;</text>
+    <text class="scoped-title">&lt;style scoped&gt; (ScopedStyle.vue)</text>
     <text class="scoped-desc">
       Bridged to Lynx's native cssId scoping system.
       Styles are scoped to this component only.

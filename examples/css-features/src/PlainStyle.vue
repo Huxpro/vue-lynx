@@ -6,7 +6,7 @@
 
 <template>
   <view class="plain-card">
-    <text class="plain-title">Plain &lt;style&gt; (no scoped)</text>
+    <text class="plain-title">Plain &lt;style&gt; (PlainStyle.vue)</text>
     <text class="plain-desc">Class selectors work via CSS extraction pipeline.</text>
   </view>
 </template>

@@ -8,7 +8,7 @@ import './imported.css'
 
 <template>
   <view class="imported-card">
-    <text class="imported-title">Imported .css file</text>
+    <text class="imported-title">Imported .css file (ImportedCSS.vue)</text>
     <text class="imported-desc">
       External CSS files with class selectors work via the
       @lynx-js/css-extract-webpack-plugin pipeline.
