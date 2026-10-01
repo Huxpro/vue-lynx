@@ -38,11 +38,11 @@ const RUN_WORKLET_CTX = 'Lynx.Worklet.runWorkletCtx';
  * await animate(0.5) // executes on Main Thread
  * ```
  */
-export function runOnMainThread<R, Fn extends (...args: unknown[]) => R>(
-  fn: Fn,
-): (...args: Parameters<Fn>) => Promise<R> {
+export function runOnMainThread<A extends unknown[], R>(
+  fn: (...args: A) => R,
+): (...args: A) => Promise<R> {
   registerWorkletCtx(fn as unknown as Worklet);
-  return async (...params: Parameters<Fn>): Promise<R> => {
+  return async (...params: A): Promise<R> => {
     return new Promise((resolve) => {
       const resolveId = onFunctionCall(resolve as (value: unknown) => void);
       lynx.getCoreContext().dispatchEvent({

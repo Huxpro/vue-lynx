@@ -138,9 +138,9 @@ function runJSFunction(event: { data?: unknown }): void {
  * sites. This export exists only for TypeScript import resolution — it is
  * never called at runtime on the BG thread.
  */
-export function runOnBackground<R, Fn extends (...args: unknown[]) => R>(
-  _fn: Fn,
-): (...args: Parameters<Fn>) => Promise<R> {
+export function runOnBackground<A extends unknown[], R>(
+  _fn: (...args: A) => R,
+): (...args: A) => Promise<R> {
   throw new Error(
     'runOnBackground() can only be used inside \'main thread\' functions. '
       + 'The SWC worklet transform should replace this call at build time.',
