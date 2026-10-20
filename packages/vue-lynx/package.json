@@ -31,6 +31,11 @@
       "import": "./plugin/dist/index.js",
       "default": "./plugin/dist/index.js"
     },
+    "./motion": {
+      "types": "./runtime/dist/motion.d.ts",
+      "import": "./runtime/dist/motion.js",
+      "default": "./runtime/dist/motion.js"
+    },
     "./main-thread": {
       "types": "./main-thread/dist/entry-main.d.ts",
       "import": "./main-thread/dist/entry-main.js",

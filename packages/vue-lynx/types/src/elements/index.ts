@@ -1,5 +1,6 @@
 import type { DefineComponent } from 'vue';
 import type { IntrinsicElements } from '@lynx-js/types';
+import type { AnimaXViewProps } from './animax.js';
 
 type ExtractBindAsOn<T> = {
   [P in keyof T as P extends `bind${infer Rest}` ? `on${Capitalize<Rest>}` : never]: T[P]
@@ -94,7 +95,12 @@ type VueLynxComponent<T> = DefineComponent<VueLynxProps<T>>
 
 export type VueLynxElements = {
   [K in keyof IntrinsicElements]: VueLynxComponent<IntrinsicElements[K]>
+} & {
+  // Elements Lynx ships outside @lynx-js/types' IntrinsicElements.
+  'animax-view': VueLynxComponent<AnimaXViewProps>
 }
+
+export type * from './animax.js'
 
 declare module "vue" {
   export interface GlobalComponents extends VueLynxElements {}

@@ -1,0 +1,85 @@
+# AnimaX
+
+[AnimaX](https://github.com/lynx-family/animax) is the animation player that ships with Lynx: a C++ engine that plays Lottie compositions and alpha video, and mixes the two in one file. Lynx exposes it as the `<animax-view>` element on iOS and Android, and `@lynx-js/animax` provides the same custom element on the web.
+
+Vue Lynx types the element and gives you a controller for it.
+
+## Where the element comes from
+
+- **iOS and Android**: the AnimaX xelement in Lynx (`LynxUIAnimaX`, `UIAnimaX`), registered under `animax-view`. Include it in the host app the way the host registers any xelement.
+- **Web**: the host page imports `@lynx-js/web-core/animax`, which registers `animax-view` from `@lynx-js/animax`. Compositions with video layers also need `@lynx-js/animax-video`.
+
+Without one of those the tag renders nothing; the rest of the page still works.
+
+## Using the element
+
+```vue
+<script setup lang="ts">
+import { useTemplateRef } from 'vue'
+import { useAnimaX } from 'vue-lynx'
+import type { AnimaXEvent, AnimaXParam } from 'vue-lynx/types'
+
+const player = useTemplateRef('player')
+const animax = useAnimaX(player)
+
+function onCompletion(e: AnimaXEvent<AnimaXParam>) {
+  console.log('played', e.detail.total, 'frames')
+}
+</script>
+
+<template>
+  <animax-view
+    ref="player"
+    src="https://example.com/gift.json"
+    :autoplay="false"
+    loop
+    objectfit="contain"
+    @completion="onCompletion"
+  />
+  <view @tap="animax.play()" />
+</template>
+```
+
+### Attributes
+
+| Attribute | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `src` | string | | URL of a Lottie JSON or an AFX export |
+| `json` | string | | Inline Lottie JSON |
+| `src-format`, `src-polyfill` | string, record | | Format hint; resource name to URL overrides |
+| `autoplay` | boolean | `true` | |
+| `loop`, `loop-count` | boolean, number | `false`, `1` | |
+| `speed` | number | `1` | |
+| `progress` | number | | 0 to 1 |
+| `start-frame`, `end-frame` | number | `0`, `-1` | `-1` plays to the end |
+| `auto-reverse` | boolean | `false` | |
+| `keeplastframe` | boolean | `true` | |
+| `objectfit`, `object-position` | string | | `contain`, `cover`, `center`, `fill`, `scale-down`; nine positions |
+| `fps-event-interval`, `max-frame-rate` | number | | |
+| `dynamic-resource` | boolean | | Load images, fonts and videos lazily by name |
+| `muted`, `enable-audio` | boolean | `false` | |
+| `display-mode`, `multi-thread-accelerate`, `ignore-attach-status`, `ignore-lynx-lifecycle`, `tag` | | | Native only |
+
+### Events
+
+`@ready`, `@start`, `@repeat`, `@update`, `@completion`, `@cancel`, `@firstframe`, `@compositionready` carry `{ animationID, current, total, loopIndex }` in `detail`. `@fps` adds `fps` and `max_drop_rate`; `@taplayers` adds `layerList`; `@error` and `@warning` carry `{ code, message }` (`data` on the web).
+
+`update` fires only for frames you subscribed to with `subscribeUpdateEvent` or `subscribeUpdateEvents`.
+
+## `useAnimaX`
+
+`useAnimaX(ref)` takes a template ref (or a getter returning the element) and returns the element's UI methods as Promises:
+
+| Method | Result |
+| --- | --- |
+| `play()`, `pause()`, `resume()`, `stop()` | |
+| `seek(frame)` | |
+| `playSegment(startFrame, endFrame)` | |
+| `getDuration()` | milliseconds |
+| `getCurrentFrame()` | frame |
+| `isAnimating()` | boolean |
+| `subscribeUpdateEvent(frame)`, `subscribeUpdateEvents(frames)`, `unsubscribeUpdateEvent(frame)`, `unsubscribeUpdateEvents(frames)` | |
+
+A method rejects when the element is not mounted, or with the native error code when the element refuses the call.
+
+See [`examples/animax`](https://github.com/Huxpro/vue-lynx/tree/main/examples/animax) for a complete page.

@@ -264,6 +264,8 @@ export {
   transformToWorklet,
 };
 export { useGlobalEvent } from './use-global-event.js';
+export { useAnimaX } from './animax.js';
+export type { AnimaXController, AnimaXTarget } from './animax.js';
 
 /** @internal Exposed for upstream-tests bridge render(). */
 export { createPageRoot } from './shadow-element.js';
