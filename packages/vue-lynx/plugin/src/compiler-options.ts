@@ -6,6 +6,7 @@ import type { NodeTransform } from '@vue/compiler-core';
 import { ElementTypes, NodeTypes } from '@vue/compiler-core';
 
 import { elementTemplateTransform } from './compiler/element-template-transform.js';
+import { mainThreadModifierTransform } from './compiler/main-thread-transform.js';
 
 // Structural views of @vue/compiler-core's AST nodes — the transform accepts
 // `unknown` (it must tolerate whichever compiler copy vue-loader bundles),
@@ -81,7 +82,10 @@ export const vueLynxCompilerOptions = {
   // Widened to NodeTransform[]: transformPageElement takes `unknown` (it
   // must tolerate whichever compiler copy vue-loader bundles) and is
   // assignable to the stricter NodeTransform signature.
-  nodeTransforms: [transformPageElement] as NodeTransform[],
+  nodeTransforms: [
+    transformPageElement,
+    mainThreadModifierTransform,
+  ] as NodeTransform[],
   whitespace: 'condense' as const,
   // Disable static hoisting: @vue/compiler-dom's stringifyStatic
   // transform converts runs of 5+ constant-prop siblings into a single

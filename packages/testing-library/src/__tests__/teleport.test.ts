@@ -254,6 +254,27 @@ describe('Teleport', () => {
     expect(container.textContent).toContain('Toggle');
   });
 
+  it('resolves a target rendered after it when deferred', async () => {
+    // A takeover or sheet layer declared at the end of the page is the
+    // natural shape; `defer` lets the Teleport find it after mount.
+    const Comp = defineComponent({
+      render() {
+        return h('view', null, [
+          h(Teleport, { to: '#layer', defer: true }, teleportSlot(() => [
+            h('text', null, 'Late'),
+          ])),
+          h('view', { id: 'layer' }),
+        ]);
+      },
+    });
+
+    const { container } = render(Comp);
+    await flush();
+    const layer = container.querySelector('[id="layer"]');
+    expect(layer).not.toBeNull();
+    expect(layer!.textContent).toBe('Late');
+  });
+
   it('handles non-existent target gracefully', () => {
     // Vue emits its own warning for missing targets; content should not crash.
     const Comp = defineComponent({

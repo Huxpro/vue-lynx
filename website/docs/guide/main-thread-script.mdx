@@ -168,6 +168,22 @@ const addBackgroundColor = (event: MainThread.ITouchEvent) => {
 
 Note that the `current` property of `MainThreadRef` can only be accessed within a main thread function.
 
+## Template Sugar: `.main-thread`
+
+Every `main-thread-*` attribute above has a modifier spelling that reads like the rest of a Vue template:
+
+```vue
+<template>
+  <view @tap.main-thread="addBackgroundColor">
+    <text :ref.main-thread="textRef">Hello World!</text>
+  </view>
+  <scroll-view @scroll.main-thread="onScroll" />
+  <view @touchstart.main-thread.catch="onTouchStart" />
+</template>
+```
+
+`@event.main-thread` compiles to `:main-thread-bind<event>`, adding `.catch` picks the `catch` form, and `:ref.main-thread` compiles to `:main-thread-ref`. The handler still carries the `'main thread'` directive. `.main-thread` cannot be combined with `.once`, `.stop` or any other event modifier; the compiler reports it instead of guessing what the main thread should do with it. The Volar plugin applies the same rewrite, so the IDE types the binding as the main thread prop.
+
 ## Maintaining State in Main Thread Functions
 
 Main thread functions cannot modify captured variables. Therefore, if you need to maintain state between main thread functions, you should use `MainThreadRef`:
@@ -372,6 +388,26 @@ const onTap = () => {
 }
 </script>
 ```
+
+### Style Helpers: `vue-lynx/motion`
+
+`vue-lynx/motion` is a shared module of numeric animation helpers: a damped spring and an eased tween that write to a main thread element once per frame. It carries no dependency; [`@lynx-js/motion`](https://lynxjs.org/ui/motion.html) is written for ReactLynx and imports the React runtime at module load, which a Vue Lynx bundle must not carry. The options read the same (`type: 'spring'`, `stiffness`, `damping`, `mass`, `duration`, `ease`, `from`), so moving to it later is a one-line change. Import the helpers as shared:
+
+```ts
+import { springStyle, animateTranslate } from 'vue-lynx/motion' with { runtime: 'shared' }
+
+const boxRef = useMainThreadRef<MainThread.Element>(null)
+
+const onTap = () => {
+  'main thread'
+  const el = boxRef.current
+  if (!el) return
+  springStyle(el, 'opacity', 1, { from: 0 })
+  animateTranslate(el, { x: 0 }, { x: 120 }, { type: 'spring', stiffness: 300, damping: 30 })
+}
+```
+
+`animateStyle(el, property, to, options)` writes one style property per frame (`from`, `unit`, `duration`, `ease`, or `type: 'spring'` with `stiffness`, `damping`, `mass`); `springStyle` is the same with a spring; `animateTranslate` animates both axes through one `transform`; `animateValue(write, to, options)` is the engine underneath for anything else. Each returns a handle with `stop()`, `finished` and `then()`, and the first frame is written synchronously so the element starts exactly at `from`. `linear`, `easeIn`, `easeOut`, `easeInOut` and `cubicBezier(x1, y1, x2, y2)` are the easings.
 
 ### Limitations
 

@@ -203,7 +203,7 @@ Vue's [`<Teleport>`](https://vuejs.org/guide/built-ins/teleport.html) moves a te
 :::warning Caveats
 Direct element refs and non-ID selectors (e.g. `to=".class"` or `to="body"`) are not yet supported. Give the destination an `id` and target it with `to="#that-id"`.
 
-The target element must already exist when `<Teleport>` mounts — place the `id` host earlier in the tree than the `<Teleport>` (or outside the component that owns it). Vue cannot resolve a target that is created by the same render as the teleport.
+The target element must already exist when `<Teleport>` mounts — place the `id` host earlier in the tree than the `<Teleport>` (or outside the component that owns it). Vue cannot resolve a target that is created by the same render as the teleport. Pass `defer` to resolve the target after the current render instead; that lets a sheet or overlay layer sit at the end of the page and still receive teleported content.
 :::
 
 The example below shows a modal teleported to `#overlay-root`, plus reactive content with the `disabled` prop:
