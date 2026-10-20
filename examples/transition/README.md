@@ -19,4 +19,4 @@ See `src/App.vue`:
 ## Caveats
 
 - `<Transition>` has no Lynx-specific limitations — CSS transitions/animations work with or without `:duration` (event + bounded fallback cleanup).
-- Move (FLIP) animations in `<TransitionGroup>` are not supported — `getBoundingClientRect()` is unavailable from the background thread
+- Move (FLIP) animations in `<TransitionGroup>` need the `move` prop; they run on the main thread from each child's last laid-out rect, and `moveClass` is not read

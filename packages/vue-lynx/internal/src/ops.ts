@@ -45,6 +45,9 @@ export const OP = {
   INIT_MT_REF: 13,
   SET_SCOPE_ID: 14,
   INSTANTIATE_TEMPLATE: 15,
+  FLIP_TRACK: 16,
+  FLIP_UNTRACK: 17,
+  FLIP_MOVE: 18,
 } as const;
 
 export type OpCode = (typeof OP)[keyof typeof OP];
@@ -72,6 +75,9 @@ export const OP_ARITY: Record<OpCode, number> = {
   [OP.INIT_MT_REF]: 2, // wvid, initValue
   [OP.SET_SCOPE_ID]: 2, // id, cssId
   [OP.INSTANTIATE_TEMPLATE]: 3, // rootId, tplId, holeCount
+  [OP.FLIP_TRACK]: 1, // id
+  [OP.FLIP_UNTRACK]: 1, // id
+  [OP.FLIP_MOVE]: 3, // ids, durationMs, easing
 };
 
 /**

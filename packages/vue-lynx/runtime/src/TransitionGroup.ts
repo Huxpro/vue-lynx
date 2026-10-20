@@ -7,21 +7,28 @@
  *
  * Renders a real container element (default: 'view') and applies enter/leave
  * transition hooks to each child independently.  Move animations (FLIP) are
- * not supported in this phase because they require synchronous bounding-rect
- * queries which are not available from the Background Thread.
+ * opt-in through the `move` prop and run on the main thread (see
+ * main-thread/src/flip-apply.ts): the background thread cannot measure, so it
+ * only tracks children and marks an update.
  */
 
 import {
   type SetupContext,
+  type VNode,
   defineComponent,
   getCurrentInstance,
   h,
+  onBeforeUnmount,
+  onMounted,
+  onUpdated,
   resolveTransitionHooks,
   setTransitionHooks,
   useTransitionState,
   getTransitionRawChildren,
 } from '@vue/runtime-core';
 
+import { scheduleFlush } from './flush.js';
+import { OP, pushOp } from './ops.js';
 import type { ShadowElement } from './shadow-element.js';
 import type { TransitionProps } from './Transition.js';
 import {
@@ -41,7 +48,17 @@ import {
 export interface TransitionGroupProps extends TransitionProps {
   tag?: string;
   moveClass?: string;
+  /**
+   * Animate children that change position (FLIP). `true` for 300ms, or the
+   * duration in milliseconds. Runs on the main thread from each child's last
+   * laid-out rect; `moveClass` is not used on Lynx.
+   */
+  move?: boolean | number;
+  /** Timing function of the move animation. @defaultValue 'ease' */
+  moveEasing?: string;
 }
+
+const DEFAULT_MOVE_MS = 300;
 
 // ---------------------------------------------------------------------------
 // <TransitionGroup>
@@ -71,11 +88,68 @@ export const TransitionGroup = defineComponent({
     appearActiveClass: String,
     appearToClass: String,
     moveClass: String,
+    move: { type: [Boolean, Number] as unknown as () => boolean | number },
+    moveEasing: { type: String, default: 'ease' },
   },
 
   setup(props: TransitionGroupProps, { slots }: SetupContext) {
     const instance = getCurrentInstance()!;
     const state = useTransitionState();
+
+    // FLIP bookkeeping: every keyed child is tracked on the main thread from
+    // mount, and an update sends FLIP_MOVE for the children now on screen.
+    let lastChildren: VNode[] = [];
+    const tracked = new Set<number>();
+
+    const childIds = (): number[] => {
+      const ids: number[] = [];
+      for (const child of lastChildren) {
+        const id = (child.el as ShadowElement | null)?.id;
+        if (typeof id === 'number') ids.push(id);
+      }
+      return ids;
+    };
+
+    const syncTracking = (ids: number[]): void => {
+      const current = new Set(ids);
+      for (const id of tracked) {
+        if (!current.has(id)) {
+          pushOp(OP.FLIP_UNTRACK, id);
+          tracked.delete(id);
+        }
+      }
+      for (const id of ids) {
+        if (!tracked.has(id)) {
+          pushOp(OP.FLIP_TRACK, id);
+          tracked.add(id);
+        }
+      }
+    };
+
+    const moveDuration = (): number =>
+      typeof props.move === 'number' ? props.move : DEFAULT_MOVE_MS;
+
+    onMounted(() => {
+      if (!props.move) return;
+      syncTracking(childIds());
+      scheduleFlush();
+    });
+
+    onUpdated(() => {
+      if (!props.move) return;
+      const ids = childIds();
+      syncTracking(ids);
+      if (ids.length > 0) {
+        pushOp(OP.FLIP_MOVE, ids, moveDuration(), props.moveEasing ?? 'ease');
+      }
+      scheduleFlush();
+    });
+
+    onBeforeUnmount(() => {
+      for (const id of tracked) pushOp(OP.FLIP_UNTRACK, id);
+      tracked.clear();
+      scheduleFlush();
+    });
 
     return () => {
       const rawChildren = slots.default ? slots.default() : [];
@@ -172,6 +246,7 @@ export const TransitionGroup = defineComponent({
         setTransitionHooks(child, hooks);
       }
 
+      lastChildren = children;
       return h(props.tag!, null, children);
     };
   },

@@ -19,6 +19,12 @@ import {
 } from './element-registry.js';
 import { getTemplate } from './element-templates.js';
 import {
+  applyFlipMove,
+  applyFlipTrack,
+  applyFlipUntrack,
+  resetFlipState,
+} from './flip-apply.js';
+import {
   createListElement,
   flushListUpdates,
   insertListItem,
@@ -263,6 +269,24 @@ export function applyOps(ops: unknown[], flush = true): void {
         break;
       }
 
+      case OP.FLIP_TRACK: {
+        applyFlipTrack(ops[i++] as number);
+        break;
+      }
+
+      case OP.FLIP_UNTRACK: {
+        applyFlipUntrack(ops[i++] as number);
+        break;
+      }
+
+      case OP.FLIP_MOVE: {
+        const ids = ops[i++] as number[];
+        const duration = ops[i++] as number;
+        const easing = ops[i++] as string;
+        applyFlipMove(ids, duration, easing);
+        break;
+      }
+
       case OP.SET_SCOPE_ID: {
         const id = ops[i++] as number;
         const cssId = ops[i++] as number;
@@ -327,4 +351,5 @@ export function resetMainThreadState(): void {
   setPageUniqueId(1);
   resetListState();
   resetWorkletState();
+  resetFlipState();
 }

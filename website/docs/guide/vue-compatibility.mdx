@@ -147,7 +147,13 @@ Vue's [`<Transition>`](https://vuejs.org/guide/built-ins/transition.html) and [`
 Without `:duration`, Vue Lynx waits for the real `transitionend`/`animationend` event (same primary path as Vue DOM). A bounded fallback cleanup ([#286](https://github.com/Huxpro/vue-lynx/issues/286)) unregisters stranded handlers if a transition is interrupted before the event fires.
 
 :::info Remaining limitation (`<TransitionGroup>` only)
-Move (FLIP) animations in `<TransitionGroup>` are not supported — `getBoundingClientRect()` is unavailable from the background thread. Enter and leave transitions for list items still work.
+Move (FLIP) animations in `<TransitionGroup>` take the `move` prop: `true` for 300ms, or a duration in milliseconds, with `moveEasing` as the timing function. They run on the main thread: the main thread has no synchronous bounds call, so every keyed child's last laid-out rect is remembered from its `layoutchange` event, a reorder marks the children, and the next `layoutchange` of a moved child animates the delta back to zero with the engine's own animation API. `moveClass` is not used on Lynx; the move does not read CSS.
+
+```vue
+<TransitionGroup tag="view" name="list" move="250" move-easing="ease-out">
+  <view v-for="item in items" :key="item.id">{{ item.text }}</view>
+</TransitionGroup>
+```
 :::
 
 Scroll to **9. Registry cleanup** in the example below to see a no-`duration` `<Transition>` under rapid interruption: the event-registry counter climbs while hammering, then returns to baseline after stop.
@@ -233,5 +239,4 @@ Some Vue built-in features are not yet adapted to the dual-thread native environ
 
 | Feature | Reason | Alternative |
 |---------|--------|-------------|
-| `<TransitionGroup>` move (FLIP) | `getBoundingClientRect()` is unavailable on the background thread | Enter/leave list transitions still work; animate layout changes with CSS or Main Thread Script if needed |
 | `withKeys` key modifiers | No-op on native — Lynx's native runtime converts keyboard input to named events (e.g. `confirm`) before reaching JS, so `event.key` is never populated on iOS/Android. Works on web preview ([lynx-stack#2594](https://github.com/lynx-family/lynx-stack/pull/2594)). Native support requires an upstream runtime change. | Native: use `@confirm` directly on `<input>` |
