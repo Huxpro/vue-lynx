@@ -293,13 +293,16 @@ export function pluginVueLynx(
                 },
               },
               swc: {
-                jsc: {
-                  // The Lynx JS engine only supports up to ES2019 syntax.
-                  // Without this, SWC processes node_modules files (via
-                  // source.include) but preserves modern syntax like ?? and
-                  // ??= because its default target is too high.
-                  // Match rspeedy core's pluginSwc behavior.
-                  target: 'es2019',
+                // The Lynx JS engine only supports up to ES2019 syntax. Without this, SWC
+                // processes node_modules files (via source.include) but preserves modern
+                // syntax like ?? and ??= because its default target is too high.
+                //
+                // Expressed as `env.targets` rather than `jsc.target`: Rsbuild 2 sets `env`
+                // itself, and SWC refuses a config carrying both. `env` is also what the
+                // browserslist-style targets elsewhere in a build use, so this agrees with
+                // them instead of overriding them.
+                env: {
+                  targets: 'chrome >= 74, safari >= 13.1, firefox >= 70, edge >= 79',
                 },
               },
             },
